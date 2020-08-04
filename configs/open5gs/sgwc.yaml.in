@@ -52,6 +52,57 @@ sgwc:
       addr: 127.0.0.6
 
 #
+# sgwu:
+#
+#  <PFCP Client>>
+#
+#  o PFCP Client(127.0.0.7:8805)
+#
+#    pfcp:
+#      addr: 127.0.0.7
+#
+#  <UPF_SELECTION_MODE - EPC only>
+#
+# o Round-Robin
+#  sgwu:
+#    pfcp:
+#      - addr: 127.0.0.7
+#      - addr: 127.0.0.12
+#
+# o UPF selection by eNodeB TAC
+#   (either single TAC or multiple TACs, DECIMAL representation)
+#
+#  sgwu:
+#    pfcp:
+#      - addr: 127.0.0.7
+#        tac: 1
+#      - addr: 127.0.0.12
+#        tac: [3,5,8]
+#
+# o UPF selection by UE's DNN/APN (either single DNN/APN or multiple DNNs/APNs)
+#
+#  sgwu:
+#    pfcp:
+#      - addr: 127.0.0.7
+#        dnn: ims
+#      - addr: 127.0.0.12
+#        apn: [internet, web]
+#
+# o UPF selection by CellID(e_cell_id: 28bit, nr_cell_id: 36bit)
+#   (either single enb_id or multiple enb_ids, HEX representation)
+#
+#  sgwu:
+#    pfcp:
+#      - addr: 127.0.0.7
+#        e_cell_id: 463
+#      - addr: 127.0.0.12
+#        nr_cell_id: [123456789, 9413]
+#
+sgwu:
+    pfcp:
+      addr: 127.0.0.7
+
+#
 # parameter:
 #
 #  o Number of output streams per SCTP associations.

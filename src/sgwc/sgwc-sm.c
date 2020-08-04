@@ -17,9 +17,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "gtp-path.h"
 #include "s11-handler.h"
 #include "s5c-handler.h"
+
+#include "gtp-path.h"
+#include "pfcp-path.h"
 
 static void sgwc_handle_echo_request(
         ogs_gtp_xact_t *xact, ogs_gtp_echo_request_t *req)
@@ -59,13 +61,19 @@ void sgwc_state_final(ogs_fsm_t *s, sgwc_event_t *e)
 void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
 {
     int rv;
-    ogs_pkbuf_t *pkbuf = NULL;
-    ogs_gtp_xact_t *xact = NULL;
-    ogs_gtp_message_t message;
+
+    ogs_pkbuf_t *recvbuf = NULL;
     sgwc_ue_t *sgwc_ue = NULL;
     sgwc_sess_t *sess = NULL;
     sgwc_bearer_t *bearer = NULL;
+
+    ogs_gtp_xact_t *xact = NULL;
+    ogs_gtp_message_t message;
     ogs_gtp_node_t *gnode = NULL;
+
+    ogs_pfcp_node_t *pfcp_node = NULL;
+    ogs_pfcp_xact_t *pfcp_xact = NULL;
+    ogs_pfcp_message_t pfcp_message;
 
     sgwc_sm_debug(e);
 
@@ -78,18 +86,65 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
             ogs_error("Can't establish SGW path");
             break;
         }
+
+        rv = sgwc_pfcp_open();
+        if (rv != OGS_OK) {
+            ogs_fatal("Can't establish N4-PFCP path");
+        }
+
         break;
     case OGS_FSM_EXIT_SIG:
         sgwc_gtp_close();
+        sgwc_pfcp_close();
         break;
+    case SGWC_EVT_SXA_MESSAGE:
+        ogs_assert(e);
+        recvbuf = e->pkbuf;
+        ogs_assert(recvbuf);
+        pfcp_node = e->pfcp_node;
+        ogs_assert(pfcp_node);
+        ogs_assert(OGS_FSM_STATE(&pfcp_node->sm));
+
+        if (ogs_pfcp_parse_msg(&pfcp_message, recvbuf) != OGS_OK) {
+            ogs_error("ogs_pfcp_parse_msg() failed");
+            ogs_pkbuf_free(recvbuf);
+            break;
+        }
+
+        rv = ogs_pfcp_xact_receive(pfcp_node, &pfcp_message.h, &pfcp_xact);
+        if (rv != OGS_OK) {
+            ogs_pkbuf_free(recvbuf);
+            break;
+        }
+
+        e->pfcp_message = &pfcp_message;
+        e->pfcp_xact = pfcp_xact;
+        ogs_fsm_dispatch(&pfcp_node->sm, e);
+        if (OGS_FSM_CHECK(&pfcp_node->sm, sgwc_pfcp_state_exception)) {
+            ogs_error("PFCP state machine exception");
+            break;
+        }
+
+        ogs_pkbuf_free(recvbuf);
+        break;
+    case SGWC_EVT_SXA_TIMER:
+    case SGWC_EVT_SXA_NO_HEARTBEAT:
+        ogs_assert(e);
+        pfcp_node = e->pfcp_node;
+        ogs_assert(pfcp_node);
+        ogs_assert(OGS_FSM_STATE(&pfcp_node->sm));
+
+        ogs_fsm_dispatch(&pfcp_node->sm, e);
+        break;
+
     case SGWC_EVT_S11_MESSAGE:
         ogs_assert(e);
-        pkbuf = e->pkbuf;
-        ogs_assert(pkbuf);
+        recvbuf = e->pkbuf;
+        ogs_assert(recvbuf);
 
-        if (ogs_gtp_parse_msg(&message, pkbuf) != OGS_OK) {
+        if (ogs_gtp_parse_msg(&message, recvbuf) != OGS_OK) {
             ogs_error("ogs_gtp_parse_msg() failed");
-            ogs_pkbuf_free(pkbuf);
+            ogs_pkbuf_free(recvbuf);
             break;
         }
 
@@ -108,7 +163,7 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
 
         rv = ogs_gtp_xact_receive(gnode, &message.h, &xact);
         if (rv != OGS_OK) {
-            ogs_pkbuf_free(pkbuf);
+            ogs_pkbuf_free(recvbuf);
             break;
         }
 
@@ -173,17 +228,17 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
             ogs_warn("Not implemented(type:%d)", message.h.type);
             break;
         }
-        ogs_pkbuf_free(pkbuf);
+        ogs_pkbuf_free(recvbuf);
         break;
 
     case SGWC_EVT_S5C_MESSAGE:
         ogs_assert(e);
-        pkbuf = e->pkbuf;
-        ogs_assert(pkbuf);
+        recvbuf = e->pkbuf;
+        ogs_assert(recvbuf);
 
-        if (ogs_gtp_parse_msg(&message, pkbuf) != OGS_OK) {
+        if (ogs_gtp_parse_msg(&message, recvbuf) != OGS_OK) {
             ogs_error("ogs_gtp_parse_msg() failed");
-            ogs_pkbuf_free(pkbuf);
+            ogs_pkbuf_free(recvbuf);
             break;
         }
 
@@ -201,7 +256,7 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
 
         rv = ogs_gtp_xact_receive(gnode, &message.h, &xact);
         if (rv != OGS_OK) {
-            ogs_pkbuf_free(pkbuf);
+            ogs_pkbuf_free(recvbuf);
             break;
         }
 
@@ -240,7 +295,7 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
             ogs_warn("Not implmeneted(type:%d)", message.h.type);
             break;
         }
-        ogs_pkbuf_free(pkbuf);
+        ogs_pkbuf_free(recvbuf);
         break;
     case SGWC_EVT_LO_DLDATA_NOTI:
         ogs_assert(e);

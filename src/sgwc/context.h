@@ -20,9 +20,11 @@
 #ifndef SGWC_CONTEXT_H
 #define SGWC_CONTEXT_H
 
-#include "ogs-gtp.h"
 #include "ogs-app.h"
+#include "ogs-gtp.h"
+#include "ogs-pfcp.h"
 
+#include "timer.h"
 #include "sgwc-sm.h"
 
 #ifdef __cplusplus
@@ -46,6 +48,8 @@ typedef struct sgwc_context_s {
     ogs_sock_t      *gtpc_sock6;    /* SGW GTPC IPv6 Socket */
     ogs_sockaddr_t  *gtpc_addr;     /* SGW GTPC IPv4 Address */
     ogs_sockaddr_t  *gtpc_addr6;    /* SGW GTPC IPv6 Address */
+
+    uint8_t         function_features; /* CP Function Features */
 
     ogs_list_t      gtpu_list;      /* SGW GTPU IPv4 Server List */
     ogs_list_t      gtpu_list6;     /* SGW GTPU IPv6 Server List */
@@ -172,9 +176,13 @@ void sgwc_ue_remove_all(void);
 sgwc_sess_t *sgwc_sess_add(sgwc_ue_t *sgwc_ue, char *apn, uint8_t ebi);
 int sgwc_sess_remove(sgwc_sess_t *sess);
 void sgwc_sess_remove_all(sgwc_ue_t *sgwc_ue);
+
+sgwc_sess_t *sgwc_sess_find(uint32_t index);
+sgwc_sess_t *sgwc_sess_find_by_teid(uint32_t teid);
+sgwc_sess_t *sgwc_sess_find_by_seid(uint64_t seid);
+
 sgwc_sess_t *sgwc_sess_find_by_apn(sgwc_ue_t *sgwc_ue, char *apn);
 sgwc_sess_t *sgwc_sess_find_by_ebi(sgwc_ue_t *sgwc_ue, uint8_t ebi);
-sgwc_sess_t *sgwc_sess_find_by_teid(uint32_t teid);
 sgwc_sess_t *sgwc_sess_first(sgwc_ue_t *sgwc_ue);
 sgwc_sess_t *sgwc_sess_next(sgwc_sess_t *sess);
 

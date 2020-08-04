@@ -27,6 +27,9 @@ extern "C" {
 #endif
 
 typedef struct ogs_gtp_node_s ogs_gtp_node_t;
+typedef struct ogs_pfcp_node_s ogs_pfcp_node_t;
+typedef struct ogs_pfcp_xact_s ogs_pfcp_xact_t;
+typedef struct ogs_pfcp_message_s ogs_pfcp_message_t;
 typedef struct sgwc_bearer_s sgwc_bearer_t;
 
 typedef enum {
@@ -34,6 +37,10 @@ typedef enum {
 
     SGWC_EVT_S11_MESSAGE,
     SGWC_EVT_S5C_MESSAGE,
+
+    SGWC_EVT_SXA_MESSAGE,
+    SGWC_EVT_SXA_TIMER,
+    SGWC_EVT_SXA_NO_HEARTBEAT,
 
     SGWC_EVT_LO_DLDATA_NOTI,
 
@@ -44,8 +51,13 @@ typedef enum {
 typedef struct sgwc_event_s {
     int id;
     ogs_pkbuf_t *pkbuf;
+    int timer_id;
 
     ogs_gtp_node_t *gnode;
+
+    ogs_pfcp_node_t *pfcp_node;
+    ogs_pfcp_xact_t *pfcp_xact;
+    ogs_pfcp_message_t *pfcp_message;
 
     sgwc_bearer_t *bearer;
 } sgwc_event_t;

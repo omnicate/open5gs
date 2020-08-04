@@ -88,6 +88,13 @@ const char *sgwc_event_get_name(sgwc_event_t *e)
     case SGWC_EVT_S5C_MESSAGE:
         return "SGWC_EVT_S5C_MESSAGE";
 
+    case SGWC_EVT_SXA_MESSAGE:
+        return "SGWC_EVT_SXA_MESSAGE";
+    case SGWC_EVT_SXA_TIMER:
+        return "SGWC_EVT_SXA_TIMER";
+    case SGWC_EVT_SXA_NO_HEARTBEAT:
+        return "SGWC_EVT_SXA_NO_HEARTBEAT";
+
     default: 
        break;
     }

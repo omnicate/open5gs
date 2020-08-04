@@ -17,50 +17,52 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SMF_N4_HANDLER_H
-#define SMF_N4_HANDLER_H
+#ifndef SGWC_SXA_HANDLER_H
+#define SGWC_SXA_HANDLER_H
 
-#include "ogs-gtp.h"
+#include "context.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void smf_n4_handle_association_setup_request(
+void sgwc_sxa_handle_association_setup_request(
         ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
         ogs_pfcp_association_setup_request_t *req);
-void smf_n4_handle_association_setup_response(
+void sgwc_sxa_handle_association_setup_response(
         ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
         ogs_pfcp_association_setup_response_t *req);
-void smf_n4_handle_heartbeat_request(
+void sgwc_sxa_handle_heartbeat_request(
         ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
         ogs_pfcp_heartbeat_request_t *req);
-void smf_n4_handle_heartbeat_response(
+void sgwc_sxa_handle_heartbeat_response(
         ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
         ogs_pfcp_heartbeat_response_t *req);
 
-void smf_5gc_n4_handle_session_establishment_response(
-        smf_sess_t *sess, ogs_pfcp_xact_t *xact,
+#if 0
+void sgwc_5gc_sxa_handle_session_establishment_response(
+        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_establishment_response_t *rsp);
-void smf_5gc_n4_handle_session_modification_response(
-        smf_sess_t *sess, ogs_pfcp_xact_t *xact,
+void sgwc_5gc_sxa_handle_session_modification_response(
+        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_modification_response_t *rsp);
-void smf_5gc_n4_handle_session_deletion_response(
-        smf_sess_t *sess, ogs_pfcp_xact_t *xact,
+void sgwc_5gc_sxa_handle_session_deletion_response(
+        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_deletion_response_t *rsp);
 
-void smf_epc_n4_handle_session_establishment_response(
-        smf_sess_t *sess, ogs_pfcp_xact_t *xact,
+void sgwc_epc_sxa_handle_session_establishment_response(
+        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_establishment_response_t *rsp);
-void smf_epc_n4_handle_session_modification_response(
-        smf_sess_t *sess, ogs_pfcp_xact_t *xact,
+void sgwc_epc_sxa_handle_session_modification_response(
+        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_modification_response_t *rsp);
-void smf_epc_n4_handle_session_deletion_response(
-        smf_sess_t *sess, ogs_pfcp_xact_t *xact,
+void sgwc_epc_sxa_handle_session_deletion_response(
+        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_deletion_response_t *rsp);
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SMF_N4_HANDLER_H */
+#endif /* SGWC_SXA_HANDLER_H */

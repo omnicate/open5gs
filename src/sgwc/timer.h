@@ -17,31 +17,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SGWC_SM_H
-#define SGWC_SM_H
+#ifndef SGWC_TIMER_H
+#define SGWC_TIMER_H
 
-#include "event.h"
+#include "ogs-core.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void sgwc_state_initial(ogs_fsm_t *s, sgwc_event_t *e);
-void sgwc_state_final(ogs_fsm_t *s, sgwc_event_t *e);
-void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e);
-void sgwc_state_exception(ogs_fsm_t *s, sgwc_event_t *e);
+/* forward declaration */
+typedef enum {
+    SGWC_TIMER_BASE = 0,
 
-void sgwc_pfcp_state_initial(ogs_fsm_t *s, sgwc_event_t *e);
-void sgwc_pfcp_state_final(ogs_fsm_t *s, sgwc_event_t *e);
-void sgwc_pfcp_state_will_associate(ogs_fsm_t *s, sgwc_event_t *e);
-void sgwc_pfcp_state_associated(ogs_fsm_t *s, sgwc_event_t *e);
-void sgwc_pfcp_state_exception(ogs_fsm_t *s, sgwc_event_t *e);
+    SGWC_TIMER_PFCP_ASSOCIATION,
+    SGWC_TIMER_PFCP_NO_HEARTBEAT,
 
-#define sgwc_sm_debug(__pe) \
-    ogs_debug("%s(): %s\n", __func__, sgwc_event_get_name(__pe))
+    MAX_NUM_OF_SGWC_TIMER,
+
+} sgwc_timer_e;
+
+const char *sgwc_timer_get_name(sgwc_timer_e id);
+
+void sgwc_timer_pfcp_association(void *data);
+void sgwc_timer_pfcp_no_heartbeat(void *data);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* !SGWC_SM_H */
+#endif /* SGWC_TIMER_H */

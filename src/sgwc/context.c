@@ -621,9 +621,20 @@ void sgwc_sess_remove_all(sgwc_ue_t *sgwc_ue)
         sgwc_sess_remove(sess);
 }
 
+sgwc_sess_t *sgwc_sess_find(uint32_t index)
+{
+    ogs_assert(index);
+    return ogs_pool_find(&sgwc_sess_pool, index);
+}
+
 sgwc_sess_t* sgwc_sess_find_by_teid(uint32_t teid)
 {
     return ogs_pool_find(&sgwc_sess_pool, SGW_S5C_TEID_TO_INDEX(teid));
+}
+
+sgwc_sess_t *sgwc_sess_find_by_seid(uint64_t seid)
+{
+    return sgwc_sess_find(seid);
 }
 
 sgwc_sess_t* sgwc_sess_find_by_apn(sgwc_ue_t *sgwc_ue, char *apn)

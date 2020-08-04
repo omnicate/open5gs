@@ -28,10 +28,17 @@ int sgwc_initialize()
 {
     int rv;
 
+    ogs_pfcp_context_init(ogs_config()->max.upf * OGS_MAX_NUM_OF_GTPU_RESOURCE);
     sgwc_context_init();
     sgwc_event_init();
 
     rv = ogs_gtp_xact_init(sgwc_self()->timer_mgr, 512);
+    if (rv != OGS_OK) return rv;
+
+    rv = ogs_pfcp_xact_init(sgwc_self()->timer_mgr, 512);
+    if (rv != OGS_OK) return rv;
+
+    rv = ogs_pfcp_context_parse_config("sgwc", "sgwu");
     if (rv != OGS_OK) return rv;
 
     rv = sgwc_context_parse_config();
@@ -58,7 +65,9 @@ void sgwc_terminate(void)
     ogs_thread_destroy(thread);
 
     sgwc_context_final();
+    ogs_pfcp_context_final();
 
+    ogs_pfcp_xact_final();
     ogs_gtp_xact_final();
 
     sgwc_event_final();

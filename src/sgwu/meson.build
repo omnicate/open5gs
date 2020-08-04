@@ -30,12 +30,16 @@ libsgwu_sources = files('''
 
 libsgwu = static_library('sgwu',
     sources : libsgwu_sources,
-    dependencies : [libapp_dep, libgtp_dep],
+    dependencies : [libapp_dep,
+                    libgtp_dep,
+                    libpfcp_dep],
     install : false)
 
 libsgwu_dep = declare_dependency(
     link_with : libsgwu,
-    dependencies : [libapp_dep, libgtp_dep])
+    dependencies : [libapp_dep,
+                    libgtp_dep,
+                    libpfcp_dep])
 
 sgwu_sources = files('''
     app.c

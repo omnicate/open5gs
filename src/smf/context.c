@@ -135,6 +135,10 @@ static int smf_context_validation(void)
         ogs_error("No smf.dns in '%s'", ogs_config()->file);
         return OGS_ERROR;
     }
+    if (ogs_list_first(&ogs_pfcp_self()->subnet_list) == NULL) {
+        ogs_error("No smf.pdn: in '%s'", ogs_config()->file);
+        return OGS_ERROR;
+    }
     return OGS_OK;
 }
 

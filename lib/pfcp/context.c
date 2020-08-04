@@ -139,11 +139,6 @@ static int ogs_pfcp_context_validation(const char *local)
         ogs_error("No %s.pfcp: in '%s'", local, ogs_config()->file);
         return OGS_ERROR;
     }
-    if (ogs_list_first(&self.subnet_list) == NULL) {
-        ogs_error("No %s.pdn: in '%s'", local, ogs_config()->file);
-        return OGS_ERROR;
-    }
-
     return OGS_OK;
 }
 

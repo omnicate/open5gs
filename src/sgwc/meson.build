@@ -17,29 +17,42 @@
 
 libsgwc_sources = files('''
     event.h
+    timer.h
     context.h 
     gtp-path.h
-    sgwc-sm.h
     s11-handler.h
     s5c-handler.h 
+    sxa-build.h
+    sxa-handler.h
+    pfcp-path.h
+    sgwc-sm.h
 
     init.c
     event.c
+    timer.c
     context.c 
     gtp-path.c
-    sgwc-sm.c
     s11-handler.c
     s5c-handler.c 
+    sxa-build.c
+    sxa-handler.c
+    pfcp-path.c
+    pfcp-sm.c
+    sgwc-sm.c
 '''.split())
 
 libsgwc = static_library('sgwc',
     sources : libsgwc_sources,
-    dependencies : [libapp_dep, libgtp_dep],
+    dependencies : [libapp_dep,
+                    libgtp_dep,
+                    libpfcp_dep],
     install : false)
 
 libsgwc_dep = declare_dependency(
     link_with : libsgwc,
-    dependencies : [libapp_dep, libgtp_dep])
+    dependencies : [libapp_dep,
+                    libgtp_dep,
+                    libpfcp_dep])
 
 sgwc_sources = files('''
     app.c
