@@ -41,8 +41,6 @@ void sgwu_context_init(void)
     ogs_log_install_domain(&__ogs_gtp_domain, "gtp", ogs_core()->log.level);
     ogs_log_install_domain(&__sgwu_log_domain, "sgwu", ogs_core()->log.level);
 
-    ogs_list_init(&self.gtpc_list);
-    ogs_list_init(&self.gtpc_list6);
     ogs_list_init(&self.gtpu_list);
     ogs_list_init(&self.gtpu_list6);
     ogs_list_init(&self.adv_gtpu_list);
@@ -104,7 +102,6 @@ sgwu_context_t *sgwu_self(void)
 
 static int sgwu_context_prepare(void)
 {
-    self.gtpc_port = OGS_GTPV2_C_UDP_PORT;
     self.gtpu_port = OGS_GTPV1_U_UDP_PORT;
 
     return OGS_OK;
@@ -142,118 +139,7 @@ int sgwu_context_parse_config(void)
             while (ogs_yaml_iter_next(&sgwu_iter)) {
                 const char *sgwu_key = ogs_yaml_iter_key(&sgwu_iter);
                 ogs_assert(sgwu_key);
-                if (!strcmp(sgwu_key, "gtpc")) {
-                    ogs_yaml_iter_t gtpc_array, gtpc_iter;
-                    ogs_yaml_iter_recurse(&sgwu_iter, &gtpc_array);
-                    do {
-                        int family = AF_UNSPEC;
-                        int i, num = 0;
-                        const char *hostname[OGS_MAX_NUM_OF_HOSTNAME];
-                        uint16_t port = self.gtpc_port;
-                        const char *dev = NULL;
-                        ogs_sockaddr_t *addr = NULL;
-
-                        if (ogs_yaml_iter_type(&gtpc_array) ==
-                                YAML_MAPPING_NODE) {
-                            memcpy(&gtpc_iter, &gtpc_array,
-                                    sizeof(ogs_yaml_iter_t));
-                        } else if (ogs_yaml_iter_type(&gtpc_array) ==
-                            YAML_SEQUENCE_NODE) {
-                            if (!ogs_yaml_iter_next(&gtpc_array))
-                                break;
-                            ogs_yaml_iter_recurse(&gtpc_array, &gtpc_iter);
-                        } else if (ogs_yaml_iter_type(&gtpc_array) ==
-                            YAML_SCALAR_NODE) {
-                            break;
-                        } else
-                            ogs_assert_if_reached();
-
-                        while (ogs_yaml_iter_next(&gtpc_iter)) {
-                            const char *gtpc_key =
-                                ogs_yaml_iter_key(&gtpc_iter);
-                            ogs_assert(gtpc_key);
-                            if (!strcmp(gtpc_key, "family")) {
-                                const char *v = ogs_yaml_iter_value(&gtpc_iter);
-                                if (v) family = atoi(v);
-                                if (family != AF_UNSPEC &&
-                                    family != AF_INET && family != AF_INET6) {
-                                    ogs_warn("Ignore family(%d) : "
-                                        "AF_UNSPEC(%d), "
-                                        "AF_INET(%d), AF_INET6(%d) ", 
-                                        family, AF_UNSPEC, AF_INET, AF_INET6);
-                                    family = AF_UNSPEC;
-                                }
-                            } else if (!strcmp(gtpc_key, "addr") ||
-                                    !strcmp(gtpc_key, "name")) {
-                                ogs_yaml_iter_t hostname_iter;
-                                ogs_yaml_iter_recurse(&gtpc_iter,
-                                        &hostname_iter);
-                                ogs_assert(ogs_yaml_iter_type(&hostname_iter) !=
-                                    YAML_MAPPING_NODE);
-
-                                do {
-                                    if (ogs_yaml_iter_type(&hostname_iter) ==
-                                            YAML_SEQUENCE_NODE) {
-                                        if (!ogs_yaml_iter_next(&hostname_iter))
-                                            break;
-                                    }
-
-                                    ogs_assert(num <= OGS_MAX_NUM_OF_HOSTNAME);
-                                    hostname[num++] = 
-                                        ogs_yaml_iter_value(&hostname_iter);
-                                } while (
-                                    ogs_yaml_iter_type(&hostname_iter) ==
-                                        YAML_SEQUENCE_NODE);
-                            } else if (!strcmp(gtpc_key, "port")) {
-                                const char *v = ogs_yaml_iter_value(&gtpc_iter);
-                                if (v) port = atoi(v);
-                            } else if (!strcmp(gtpc_key, "dev")) {
-                                dev = ogs_yaml_iter_value(&gtpc_iter);
-                            } else
-                                ogs_warn("unknown key `%s`", gtpc_key);
-                        }
-
-                        addr = NULL;
-                        for (i = 0; i < num; i++) {
-                            rv = ogs_addaddrinfo(&addr,
-                                    family, hostname[i], port, 0);
-                            ogs_assert(rv == OGS_OK);
-                        }
-
-                        if (addr) {
-                            if (ogs_config()->parameter.no_ipv4 == 0)
-                                ogs_socknode_add(
-                                        &self.gtpc_list, AF_INET, addr);
-                            if (ogs_config()->parameter.no_ipv6 == 0)
-                                ogs_socknode_add(
-                                        &self.gtpc_list6, AF_INET6, addr);
-                            ogs_freeaddrinfo(addr);
-                        }
-
-                        if (dev) {
-                            rv = ogs_socknode_probe(
-                                    ogs_config()->parameter.no_ipv4 ?
-                                        NULL : &self.gtpc_list,
-                                    ogs_config()->parameter.no_ipv6 ?
-                                        NULL : &self.gtpc_list6,
-                                    dev, port);
-                            ogs_assert(rv == OGS_OK);
-                        }
-
-                    } while (ogs_yaml_iter_type(&gtpc_array) == 
-                            YAML_SEQUENCE_NODE);
-
-                    if (ogs_list_empty(&self.gtpc_list) &&
-                        ogs_list_empty(&self.gtpc_list6)) {
-                        rv = ogs_socknode_probe(
-                                ogs_config()->parameter.no_ipv4 ?
-                                    NULL : &self.gtpc_list,
-                                ogs_config()->parameter.no_ipv6 ?
-                                    NULL : &self.gtpc_list6,
-                                NULL, self.gtpc_port);
-                        ogs_assert(rv == OGS_OK);
-                    }
-                } else if (!strcmp(sgwu_key, "gtpu")) {
+                if (!strcmp(sgwu_key, "gtpu")) {
                     ogs_yaml_iter_t gtpu_array, gtpu_iter;
                     ogs_yaml_iter_recurse(&sgwu_iter, &gtpu_array);
                     do {

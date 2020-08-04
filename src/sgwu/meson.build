@@ -20,16 +20,12 @@ libsgwu_sources = files('''
     context.h 
     gtp-path.h
     sgwu-sm.h
-    s11-handler.h
-    s5c-handler.h 
 
     init.c
     event.c
     context.c 
     gtp-path.c
     sgwu-sm.c
-    s11-handler.c
-    s5c-handler.c 
 '''.split())
 
 libsgwu = static_library('sgwu',
