@@ -56,8 +56,6 @@ typedef struct sgwu_context_s {
     ogs_timer_mgr_t *timer_mgr;     /* Timer Manager */
     ogs_pollset_t   *pollset;       /* Poll Set for I/O Multiplexing */
 
-    ogs_list_t      mme_s11_list;   /* MME GTPC Node List */
-    ogs_list_t      pgw_s5c_list;   /* PGW GTPC Node List */
     ogs_list_t      enb_s1u_list;   /* eNB GTPU Node List */
     ogs_list_t      pgw_s5u_list;   /* PGW GTPU Node List */
 

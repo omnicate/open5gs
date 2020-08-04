@@ -50,8 +50,6 @@ void sgwu_context_init(void)
     self.adv_gtpu_hash6 = ogs_hash_make();
 
     ogs_gtp_node_init(512);
-    ogs_list_init(&self.mme_s11_list);
-    ogs_list_init(&self.pgw_s5c_list);
     ogs_list_init(&self.enb_s1u_list);
     ogs_list_init(&self.pgw_s5u_list);
 
@@ -86,8 +84,6 @@ void sgwu_context_final(void)
     ogs_pool_final(&sgwu_sess_pool);
     ogs_pool_final(&sgwu_ue_pool);
 
-    ogs_gtp_node_remove_all(&self.mme_s11_list);
-    ogs_gtp_node_remove_all(&self.pgw_s5c_list);
     ogs_gtp_node_remove_all(&self.enb_s1u_list);
     ogs_gtp_node_remove_all(&self.pgw_s5u_list);
     ogs_gtp_node_final();
