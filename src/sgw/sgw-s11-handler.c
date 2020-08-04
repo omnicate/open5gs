@@ -1284,4 +1284,3 @@ void sgw_s11_handle_bearer_resource_command(ogs_gtp_xact_t *s11_xact,
     rv = ogs_gtp_xact_commit(s5c_xact);
     ogs_expect(rv == OGS_OK);
 }
-
