@@ -17,8 +17,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef UPF_EVENT_H
-#define UPF_EVENT_H
+#ifndef SGWU_TIMER_H
+#define SGWU_TIMER_H
 
 #include "ogs-core.h"
 
@@ -26,43 +26,24 @@
 extern "C" {
 #endif
 
-typedef struct ogs_pfcp_node_s ogs_pfcp_node_t;
-typedef struct ogs_pfcp_xact_s ogs_pfcp_xact_t;
-typedef struct ogs_pfcp_message_s ogs_pfcp_message_t;
-typedef struct upf_sess_s upf_sess_t;
-
+/* forward declaration */
 typedef enum {
-    UPF_EVT_BASE = OGS_FSM_USER_SIG,
+    SGWU_TIMER_BASE = 0,
 
-    UPF_EVT_N4_MESSAGE,
-    UPF_EVT_N4_TIMER,
-    UPF_EVT_N4_NO_HEARTBEAT,
+    SGWU_TIMER_ASSOCIATION,
+    SGWU_TIMER_NO_HEARTBEAT,
 
-    UPF_EVT_TOP,
+    MAX_NUM_OF_SGWU_TIMER,
 
-} upf_event_e;
+} sgwu_timer_e;
 
-typedef struct upf_event_s {
-    int id;
-    ogs_pkbuf_t *pkbuf;
-    int timer_id;
+const char *sgwu_timer_get_name(sgwu_timer_e id);
 
-    ogs_pfcp_node_t *pfcp_node;
-    ogs_pfcp_xact_t *pfcp_xact;
-    ogs_pfcp_message_t *pfcp_message;
-} upf_event_t;
-
-void upf_event_init(void);
-void upf_event_term(void);
-void upf_event_final(void);
-
-upf_event_t *upf_event_new(upf_event_e id);
-void upf_event_free(upf_event_t *e);
-
-const char *upf_event_get_name(upf_event_t *e);
+void sgwu_timer_association(void *data);
+void sgwu_timer_no_heartbeat(void *data);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* UPF_EVENT_H */
+#endif /* SGWU_TIMER_H */

@@ -59,6 +59,7 @@ void sgwu_context_init(void)
     ogs_pool_init(&sgwu_tunnel_pool, ogs_config()->pool.tunnel);
 
     self.imsi_ue_hash = ogs_hash_make();
+    self.sess_hash = ogs_hash_make();
 
     ogs_list_init(&self.sgwu_ue_list);
 
@@ -73,6 +74,9 @@ void sgwu_context_final(void)
 
     ogs_assert(self.imsi_ue_hash);
     ogs_hash_destroy(self.imsi_ue_hash);
+
+    ogs_assert(self.sess_hash);
+    ogs_hash_destroy(self.sess_hash);
 
     ogs_assert(self.adv_gtpu_hash);
     ogs_hash_destroy(self.adv_gtpu_hash);
@@ -501,6 +505,22 @@ void sgwu_sess_remove_all(sgwu_ue_t *sgwu_ue)
     ogs_assert(sgwu_ue);
     ogs_list_for_each_safe(&sgwu_ue->sess_list, next_sess, sess)
         sgwu_sess_remove(sess);
+}
+
+sgwu_sess_t *sgwu_sess_find(uint32_t index)
+{
+    ogs_assert(index);
+    return ogs_pool_find(&sgwu_sess_pool, index);
+}
+
+sgwu_sess_t *sgwu_sess_find_by_cp_seid(uint64_t seid)
+{
+    return (sgwu_sess_t *)ogs_hash_get(self.sess_hash, &seid, sizeof(seid));
+}
+
+sgwu_sess_t *sgwu_sess_find_by_up_seid(uint64_t seid)
+{
+    return sgwu_sess_find(seid);
 }
 
 sgwu_sess_t* sgwu_sess_find_by_teid(uint32_t teid)

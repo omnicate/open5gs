@@ -17,31 +17,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SGWU_SM_H
-#define SGWU_SM_H
+#ifndef SGWU_SXA_BUILD_H
+#define SGWU_SXA_BUILD_H
 
-#include "event.h"
+#include "context.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void sgwu_state_initial(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_state_final(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_state_operational(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_state_exception(ogs_fsm_t *s, sgwu_event_t *e);
+ogs_pkbuf_t *sgwu_sxa_build_association_setup_request(uint8_t type);
+ogs_pkbuf_t *sgwu_sxa_build_association_setup_response(uint8_t type,
+        uint8_t cause);
 
-void sgwu_pfcp_state_initial(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_pfcp_state_final(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_pfcp_state_will_associate(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_pfcp_state_associated(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_pfcp_state_exception(ogs_fsm_t *s, sgwu_event_t *e);
-
-#define sgwu_sm_debug(__pe) \
-    ogs_debug("%s(): %s\n", __func__, sgwu_event_get_name(__pe))
+#if 0
+ogs_pkbuf_t *sgwu_sxa_build_session_establishment_response(uint8_t type,
+    sgwu_sess_t *sess, ogs_pfcp_pdr_t *created_pdr[], int num_of_created_pdr);
+ogs_pkbuf_t *sgwu_sxa_build_session_modification_response(uint8_t type,
+    sgwu_sess_t *sess, ogs_pfcp_pdr_t *created_pdr[], int num_of_created_pdr);
+ogs_pkbuf_t *sgwu_sxa_build_session_deletion_response(uint8_t type,
+    sgwu_sess_t *sess);
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* !SGWU_SM_H */
+#endif /* SGWU_SXA_BUILD_H */

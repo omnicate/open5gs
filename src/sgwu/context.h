@@ -21,8 +21,10 @@
 #define SGWU_CONTEXT_H
 
 #include "ogs-gtp.h"
+#include "ogs-pfcp.h"
 #include "ogs-app.h"
 
+#include "timer.h"
 #include "sgwu-sm.h"
 
 #ifdef __cplusplus
@@ -52,6 +54,9 @@ typedef struct sgwu_context_s {
     ogs_sockaddr_t  *gtpu_addr;     /* SGW GTPU IPv4 Address */
     ogs_sockaddr_t  *gtpu_addr6;    /* SGW GTPU IPv6 Address */
 
+    ogs_list_t      gtpu_resource_list; /* UP IP Resource List */
+    uint16_t        function_features; /* UP Function Features */
+
     ogs_queue_t     *queue;         /* Queue for processing SGW control */
     ogs_timer_mgr_t *timer_mgr;     /* Timer Manager */
     ogs_pollset_t   *pollset;       /* Poll Set for I/O Multiplexing */
@@ -60,6 +65,7 @@ typedef struct sgwu_context_s {
     ogs_list_t      pgw_s5u_list;   /* PGW GTPU Node List */
 
     ogs_hash_t      *imsi_ue_hash;  /* hash table (IMSI : SGW_UE) */
+    ogs_hash_t      *sess_hash;     /* hash table (F-SEID) */
 
     ogs_list_t      sgwu_ue_list;    /* SGW_UE List */
 } sgwu_context_t;
@@ -162,6 +168,11 @@ void sgwu_ue_remove_all(void);
 sgwu_sess_t *sgwu_sess_add(sgwu_ue_t *sgwu_ue, char *apn, uint8_t ebi);
 int sgwu_sess_remove(sgwu_sess_t *sess);
 void sgwu_sess_remove_all(sgwu_ue_t *sgwu_ue);
+
+sgwu_sess_t *sgwu_sess_find(uint32_t index);
+sgwu_sess_t *sgwu_sess_find_by_cp_seid(uint64_t seid);
+sgwu_sess_t *sgwu_sess_find_by_up_seid(uint64_t seid);
+
 sgwu_sess_t *sgwu_sess_find_by_apn(sgwu_ue_t *sgwu_ue, char *apn);
 sgwu_sess_t *sgwu_sess_find_by_ebi(sgwu_ue_t *sgwu_ue, uint8_t ebi);
 sgwu_sess_t *sgwu_sess_find_by_teid(uint32_t teid);

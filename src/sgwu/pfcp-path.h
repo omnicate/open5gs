@@ -17,31 +17,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SGWU_SM_H
-#define SGWU_SM_H
+#ifndef SGWU_PFCP_PATH_H
+#define SGWU_PFCP_PATH_H
 
-#include "event.h"
+#include "sxa-build.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void sgwu_state_initial(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_state_final(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_state_operational(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_state_exception(ogs_fsm_t *s, sgwu_event_t *e);
+int sgwu_pfcp_open(void);
+void sgwu_pfcp_close(void);
 
-void sgwu_pfcp_state_initial(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_pfcp_state_final(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_pfcp_state_will_associate(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_pfcp_state_associated(ogs_fsm_t *s, sgwu_event_t *e);
-void sgwu_pfcp_state_exception(ogs_fsm_t *s, sgwu_event_t *e);
+void sgwu_pfcp_send_association_setup_request(ogs_pfcp_node_t *node);
+void sgwu_pfcp_send_association_setup_response(ogs_pfcp_xact_t *xact,
+        uint8_t cause);
+void sgwu_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node);
 
-#define sgwu_sm_debug(__pe) \
-    ogs_debug("%s(): %s\n", __func__, sgwu_event_get_name(__pe))
+#if 0
+void sgwu_pfcp_send_session_establishment_response(
+        ogs_pfcp_xact_t *xact, pfcp_sess_t *sess,
+        ogs_pfcp_pdr_t *created_pdr[], int num_of_created_pdr);
+void sgwu_pfcp_send_session_modification_response(
+        ogs_pfcp_xact_t *xact, pfcp_sess_t *sess,
+        ogs_pfcp_pdr_t *created_pdr[], int num_of_created_pdr);
+void sgwu_pfcp_send_session_deletion_response(ogs_pfcp_xact_t *xact,
+        pfcp_sess_t *sess);
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* !SGWU_SM_H */
+#endif /* SGWU_PFCP_PATH_H */

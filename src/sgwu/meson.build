@@ -16,15 +16,24 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 libsgwu_sources = files('''
+    timer.h
     event.h
     context.h 
     gtp-path.h
+    sxa-build.h
+    sxa-handler.h
+    pfcp-path.h
     sgwu-sm.h
 
     init.c
+    timer.c
     event.c
     context.c 
     gtp-path.c
+    sxa-build.c
+    sxa-handler.c
+    pfcp-path.c
+    pfcp-sm.c
     sgwu-sm.c
 '''.split())
 

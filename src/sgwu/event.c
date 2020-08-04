@@ -83,10 +83,12 @@ const char *sgwu_event_get_name(sgwu_event_t *e)
     case OGS_FSM_EXIT_SIG: 
         return OGS_FSM_NAME_EXIT_SIG;
 
-    case SGWU_EVT_S11_MESSAGE:
-        return "SGWU_EVT_S11_MESSAGE";
-    case SGWU_EVT_S5C_MESSAGE:
-        return "SGWU_EVT_S5C_MESSAGE";
+    case SGWU_EVT_SXA_MESSAGE:
+        return "SGWU_EVT_SXA_MESSAGE";
+    case SGWU_EVT_SXA_TIMER:
+        return "SGWU_EVT_SXA_TIMER";
+    case SGWU_EVT_SXA_NO_HEARTBEAT:
+        return "SGWU_EVT_SXA_NO_HEARTBEAT";
 
     default: 
        break;
