@@ -195,7 +195,8 @@ void sgwc_s5c_handle_create_session_response(ogs_gtp_xact_t *s5c_xact,
     sgwc_s11_teid.interface_type = OGS_GTP_F_TEID_S11_S4_SGW_GTP_C;
     sgwc_s11_teid.teid = htonl(sgwc_ue->sgwc_s11_teid);
     rv = ogs_gtp_sockaddr_to_f_teid(
-            sgwc_self()->gtpc_addr, sgwc_self()->gtpc_addr6, &sgwc_s11_teid, &len);
+            sgwc_self()->gtpc_addr, sgwc_self()->gtpc_addr6,
+            &sgwc_s11_teid, &len);
     ogs_assert(rv == OGS_OK);
     rsp->sender_f_teid_for_control_plane.presence = 1;
     rsp->sender_f_teid_for_control_plane.data = &sgwc_s11_teid;
@@ -421,7 +422,8 @@ void sgwc_s5c_handle_create_bearer_request(ogs_gtp_xact_t *s5c_xact,
         ogs_assert(rv == OGS_OK);
     } else {
         rv = ogs_gtp_sockaddr_to_f_teid(
-        sgwc_self()->gtpu_addr,  sgwc_self()->gtpu_addr6, &sgwc_s1u_teid, &len);
+                sgwc_self()->gtpu_addr, sgwc_self()->gtpu_addr6,
+                &sgwc_s1u_teid, &len);
         ogs_assert(rv == OGS_OK);
     }
     req->bearer_contexts.s1_u_enodeb_f_teid.presence = 1;
