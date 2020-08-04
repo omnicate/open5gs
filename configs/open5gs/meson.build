@@ -23,6 +23,7 @@ open5gs_conf = '''
     mme.yaml
     hss.yaml
     sgw.yaml
+    sgwc.yaml
     pgw.yaml
     pcrf.yaml
 
