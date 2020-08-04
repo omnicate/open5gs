@@ -30,14 +30,14 @@ typedef struct ogs_gtp_node_s ogs_gtp_node_t;
 typedef struct sgwc_bearer_s sgwc_bearer_t;
 
 typedef enum {
-    SGW_EVT_BASE = OGS_FSM_USER_SIG,
+    SGWC_EVT_BASE = OGS_FSM_USER_SIG,
 
-    SGW_EVT_S11_MESSAGE,
-    SGW_EVT_S5C_MESSAGE,
+    SGWC_EVT_S11_MESSAGE,
+    SGWC_EVT_S5C_MESSAGE,
 
-    SGW_EVT_LO_DLDATA_NOTI,
+    SGWC_EVT_LO_DLDATA_NOTI,
 
-    SGW_EVT_TOP,
+    SGWC_EVT_TOP,
 
 } sgwc_event_e;
 

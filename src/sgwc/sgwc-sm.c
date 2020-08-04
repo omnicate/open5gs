@@ -82,7 +82,7 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
     case OGS_FSM_EXIT_SIG:
         sgwc_gtp_close();
         break;
-    case SGW_EVT_S11_MESSAGE:
+    case SGWC_EVT_S11_MESSAGE:
         ogs_assert(e);
         pkbuf = e->pkbuf;
         ogs_assert(pkbuf);
@@ -176,7 +176,7 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
         ogs_pkbuf_free(pkbuf);
         break;
 
-    case SGW_EVT_S5C_MESSAGE:
+    case SGWC_EVT_S5C_MESSAGE:
         ogs_assert(e);
         pkbuf = e->pkbuf;
         ogs_assert(pkbuf);
@@ -242,7 +242,7 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
         }
         ogs_pkbuf_free(pkbuf);
         break;
-    case SGW_EVT_LO_DLDATA_NOTI:
+    case SGWC_EVT_LO_DLDATA_NOTI:
         ogs_assert(e);
 
         bearer = e->bearer;

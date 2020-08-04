@@ -432,6 +432,8 @@ int sgwc_context_parse_config(void)
                         ogs_assert(rv == OGS_OK);
                     }
 
+                } else if (!strcmp(sgwc_key, "pfcp")) {
+                    /* handle config in pfcp library */
                 } else
                     ogs_warn("unknown key `%s`", sgwc_key);
             }

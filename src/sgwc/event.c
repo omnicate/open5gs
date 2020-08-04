@@ -83,10 +83,10 @@ const char *sgwc_event_get_name(sgwc_event_t *e)
     case OGS_FSM_EXIT_SIG: 
         return OGS_FSM_NAME_EXIT_SIG;
 
-    case SGW_EVT_S11_MESSAGE:
-        return "SGW_EVT_S11_MESSAGE";
-    case SGW_EVT_S5C_MESSAGE:
-        return "SGW_EVT_S5C_MESSAGE";
+    case SGWC_EVT_S11_MESSAGE:
+        return "SGWC_EVT_S11_MESSAGE";
+    case SGWC_EVT_S5C_MESSAGE:
+        return "SGWC_EVT_S5C_MESSAGE";
 
     default: 
        break;

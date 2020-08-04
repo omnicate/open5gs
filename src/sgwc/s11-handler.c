@@ -102,7 +102,8 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
     }
 
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
                 OGS_GTP_CREATE_SESSION_RESPONSE_TYPE, cause_value);
         return;
     }
@@ -258,7 +259,8 @@ void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,
     }
 
     if (cause.value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
                 OGS_GTP_MODIFY_BEARER_RESPONSE_TYPE, cause.value);
         return;
     }
@@ -401,7 +403,8 @@ void sgwc_s11_handle_delete_session_request(ogs_gtp_xact_t *s11_xact,
     }
 
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
                 OGS_GTP_DELETE_SESSION_RESPONSE_TYPE, cause_value);
         return;
     }
@@ -572,7 +575,8 @@ void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact,
     ogs_assert(req->user_location_information.len == decoded);
     memcpy(&bearer->tai.plmn_id, &uli.tai.plmn_id, sizeof(uli.tai.plmn_id));
     bearer->tai.tac = uli.tai.tac;
-    memcpy(&bearer->e_cgi.plmn_id, &uli.e_cgi.plmn_id, sizeof(uli.e_cgi.plmn_id));
+    memcpy(&bearer->e_cgi.plmn_id,
+            &uli.e_cgi.plmn_id, sizeof(uli.e_cgi.plmn_id));
     bearer->e_cgi.cell_id = uli.e_cgi.cell_id;
 
     /* Reset UE state */
@@ -841,7 +845,8 @@ void sgwc_s11_handle_release_access_bearers_request(ogs_gtp_xact_t *s11_xact,
     }
 
     if (cause.value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
                 OGS_GTP_RELEASE_ACCESS_BEARERS_RESPONSE_TYPE, cause.value);
         return;
     }
@@ -995,7 +1000,8 @@ void sgwc_s11_handle_create_indirect_data_forwarding_tunnel_request(
     }
 
     if (cause.value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
                 OGS_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_RESPONSE_TYPE,
                 cause.value);
         return;
@@ -1154,7 +1160,8 @@ void sgwc_s11_handle_delete_indirect_data_forwarding_tunnel_request(
     }
 
     if (cause.value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
                 OGS_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_RESPONSE_TYPE,
                 cause.value);
         return;
@@ -1256,7 +1263,8 @@ void sgwc_s11_handle_bearer_resource_command(ogs_gtp_xact_t *s11_xact,
     }
 
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
                 OGS_GTP_BEARER_RESOURCE_FAILURE_INDICATION_TYPE, cause_value);
         return;
     }

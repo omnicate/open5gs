@@ -76,11 +76,11 @@ static void _gtpv2_c_recv_cb(short when, ogs_socket_t fd, void *data)
      */
     gnode = ogs_gtp_node_find_by_addr(&sgwc_self()->pgw_s5c_list, &from);
     if (gnode) {
-        e = sgwc_event_new(SGW_EVT_S5C_MESSAGE);
+        e = sgwc_event_new(SGWC_EVT_S5C_MESSAGE);
         ogs_assert(e);
         e->gnode = gnode;
     } else {
-        e = sgwc_event_new(SGW_EVT_S11_MESSAGE);
+        e = sgwc_event_new(SGWC_EVT_S11_MESSAGE);
         gnode = ogs_gtp_node_find_by_addr(&sgwc_self()->mme_s11_list, &from);
         if (!gnode) {
             gnode = ogs_gtp_node_add_by_addr(&sgwc_self()->mme_s11_list, &from);
@@ -254,7 +254,7 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
                         sgwc_event_t *e;
 
                         ogs_debug("    EVENT DL Data Notification");
-                        e = sgwc_event_new(SGW_EVT_LO_DLDATA_NOTI);
+                        e = sgwc_event_new(SGWC_EVT_LO_DLDATA_NOTI);
                         ogs_assert(e);
                         e->bearer = bearer;
                         rv = ogs_queue_push(sgwc_self()->queue, e);
