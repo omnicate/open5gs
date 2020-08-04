@@ -62,6 +62,8 @@ typedef struct ogs_pfcp_xact_s {
     uint8_t         holding_rcount;
 
     void            *assoc_xact;    /**< Associated GTP transaction */
+    ogs_pkbuf_t     *gtpbuf;        /**< GTP packet buffer */
+
     void            *assoc_session; /**< Associated SBI session */
 
 #define OGS_PFCP_5GC_MODIFY_CREATE ((uint64_t)1<<0)
