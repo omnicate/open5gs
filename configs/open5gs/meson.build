@@ -24,6 +24,7 @@ open5gs_conf = '''
     hss.yaml
     sgw.yaml
     sgwc.yaml
+    sgwu.yaml
     pgw.yaml
     pcrf.yaml
 

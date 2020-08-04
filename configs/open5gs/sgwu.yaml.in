@@ -19,24 +19,10 @@
 #    domain: core,gtp,sgw,event,tlv,mem,sock
 #
 logger:
-    file: @localstatedir@/log/open5gs/sgw.log
+    file: @localstatedir@/log/open5gs/sgwc.log
 
 #
-# sgw:
-#
-#  <GTP-C Server>
-#
-#  o GTP-C Server(127.0.0.2:2123, [fe80::2%@loopback_devname@]:2123)
-#    gtpc:
-#      addr:
-#        - 127.0.0.2
-#        - fe80::2%@loopback_devname@
-#
-#  o On SGW, Same Configuration(127.0.0.2:2123,
-#  [fe80::2%@loopback_devname@]:2123) as below.
-#    gtpc:
-#      - addr: 127.0.0.2
-#      - addr: fe80::2%@loopback_devname@
+# sgwu:
 #
 #  <GTP-U Server>
 #
@@ -56,11 +42,18 @@ logger:
 #      dev: ens3
 #      advertise_name: sgw1.epc.mnc001.mcc001.3gppnetwork.org
 #
-sgw:
-    gtpc:
-      addr: 127.0.0.2
+#  <PFCP Server>
+#
+#  o PFCP Server(127.0.0.7:8805, ::1:8805)
+#    pfcp:
+#      - addr: 127.0.0.7
+#      - addr: ::1
+#
+sgwu:
     gtpu:
-      addr: 127.0.0.2
+      addr: 127.0.0.7
+    pfcp:
+      addr: 127.0.0.7
 
 #
 # parameter:

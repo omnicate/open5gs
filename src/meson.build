@@ -33,6 +33,7 @@ subdir('mme')
 subdir('hss')
 subdir('sgw')
 subdir('sgwc')
+subdir('sgwu')
 subdir('pgw')
 subdir('pcrf')
 
