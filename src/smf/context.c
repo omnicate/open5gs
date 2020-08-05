@@ -639,13 +639,13 @@ static ogs_pfcp_node_t *selected_upf_node(
             compare_ue_info(node, sess) == true) return node;
     }
 
-    for (node = ogs_list_first(&ogs_pfcp_self()->n4_list);
+    for (node = ogs_list_first(&ogs_pfcp_self()->peer_list);
             node != next; node = ogs_list_next(node)) {
         if (OGS_FSM_CHECK(&node->sm, smf_pfcp_state_associated) &&
             compare_ue_info(node, sess) == true) return node;
     }
 
-    return next ? next : ogs_list_first(&ogs_pfcp_self()->n4_list);
+    return next ? next : ogs_list_first(&ogs_pfcp_self()->peer_list);
 }
 
 void smf_sess_select_upf(smf_sess_t *sess)
@@ -659,7 +659,7 @@ void smf_sess_select_upf(smf_sess_t *sess)
      * the search is performed from the first SGW in a round-robin manner.
      */
     if (ogs_pfcp_self()->node == NULL)
-        ogs_pfcp_self()->node = ogs_list_last(&ogs_pfcp_self()->n4_list);
+        ogs_pfcp_self()->node = ogs_list_last(&ogs_pfcp_self()->peer_list);
 
     /* setup GTP session with selected UPF */
     ogs_pfcp_self()->node = selected_upf_node(ogs_pfcp_self()->node, sess);
