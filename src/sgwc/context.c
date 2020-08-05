@@ -609,16 +609,16 @@ sgwc_bearer_t* sgwc_bearer_add(sgwc_sess_t *sess)
     dl_pdr->id = OGS_NEXT_ID(sess->pdr_id, 1, OGS_MAX_NUM_OF_PDR+1);
     dl_pdr->src_if = OGS_PFCP_INTERFACE_CORE;
 
-    ul_pdr = ogs_pfcp_pdr_add(&bearer->pfcp);
-    ogs_assert(ul_pdr);
-    ul_pdr->id = OGS_NEXT_ID(sess->pdr_id, 1, OGS_MAX_NUM_OF_PDR+1);
-    ul_pdr->src_if = OGS_PFCP_INTERFACE_ACCESS;
-
     dl_far = ogs_pfcp_far_add(&bearer->pfcp);
     ogs_assert(dl_far);
     dl_far->id = OGS_NEXT_ID(sess->far_id, 1, OGS_MAX_NUM_OF_FAR+1);
     dl_far->dst_if = OGS_PFCP_INTERFACE_ACCESS;
     ogs_pfcp_pdr_associate_far(dl_pdr, dl_far);
+
+    ul_pdr = ogs_pfcp_pdr_add(&bearer->pfcp);
+    ogs_assert(ul_pdr);
+    ul_pdr->id = OGS_NEXT_ID(sess->pdr_id, 1, OGS_MAX_NUM_OF_PDR+1);
+    ul_pdr->src_if = OGS_PFCP_INTERFACE_ACCESS;
 
     ul_far = ogs_pfcp_far_add(&bearer->pfcp);
     ogs_assert(ul_far);
