@@ -55,6 +55,13 @@ static void test1_func(abts_case *tc, void *data)
         "000b403800000300 0000020001000800 020018001a002524 27e211a94a030761"
         "430f10004f007000 65006e0035004700 5347028040325204 69490100";
 
+    test_ue_t test_ue;
+
+    const char *_k_string = "465b5ce8b199b49faa5f0a2ee238a6bc";
+    uint8_t k[OGS_KEY_LEN];
+    const char *_opc_string = "e8ed289deba952e4283b54e88e6183ca";
+    uint8_t opc[OGS_KEY_LEN];
+
     mongoc_collection_t *collection = NULL;
     bson_t *doc = NULL;
     int64_t count = 0;
@@ -107,6 +114,10 @@ static void test1_func(abts_case *tc, void *data)
         "\"__v\" : 0 "
       "}";
 
+    /* Setup Test UE & Session Context */
+    memset(&test_ue, 0, sizeof(test_ue));
+    test_ue.imsi = (char *)"310014987654004";
+
     /* eNB connects to MME */
     s1ap = testenb_s1ap_client("127.0.0.1");
     ABTS_PTR_NOTNULL(tc, s1ap);
@@ -135,13 +146,27 @@ static void test1_func(abts_case *tc, void *data)
     ABTS_PTR_NOTNULL(tc, collection);
 
     /********** Insert Subscriber in Database */
+    collection = mongoc_client_get_collection(
+        ogs_mongoc()->client, ogs_mongoc()->name, "subscribers");
+    ABTS_PTR_NOTNULL(tc, collection);
+    doc = BCON_NEW("imsi", BCON_UTF8(test_ue.imsi));
+    ABTS_PTR_NOTNULL(tc, doc);
+
+    count = mongoc_collection_count (
+        collection, MONGOC_QUERY_NONE, doc, 0, 0, NULL, &error);
+    if (count) {
+        ABTS_TRUE(tc, mongoc_collection_remove(collection,
+                MONGOC_REMOVE_SINGLE_REMOVE, doc, NULL, &error))
+    }
+    bson_destroy(doc);
+
     doc = bson_new_from_json((const uint8_t *)json, -1, &error);;
     ABTS_PTR_NOTNULL(tc, doc);
-    ABTS_TRUE(tc, mongoc_collection_insert(collection, 
+    ABTS_TRUE(tc, mongoc_collection_insert(collection,
                 MONGOC_INSERT_NONE, doc, NULL, &error));
     bson_destroy(doc);
 
-    doc = BCON_NEW("imsi", BCON_UTF8("310014987654004"));
+    doc = BCON_NEW("imsi", BCON_UTF8(test_ue.imsi));
     ABTS_PTR_NOTNULL(tc, doc);
     do {
         count = mongoc_collection_count (
@@ -149,6 +174,7 @@ static void test1_func(abts_case *tc, void *data)
     } while (count == 0);
     bson_destroy(doc);
 
+    /* Send Attach Request */
     rv = tests1ap_build_initial_ue_msg(&sendbuf, msgindex);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
     rv = testenb_s1ap_send(s1ap, sendbuf);
@@ -252,10 +278,10 @@ static void test1_func(abts_case *tc, void *data)
     ogs_pkbuf_free(recvbuf);
 
     /********** Remove Subscriber in Database */
-    doc = BCON_NEW("imsi", BCON_UTF8("310014987654004"));
+    doc = BCON_NEW("imsi", BCON_UTF8(test_ue.imsi));
     ABTS_PTR_NOTNULL(tc, doc);
-    ABTS_TRUE(tc, mongoc_collection_remove(collection, 
-            MONGOC_REMOVE_SINGLE_REMOVE, doc, NULL, &error)) 
+    ABTS_TRUE(tc, mongoc_collection_remove(collection,
+            MONGOC_REMOVE_SINGLE_REMOVE, doc, NULL, &error))
     bson_destroy(doc);
 
     mongoc_collection_destroy(collection);

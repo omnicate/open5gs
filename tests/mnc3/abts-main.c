@@ -43,6 +43,9 @@ static void initialize(const char *const argv[])
 {
     int rv;
 
+    /* FIXME : remove it */
+    test_no_mme_self = true;
+
     rv = ogs_app_initialize(NULL, argv);
     ogs_assert(rv == OGS_OK);
     test_app_init();
@@ -57,7 +60,7 @@ int main(int argc, const char *const argv[])
     abts_suite *suite = NULL;
 
     atexit(terminate);
-    test_epc_run(argc, argv, "mnc3.yaml", initialize);
+    test_5gc_run(argc, argv, "mnc3.yaml", initialize);
 
     for (i = 0; alltests[i].func; i++)
         suite = alltests[i].func(suite);

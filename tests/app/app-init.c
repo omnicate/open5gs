@@ -23,11 +23,10 @@ static ogs_thread_t *pcrf_thread = NULL;
 static ogs_thread_t *pgw_thread = NULL;
 static ogs_thread_t *sgw_thread = NULL;
 static ogs_thread_t *hss_thread = NULL;
+static ogs_thread_t *mme_thread = NULL;
 
 int app_initialize(const char *const argv[])
 {
-    int rv;
-
     const char *argv_out[OGS_ARG_MAX];
     bool user_config = false;
     int i = 0;
@@ -54,23 +53,15 @@ int app_initialize(const char *const argv[])
         sgw_thread = test_child_create("sgw", argv_out);
     if (ogs_config()->parameter.no_hss == 0)
         hss_thread = test_child_create("hss", argv_out);
-
-    ogs_sctp_init(ogs_config()->usrsctp.udp_port);
-
-    rv = mme_initialize();
-    ogs_assert(rv == OGS_OK);
-    ogs_info("MME initialize...done");
+    if (ogs_config()->parameter.no_mme == 0)
+        mme_thread = test_child_create("mme", argv_out);
 
     return OGS_OK;;
 }
 
 void app_terminate(void)
 {
-    mme_terminate();
-
-    ogs_sctp_final();
-    ogs_info("MME terminate...done");
-
+    if (mme_thread) ogs_thread_destroy(mme_thread);
     if (hss_thread) ogs_thread_destroy(hss_thread);
     if (sgw_thread) ogs_thread_destroy(sgw_thread);
     if (pgw_thread) ogs_thread_destroy(pgw_thread);
@@ -85,10 +76,12 @@ void test_app_init(void)
     ogs_log_install_domain(&__ogs_dbi_domain, "dbi", OGS_LOG_ERROR);
     ogs_log_install_domain(&__ogs_nas_domain, "nas", OGS_LOG_ERROR);
 
+    ogs_sctp_init(ogs_config()->usrsctp.udp_port);
     ogs_assert(ogs_dbi_init(ogs_config()->db_uri) == OGS_OK);
 }
 
 void test_app_final(void)
 {
     ogs_dbi_final();
+    ogs_sctp_final();
 }
