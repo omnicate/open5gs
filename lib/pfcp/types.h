@@ -403,6 +403,14 @@ ED6(uint8_t     spare:1;,
         uint8_t flags;
     };
 
+    /*
+     * OGS_PFCP-GTPU-TEID   = INDEX              | TEID_RANGE
+     * INDEX                = OGS_PFCP-GTPU-TEID & ~TEID_RANGE
+     */
+#define OGS_PFCP_GTPU_TEID_TO_INDEX(__tEID, __iND, __rANGE) \
+    (__tEID & ~(__rANGE << (32 - __iND)))
+#define OGS_PFCP_GTPU_INDEX_TO_TEID(__iNDEX, __iND, __rANGE) \
+    (__iNDEX | (__rANGE << (32 - __iND)))
     uint8_t     teid_range;
     uint32_t    addr;
     uint8_t     addr6[OGS_IPV6_LEN];

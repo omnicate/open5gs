@@ -1204,7 +1204,7 @@ smf_bearer_t *smf_bearer_add(smf_sess_t *sess)
             &bearer->upf_s5u_addr, &bearer->upf_s5u_addr6);
         ogs_assert(bearer->upf_s5u_addr || bearer->upf_s5u_addr6);
         if (resource->info.teidri)
-            bearer->upf_s5u_teid = UPF_GTPU_INDEX_TO_TEID(
+            bearer->upf_s5u_teid = OGS_PFCP_GTPU_INDEX_TO_TEID(
                     bearer->index, resource->info.teidri,
                     resource->info.teid_range);
         else

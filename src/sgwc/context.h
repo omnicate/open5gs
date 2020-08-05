@@ -108,7 +108,7 @@ typedef struct sgwc_ue_s {
 } sgwc_ue_t;
 
 typedef struct sgwc_sess_s {
-    ogs_lnode_t     lnode;      /* A node of list_t */
+    ogs_lnode_t     lnode;          /* A node of list_t */
     uint32_t        index;          /**< An index of this node */
 
     uint32_t        sgw_s5c_teid;   /* SGW-S5C-TEID is derived from INDEX */
@@ -116,6 +116,12 @@ typedef struct sgwc_sess_s {
 
     uint64_t        sgwc_sxa_seid;  /* SGW-C SEID is dervied from INDEX */
     uint64_t        sgwu_sxa_seid;  /* SGW-U SEID is received from Peer */
+
+    ogs_pfcp_pdr_id_t   pdr_id;     /* ID Generator(1~OGS_MAX_NUM_OF_PDR) */
+    ogs_pfcp_far_id_t   far_id;     /* ID Generator(1~OGS_MAX_NUM_OF_FAR) */
+    ogs_pfcp_urr_id_t   urr_id;     /* ID Generator(1~OGS_MAX_NUM_OF_URR) */
+    ogs_pfcp_qer_id_t   qer_id;     /* ID Generator(1~OGS_MAX_NUM_OF_URR) */
+    ogs_pfcp_bar_id_t   bar_id;     /* ID Generator(1~OGS_MAX_NUM_OF_BAR) */
 
     /* APN Configuration */
     ogs_pdn_t       pdn;
@@ -129,10 +135,21 @@ typedef struct sgwc_sess_s {
     sgwc_ue_t       *sgwc_ue;
 } sgwc_sess_t;
 
+#define SGWC_BEARER(pfcp_sess) ogs_container_of(pfcp_sess, sgwc_bearer_t, pfcp)
 typedef struct sgwc_bearer_s {
     ogs_lnode_t     lnode;
+    uint32_t        index;          /**< An index of this node */
+
+    ogs_pfcp_sess_t pfcp;           /* PFCP session context */
 
     uint8_t         ebi;
+
+    uint32_t        sgw_s5u_teid;   /* SGW-S5U TEID */
+    ogs_sockaddr_t  *sgw_s5u_addr;  /* SGW-S5U IPv4 */
+    ogs_sockaddr_t  *sgw_s5u_addr6; /* SGW-S5U IPv6 */
+
+    uint32_t        enb_s1u_teid;   /* eNB-S1U TEID */
+    ogs_ip_t        enb_s1u_ip;     /* eNB-S1U IPv4/IPv6 */
 
     /* Pkts which will be buffered in case of UE-IDLE */
     uint32_t        num_buffered_pkt;

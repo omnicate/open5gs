@@ -151,14 +151,6 @@ typedef struct smf_sess_s {
     uint64_t        smf_n4_seid;    /* SMF SEID is dervied from INDEX */
     uint64_t        upf_n4_seid;    /* UPF SEID is received from Peer */
 
-    /*
-     * UPF-GTPU-TEID    = INDEX         | TEID_RANGE
-     * INDEX            = UPF-GTPU-TEID  & ~TEID_RANGE
-     */
-#define UPF_GTPU_TEID_TO_INDEX(__tEID, __iND, __rANGE) \
-    (__tEID & ~(__rANGE << (32 - __iND)))
-#define UPF_GTPU_INDEX_TO_TEID(__iNDEX, __iND, __rANGE) \
-    (__iNDEX | (__rANGE << (32 - __iND)))
     uint32_t        upf_n3_teid;    /* UPF-N3 TEID */
     ogs_sockaddr_t  *upf_n3_addr;   /* UPF-N3 IPv4 */
     ogs_sockaddr_t  *upf_n3_addr6;  /* UPF-N3 IPv6 */
