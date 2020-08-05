@@ -656,7 +656,7 @@ void smf_sess_select_upf(smf_sess_t *sess)
 
     /*
      * When used for the first time, if last node is set,
-     * the search is performed from the first SGW in a round-robin manner.
+     * the search is performed from the first UPF in a round-robin manner.
      */
     if (ogs_pfcp_self()->node == NULL)
         ogs_pfcp_self()->node = ogs_list_last(&ogs_pfcp_self()->peer_list);

@@ -124,6 +124,8 @@ typedef struct sgwc_sess_s {
 
     /* Related Context */
     ogs_gtp_node_t  *gnode;
+    ogs_pfcp_node_t *pfcp_node;
+
     sgwc_ue_t       *sgwc_ue;
 } sgwc_sess_t;
 
@@ -172,6 +174,9 @@ int sgwc_ue_remove(sgwc_ue_t *sgwc_ue);
 void sgwc_ue_remove_all(void);
 
 sgwc_sess_t *sgwc_sess_add(sgwc_ue_t *sgwc_ue, char *apn);
+
+void sgwc_sess_select_sgwu(sgwc_sess_t *sess);
+
 int sgwc_sess_remove(sgwc_sess_t *sess);
 void sgwc_sess_remove_all(sgwc_ue_t *sgwc_ue);
 

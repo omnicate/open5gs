@@ -108,15 +108,6 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
         return;
     }
 
-    /* Set User Location Information */
-    decoded = ogs_gtp_parse_uli(&uli, &req->user_location_information);
-    ogs_assert(req->user_location_information.len == decoded);
-    memcpy(&sgwc_ue->e_tai.plmn_id, &uli.tai.plmn_id, sizeof(uli.tai.plmn_id));
-    sgwc_ue->e_tai.tac = uli.tai.tac;
-    memcpy(&sgwc_ue->e_cgi.plmn_id,
-            &uli.e_cgi.plmn_id, sizeof(uli.e_cgi.plmn_id));
-    sgwc_ue->e_cgi.cell_id = uli.e_cgi.cell_id;
-
     /* Add Session */
     ogs_fqdn_parse(apn,
             req->access_point_name.data, req->access_point_name.len);
@@ -130,9 +121,36 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
     sess = sgwc_sess_add(sgwc_ue, apn);
     ogs_assert(sess);
 
-    /* Add Default Bearer */
+    /* Set User Location Information */
+    decoded = ogs_gtp_parse_uli(&uli, &req->user_location_information);
+    ogs_assert(req->user_location_information.len == decoded);
+    memcpy(&sgwc_ue->e_tai.plmn_id, &uli.tai.plmn_id, sizeof(uli.tai.plmn_id));
+    sgwc_ue->e_tai.tac = uli.tai.tac;
+    memcpy(&sgwc_ue->e_cgi.plmn_id,
+            &uli.e_cgi.plmn_id, sizeof(uli.e_cgi.plmn_id));
+    sgwc_ue->e_cgi.cell_id = uli.e_cgi.cell_id;
+
+    /* Select SGW-U based on UE Location Information */
+    sgwc_sess_select_sgwu(sess);
+
+    /* Check if selected SGW-U is associated with SGW-C */
+    ogs_assert(sess->pfcp_node);
+    if (!OGS_FSM_CHECK(&sess->pfcp_node->sm, sgwc_pfcp_state_associated)) {
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+                OGS_GTP_CREATE_SESSION_RESPONSE_TYPE,
+                OGS_GTP_CAUSE_REMOTE_PEER_NOT_RESPONDING);
+        return;
+    }
+
+    /* Remove all previous bearer */
+    sgwc_bearer_remove_all(sess);
+
+    /* Setup Default Bearer */
     bearer = sgwc_bearer_add(sess);
     ogs_assert(bearer);
+
+    /* Set Bearer EBI */
     bearer->ebi = req->bearer_contexts_to_be_created.eps_bearer_id.u8;
 
     s5u_tunnel = sgwc_s5u_tunnel_in_bearer(bearer);

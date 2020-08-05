@@ -420,6 +420,75 @@ sgwc_sess_t *sgwc_sess_add(sgwc_ue_t *sgwc_ue, char *apn)
     return sess;
 }
 
+static bool compare_ue_info(ogs_pfcp_node_t *node, sgwc_sess_t *sess)
+{
+    sgwc_ue_t *sgwc_ue = NULL;
+    int i;
+
+    ogs_assert(node);
+    ogs_assert(sess);
+    sgwc_ue = sess->sgwc_ue;
+    ogs_assert(sgwc_ue);
+
+    for (i = 0; i < node->num_of_tac; i++)
+        if (node->tac[i] == sgwc_ue->e_tai.tac) return true;
+
+    for (i = 0; i < node->num_of_e_cell_id; i++)
+        if (node->e_cell_id[i] == sgwc_ue->e_cgi.cell_id) return true;
+
+    for (i = 0; i < node->num_of_apn; i++)
+        if (strcmp(node->apn[i], sess->pdn.apn) == 0) return true;
+
+    return false;
+}
+
+static ogs_pfcp_node_t *selected_sgwu_node(
+        ogs_pfcp_node_t *current, sgwc_sess_t *sess)
+{
+    ogs_pfcp_node_t *next, *node;
+
+    ogs_assert(current);
+    ogs_assert(sess);
+
+    next = ogs_list_next(current);
+    for (node = next; node; node = ogs_list_next(node)) {
+        if (OGS_FSM_CHECK(&node->sm, sgwc_pfcp_state_associated) &&
+            compare_ue_info(node, sess) == true) return node;
+    }
+
+    for (node = ogs_list_first(&ogs_pfcp_self()->peer_list);
+            node != next; node = ogs_list_next(node)) {
+        if (OGS_FSM_CHECK(&node->sm, sgwc_pfcp_state_associated) &&
+            compare_ue_info(node, sess) == true) return node;
+    }
+
+    return next ? next : ogs_list_first(&ogs_pfcp_self()->peer_list);
+}
+
+void sgwc_sess_select_sgwu(sgwc_sess_t *sess)
+{
+    char buf[OGS_ADDRSTRLEN];
+
+    ogs_assert(sess);
+
+    /*
+     * When used for the first time, if last node is set,
+     * the search is performed from the first SGW-U in a round-robin manner.
+     */
+    if (ogs_pfcp_self()->node == NULL)
+        ogs_pfcp_self()->node = ogs_list_last(&ogs_pfcp_self()->peer_list);
+
+    /* setup GTP session with selected SGW-U */
+    ogs_pfcp_self()->node = selected_sgwu_node(ogs_pfcp_self()->node, sess);
+    ogs_assert(ogs_pfcp_self()->node);
+    OGS_SETUP_PFCP_NODE(sess, ogs_pfcp_self()->node);
+    ogs_debug("UE using SGW-U on IP[%s]",
+            OGS_ADDR(&ogs_pfcp_self()->node->addr, buf));
+
+    /* iterate to next SGW-U in list for next UE attach */
+    ogs_pfcp_self()->node = ogs_list_next(ogs_pfcp_self()->node);
+}
+
 int sgwc_sess_remove(sgwc_sess_t *sess)
 {
     sgwc_ue_t *sgwc_ue = NULL;
