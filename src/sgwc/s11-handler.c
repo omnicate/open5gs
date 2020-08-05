@@ -1065,7 +1065,7 @@ void sgwc_s11_handle_create_indirect_data_forwarding_tunnel_request(
             ogs_assert(req_teid);
 
             tunnel = sgwc_tunnel_add(bearer,
-                    OGS_GTP_F_TEID_SGW_GTP_U_FOR_DL_DATA_FORWARDING);
+                    OGS_PFCP_INTERFACE_CORE, OGS_PFCP_INTERFACE_ACCESS);
             ogs_assert(tunnel);
 
             tunnel->remote_teid = be32toh(req_teid->teid);
@@ -1106,7 +1106,7 @@ void sgwc_s11_handle_create_indirect_data_forwarding_tunnel_request(
             ogs_assert(req_teid);
 
             tunnel = sgwc_tunnel_add(bearer,
-                    OGS_GTP_F_TEID_SGW_GTP_U_FOR_UL_DATA_FORWARDING);
+                    OGS_PFCP_INTERFACE_ACCESS, OGS_PFCP_INTERFACE_CORE);
             ogs_assert(tunnel);
 
             tunnel->remote_teid = be32toh(req_teid->teid);

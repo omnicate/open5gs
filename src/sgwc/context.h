@@ -135,8 +135,11 @@ typedef struct sgwc_sess_s {
     sgwc_ue_t       *sgwc_ue;
 } sgwc_sess_t;
 
+#define SGWC_BEARER(pfcp_sess) ogs_container_of(pfcp_sess, sgwc_bearer_t, pfcp)
 typedef struct sgwc_bearer_s {
     ogs_lnode_t     lnode;
+
+    ogs_pfcp_sess_t pfcp;           /* PFCP session context */
 
     uint8_t         ebi;
 
@@ -151,12 +154,9 @@ typedef struct sgwc_bearer_s {
     sgwc_ue_t       *sgwc_ue;
 } sgwc_bearer_t;
 
-#define SGWC_TUNNEL(pfcp_sess) ogs_container_of(pfcp_sess, sgwc_tunnel_t, pfcp)
 typedef struct sgwc_tunnel_s {
     ogs_lnode_t     lnode;
     uint32_t        index;          /**< An index of this node */
-
-    ogs_pfcp_sess_t pfcp;           /* PFCP session context */
 
     uint8_t         interface_type;
 
@@ -217,7 +217,7 @@ sgwc_bearer_t *sgwc_bearer_first(sgwc_sess_t *sess);
 sgwc_bearer_t *sgwc_bearer_next(sgwc_bearer_t *bearer);
 
 sgwc_tunnel_t *sgwc_tunnel_add(
-        sgwc_bearer_t *bearer, uint8_t interface_type);
+        sgwc_bearer_t *bearer, uint8_t src_if, uint8_t dst_if);
 int sgwc_tunnel_remove(sgwc_tunnel_t *tunnel);
 void sgwc_tunnel_remove_all(sgwc_bearer_t *bearer);
 sgwc_tunnel_t *sgwc_tunnel_find_by_teid(uint32_t teid);

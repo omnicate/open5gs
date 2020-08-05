@@ -123,9 +123,7 @@ static void build_create_pdr(
     ogs_assert(pdr);
     pfcp_sess = pdr->sess;
     ogs_assert(pfcp_sess);
-    tunnel = SGWC_TUNNEL(pfcp_sess);
-    ogs_assert(tunnel);
-    bearer = tunnel->bearer;
+    bearer = SGWC_BEARER(pfcp_sess);
     ogs_assert(bearer);
     sess = bearer->sess;
     ogs_assert(sess);
@@ -433,11 +431,9 @@ ogs_pkbuf_t *sgwc_sxa_build_session_establishment_request(
     /* Create PDR */
     i = 0;
     ogs_list_for_each(&sess->bearer_list, bearer) {
-        ogs_list_for_each(&bearer->tunnel_list, tunnel) {
-            ogs_list_for_each(&tunnel->pfcp.pdr_list, pdr) {
-                build_create_pdr(&req->create_pdr[i], i, pdr);
-                i++;
-            }
+        ogs_list_for_each(&bearer->pfcp.pdr_list, pdr) {
+            build_create_pdr(&req->create_pdr[i], i, pdr);
+            i++;
         }
     }
 
@@ -508,41 +504,35 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
     if (modify_flags & OGS_PFCP_5GC_MODIFY_REMOVE) {
         /* Remove PDR */
         i = 0;
-        ogs_list_for_each(&bearer->tunnel_list, tunnel) {
-            ogs_list_for_each(&tunnel->pfcp.pdr_list, pdr) {
-                ogs_pfcp_tlv_remove_pdr_t *message = &req->remove_pdr[i];
+        ogs_list_for_each(&bearer->pfcp.pdr_list, pdr) {
+            ogs_pfcp_tlv_remove_pdr_t *message = &req->remove_pdr[i];
 
-                message->presence = 1;
-                message->pdr_id.presence = 1;
-                message->pdr_id.u16 = pdr->id;
-                i++;
-            }
+            message->presence = 1;
+            message->pdr_id.presence = 1;
+            message->pdr_id.u16 = pdr->id;
+            i++;
         }
 
         /* Remove FAR */
         i = 0;
-        ogs_list_for_each(&bearer->tunnel_list, tunnel) {
-            ogs_list_for_each(&tunnel->pfcp.far_list, far) {
-                ogs_pfcp_tlv_remove_far_t *message = &req->remove_far[i];
+        ogs_list_for_each(&bearer->pfcp.far_list, far) {
+            ogs_pfcp_tlv_remove_far_t *message = &req->remove_far[i];
 
-                message->presence = 1;
-                message->far_id.presence = 1;
-                message->far_id.u32 = far->id;
-                i++;
-            }
+            message->presence = 1;
+            message->far_id.presence = 1;
+            message->far_id.u32 = far->id;
+            i++;
         }
 
         /* Remove QER */
         i = 0;
-        ogs_list_for_each(&bearer->tunnel_list, tunnel) {
-            ogs_list_for_each(&tunnel->pfcp.qer_list, qer) {
-                ogs_pfcp_tlv_remove_qer_t *message = &req->remove_qer[i];
+        ogs_list_for_each(&bearer->pfcp.qer_list, qer) {
+            ogs_pfcp_tlv_remove_qer_t *message = &req->remove_qer[i];
 
-                message->presence = 1;
-                message->qer_id.presence = 1;
-                message->qer_id.u32 = qer->id;
-                i++;
-            }
+            message->presence = 1;
+            message->qer_id.presence = 1;
+            message->qer_id.u32 = qer->id;
+            i++;
         }
     } else {
         if (modify_flags & OGS_PFCP_5GC_MODIFY_CREATE) {
@@ -550,39 +540,31 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
 
             /* Create PDR */
             i = 0;
-            ogs_list_for_each(&bearer->tunnel_list, tunnel) {
-                ogs_list_for_each(&tunnel->pfcp.pdr_list, pdr) {
-                    build_create_pdr(&req->create_pdr[i], i, pdr);
-                    i++;
-                }
+            ogs_list_for_each(&bearer->pfcp.pdr_list, pdr) {
+                build_create_pdr(&req->create_pdr[i], i, pdr);
+                i++;
             }
 
             /* Create FAR */
             i = 0;
-            ogs_list_for_each(&bearer->tunnel_list, tunnel) {
-                ogs_list_for_each(&tunnel->pfcp.far_list, far) {
-                    build_create_far(&req->create_far[i], i, far);
-                    i++;
-                }
+            ogs_list_for_each(&bearer->pfcp.far_list, far) {
+                build_create_far(&req->create_far[i], i, far);
+                i++;
             }
 
             /* Create QER */
             i = 0;
-            ogs_list_for_each(&bearer->tunnel_list, tunnel) {
-                ogs_list_for_each(&tunnel->pfcp.qer_list, qer) {
-                    build_create_qer(&req->create_qer[i], i, qer);
-                    i++;
-                }
+            ogs_list_for_each(&bearer->pfcp.qer_list, qer) {
+                build_create_qer(&req->create_qer[i], i, qer);
+                i++;
             }
         }
         if (modify_flags & OGS_PFCP_5GC_MODIFY_QOS_UPDATE) {
             /* Update QER */
             i = 0;
-            ogs_list_for_each(&bearer->tunnel_list, tunnel) {
-                ogs_list_for_each(&tunnel->pfcp.qer_list, qer) {
-                    build_update_qer(&req->update_qer[i], i, qer);
-                    i++;
-                }
+            ogs_list_for_each(&bearer->pfcp.qer_list, qer) {
+                build_update_qer(&req->update_qer[i], i, qer);
+                i++;
             }
         }
     }
