@@ -19,8 +19,10 @@
 
 #include "test-app.h"
 
+static ogs_thread_t *nrf_thread = NULL;
 static ogs_thread_t *pcrf_thread = NULL;
-static ogs_thread_t *pgw_thread = NULL;
+static ogs_thread_t *upf_thread = NULL;
+static ogs_thread_t *smf_thread = NULL;
 static ogs_thread_t *sgw_thread = NULL;
 static ogs_thread_t *hss_thread = NULL;
 static ogs_thread_t *mme_thread = NULL;
@@ -45,10 +47,14 @@ int app_initialize(const char *const argv[])
         argv_out[i] = NULL;
     }
 
+    if (ogs_config()->parameter.no_nrf == 0)
+        nrf_thread = test_child_create("nrf", argv);
     if (ogs_config()->parameter.no_pcrf == 0)
         pcrf_thread = test_child_create("pcrf", argv_out);
-    if (ogs_config()->parameter.no_pgw == 0)
-        pgw_thread = test_child_create("pgw", argv_out);
+    if (ogs_config()->parameter.no_upf == 0)
+        upf_thread = test_child_create("upf", argv);
+    if (ogs_config()->parameter.no_smf == 0)
+        smf_thread = test_child_create("smf", argv);
     if (ogs_config()->parameter.no_sgw == 0)
         sgw_thread = test_child_create("sgw", argv_out);
     if (ogs_config()->parameter.no_hss == 0)
@@ -64,8 +70,10 @@ void app_terminate(void)
     if (mme_thread) ogs_thread_destroy(mme_thread);
     if (hss_thread) ogs_thread_destroy(hss_thread);
     if (sgw_thread) ogs_thread_destroy(sgw_thread);
-    if (pgw_thread) ogs_thread_destroy(pgw_thread);
+    if (smf_thread) ogs_thread_destroy(smf_thread);
+    if (upf_thread) ogs_thread_destroy(upf_thread);
     if (pcrf_thread) ogs_thread_destroy(pcrf_thread);
+    if (nrf_thread) ogs_thread_destroy(nrf_thread);
 }
 
 void test_app_init(void)
