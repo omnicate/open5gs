@@ -704,6 +704,19 @@ sgwc_tunnel_t *sgwc_tunnel_add(
     pdr->id = OGS_NEXT_ID(sess->pdr_id, 1, OGS_MAX_NUM_OF_PDR+1);
     pdr->src_if = src_if;
 
+    pdr->outer_header_removal_len = 1;
+    if (sess->pdn.pdn_type == OGS_GTP_PDN_TYPE_IPV4) {
+        pdr->outer_header_removal.description =
+            OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IPV4;
+    } else if (sess->pdn.pdn_type == OGS_GTP_PDN_TYPE_IPV6) {
+        pdr->outer_header_removal.description =
+            OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IPV6;
+    } else if (sess->pdn.pdn_type == OGS_GTP_PDN_TYPE_IPV4V6) {
+        pdr->outer_header_removal.description =
+            OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IP;
+    } else
+        ogs_assert_if_reached();
+
     far = ogs_pfcp_far_add(&bearer->pfcp);
     ogs_assert(far);
     far->id = OGS_NEXT_ID(sess->far_id, 1, OGS_MAX_NUM_OF_FAR+1);

@@ -142,7 +142,6 @@ static void build_create_pdr(
     message->pdi.source_interface.presence = 1;
     message->pdi.source_interface.u8 = pdr->src_if;
 
-#if 0
     message->pdi.network_instance.presence = 1;
     message->pdi.network_instance.len = ogs_fqdn_build(
         pdrbuf[i].dnn, sess->pdn.dnn, strlen(sess->pdn.dnn));
@@ -163,41 +162,26 @@ static void build_create_pdr(
                 &pfcp_sdf_filter[j], pdrbuf[i].sdf_filter[j], len);
     }
 
-    if (pdr->src_if == OGS_PFCP_INTERFACE_CORE) { /* Downlink */
-        if (pdr->ue_ip_addr_len) {
-            message->pdi.ue_ip_address.presence = 1;
-            message->pdi.ue_ip_address.data = &pdr->ue_ip_addr;
-            message->pdi.ue_ip_address.len = pdr->ue_ip_addr_len;
-        }
-
-    } else if (pdr->src_if == OGS_PFCP_INTERFACE_ACCESS) { /* Uplink */
-        if (pdr->f_teid_len) {
-            memcpy(&pdrbuf[i].f_teid, &pdr->f_teid, pdr->f_teid_len);
-            pdrbuf[i].f_teid.teid = htobe32(pdr->f_teid.teid);
-
-            message->pdi.local_f_teid.presence = 1;
-            message->pdi.local_f_teid.data = &pdrbuf[i].f_teid;
-            message->pdi.local_f_teid.len = pdr->f_teid_len;
-        }
-
-        if (sess->pdn.paa.pdn_type == OGS_GTP_PDN_TYPE_IPV4) {
-            pdrbuf[i].outer_header_removal.description =
-                OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IPV4;
-        } else if (sess->pdn.paa.pdn_type == OGS_GTP_PDN_TYPE_IPV6) {
-            pdrbuf[i].outer_header_removal.description =
-                OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IPV6;
-        } else if (sess->pdn.paa.pdn_type == OGS_GTP_PDN_TYPE_IPV4V6) {
-            pdrbuf[i].outer_header_removal.description =
-                OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IP;
-        } else
-            ogs_assert_if_reached();
-
-        message->outer_header_removal.presence = 1;
-        message->outer_header_removal.data =
-            &pdrbuf[i].outer_header_removal.description;
-        message->outer_header_removal.len = 1;
+    if (pdr->ue_ip_addr_len) {
+        message->pdi.ue_ip_address.presence = 1;
+        message->pdi.ue_ip_address.data = &pdr->ue_ip_addr;
+        message->pdi.ue_ip_address.len = pdr->ue_ip_addr_len;
     }
-#endif
+
+    if (pdr->f_teid_len) {
+        memcpy(&pdrbuf[i].f_teid, &pdr->f_teid, pdr->f_teid_len);
+        pdrbuf[i].f_teid.teid = htobe32(pdr->f_teid.teid);
+
+        message->pdi.local_f_teid.presence = 1;
+        message->pdi.local_f_teid.data = &pdrbuf[i].f_teid;
+        message->pdi.local_f_teid.len = pdr->f_teid_len;
+    }
+
+    if (pdr->outer_header_removal_len) {
+        message->outer_header_removal.presence = 1;
+        message->outer_header_removal.data = &pdr->outer_header_removal;
+        message->outer_header_removal.len = pdr->outer_header_removal_len;
+    }
 
     if (pdr->far) {
         message->far_id.presence = 1;

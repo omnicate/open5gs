@@ -127,6 +127,7 @@ typedef struct ogs_pfcp_pdr_s {
     ogs_pfcp_f_teid_t       f_teid;
     int                     f_teid_len;
     ogs_pfcp_outer_header_removal_t outer_header_removal;
+    int                     outer_header_removal_len;
 
     ogs_pfcp_far_t          *far;
     ogs_pfcp_urr_t          *urr;

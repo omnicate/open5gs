@@ -104,6 +104,10 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
         ogs_error("No User Location Inforamtion");
         cause_value = OGS_GTP_CAUSE_MANDATORY_IE_MISSING;
     }
+    if (req->pdn_type.presence == 0) {
+        ogs_error("No PDN Type");
+        cause_value = OGS_GTP_CAUSE_MANDATORY_IE_MISSING;
+    }
 
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
         ogs_gtp_send_error_message(
@@ -146,6 +150,10 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
                 OGS_GTP_CAUSE_REMOTE_PEER_NOT_RESPONDING);
         return;
     }
+
+    /* Set PDN Type */
+    sess->pdn.pdn_type = req->pdn_type.u8;
+    sess->pdn.paa.pdn_type = req->pdn_type.u8;
 
     /* Remove all previous bearer */
     sgwc_bearer_remove_all(sess);
