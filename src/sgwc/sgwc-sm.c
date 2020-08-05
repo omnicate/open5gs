@@ -181,28 +181,23 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
                 if (sgwc_ue)
                     OGS_SETUP_GTP_NODE(sgwc_ue, gnode);
             }
-            sgwc_s11_handle_create_session_request(xact, sgwc_ue,
-                    &message);
+            sgwc_s11_handle_create_session_request(xact, sgwc_ue, &message);
             break;
         case OGS_GTP_MODIFY_BEARER_REQUEST_TYPE:
             sgwc_s11_handle_modify_bearer_request(xact, sgwc_ue,
                     &message.modify_bearer_request);
             break;
         case OGS_GTP_DELETE_SESSION_REQUEST_TYPE:
-            sgwc_s11_handle_delete_session_request(xact, sgwc_ue,
-                    &message);
+            sgwc_s11_handle_delete_session_request(xact, sgwc_ue, &message);
             break;
         case OGS_GTP_CREATE_BEARER_RESPONSE_TYPE:
-            sgwc_s11_handle_create_bearer_response(xact, sgwc_ue,
-                    &message);
+            sgwc_s11_handle_create_bearer_response(xact, sgwc_ue, &message);
             break;
         case OGS_GTP_UPDATE_BEARER_RESPONSE_TYPE:
-            sgwc_s11_handle_update_bearer_response(xact, sgwc_ue,
-                    &message);
+            sgwc_s11_handle_update_bearer_response(xact, sgwc_ue, &message);
             break;
         case OGS_GTP_DELETE_BEARER_RESPONSE_TYPE:
-            sgwc_s11_handle_delete_bearer_response(xact, sgwc_ue,
-                    &message);
+            sgwc_s11_handle_delete_bearer_response(xact, sgwc_ue, &message);
             break;
         case OGS_GTP_RELEASE_ACCESS_BEARERS_REQUEST_TYPE:
             sgwc_s11_handle_release_access_bearers_request(xact, sgwc_ue,

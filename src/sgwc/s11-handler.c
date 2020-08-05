@@ -172,15 +172,17 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
     req->pgw_s5_s8_address_for_control_plane_or_pmip.presence = 0;
 
     /* Data Plane(DL) : SGW-S5U */
+#if 0 /* TODO */
     memset(&sgwc_s5u_teid, 0, sizeof(ogs_gtp_f_teid_t));
     sgwc_s5u_teid.teid = htonl(s5u_tunnel->local_teid);
     sgwc_s5u_teid.interface_type = OGS_GTP_F_TEID_S5_S8_SGW_GTP_U;
     rv = ogs_gtp_sockaddr_to_f_teid(
-        sgwc_self()->gtpu_addr,  sgwc_self()->gtpu_addr6, &sgwc_s5u_teid, &len);
+        sgwc_self()->gtpu_addr, sgwc_self()->gtpu_addr6, &sgwc_s5u_teid, &len);
     ogs_assert(rv == OGS_OK);
     req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.presence = 1;
     req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.data = &sgwc_s5u_teid;
     req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.len = len;
+#endif
 
     /* Set User Location Information */
     decoded = ogs_gtp_parse_uli(&uli, &req->user_location_information);
