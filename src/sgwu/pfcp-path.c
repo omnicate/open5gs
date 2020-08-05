@@ -267,7 +267,6 @@ void sgwu_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node)
     ogs_expect(rv == OGS_OK);
 }
 
-#if 0
 void sgwu_pfcp_send_session_establishment_response(
         ogs_pfcp_xact_t *xact, sgwu_sess_t *sess,
         ogs_pfcp_pdr_t *created_pdr[], int num_of_created_pdr)
@@ -280,7 +279,7 @@ void sgwu_pfcp_send_session_establishment_response(
 
     memset(&h, 0, sizeof(ogs_pfcp_header_t));
     h.type = OGS_PFCP_SESSION_ESTABLISHMENT_RESPONSE_TYPE;
-    h.seid = sess->smf_sxa_seid;
+    h.seid = sess->sgwc_sxa_seid;
 
     n4buf = sgwu_sxa_build_session_establishment_response(
             h.type, sess, created_pdr, num_of_created_pdr);
@@ -306,7 +305,7 @@ void sgwu_pfcp_send_session_modification_response(
 
     memset(&h, 0, sizeof(ogs_pfcp_header_t));
     h.type = OGS_PFCP_SESSION_MODIFICATION_RESPONSE_TYPE;
-    h.seid = sess->smf_sxa_seid;
+    h.seid = sess->sgwc_sxa_seid;
 
     n4buf = sgwu_sxa_build_session_modification_response(
             h.type, sess, created_pdr, num_of_created_pdr);
@@ -330,7 +329,7 @@ void sgwu_pfcp_send_session_deletion_response(ogs_pfcp_xact_t *xact,
 
     memset(&h, 0, sizeof(ogs_pfcp_header_t));
     h.type = OGS_PFCP_SESSION_DELETION_RESPONSE_TYPE;
-    h.seid = sess->smf_sxa_seid;
+    h.seid = sess->sgwc_sxa_seid;
 
     n4buf = sgwu_sxa_build_session_deletion_response(h.type, sess);
     ogs_expect_or_return(n4buf);
@@ -341,4 +340,3 @@ void sgwu_pfcp_send_session_deletion_response(ogs_pfcp_xact_t *xact,
     rv = ogs_pfcp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);
 }
-#endif

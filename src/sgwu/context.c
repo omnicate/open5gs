@@ -369,8 +369,7 @@ int sgwu_context_parse_config(void)
 }
 
 sgwu_sess_t *sgwu_sess_add(ogs_pfcp_f_seid_t *cp_f_seid,
-        const char *apn, uint8_t pdn_type, ogs_pfcp_ue_ip_addr_t *ue_ip,
-        ogs_pfcp_pdr_id_t default_pdr_id)
+        const char *apn, uint8_t pdn_type, ogs_pfcp_pdr_id_t default_pdr_id)
 {
     char buf1[OGS_ADDRSTRLEN];
     char buf2[OGS_ADDRSTRLEN];
@@ -378,7 +377,6 @@ sgwu_sess_t *sgwu_sess_add(ogs_pfcp_f_seid_t *cp_f_seid,
 
     ogs_assert(cp_f_seid);
     ogs_assert(apn);
-    ogs_assert(ue_ip);
 
     ogs_pool_alloc(&sgwu_sess_pool, &sess);
     ogs_assert(sess);
@@ -387,66 +385,27 @@ sgwu_sess_t *sgwu_sess_add(ogs_pfcp_f_seid_t *cp_f_seid,
     sess->index = ogs_pool_index(&sgwu_sess_pool, sess);
     ogs_assert(sess->index > 0 && sess->index <= ogs_config()->pool.sess);
 
-    sess->sgwu_n4_seid = sess->index;
-    sess->smf_n4_seid = cp_f_seid->seid;
-    ogs_hash_set(self.sess_hash, &sess->smf_n4_seid,
-            sizeof(sess->smf_n4_seid), sess);
+    sess->sgwu_sxa_seid = sess->index;
+    sess->sgwc_sxa_seid = cp_f_seid->seid;
+    ogs_hash_set(self.sess_hash, &sess->sgwc_sxa_seid,
+            sizeof(sess->sgwc_sxa_seid), sess);
 
     /* Set APN */
     ogs_cpystrn(sess->pdn.apn, apn, OGS_MAX_APN_LEN+1);
 
-    /* Set PDN-Type and UE IP Address */
-    sess->pdn.pdn_type = pdn_type;
-    if (pdn_type == OGS_GTP_PDN_TYPE_IPV4) {
-        if (ue_ip->ipv4 == 0) {
-            ogs_error("Cannot support PDN-Type[%d] != [IPv4:%d, IPv6:%d]",
-                    pdn_type, ue_ip->ipv4, ue_ip->ipv6);
-            goto cleanup;
-        }
-        sess->ipv4 = ogs_pfcp_ue_ip_alloc(
-                AF_INET, apn, (uint8_t *)&(ue_ip->addr));
-        ogs_assert(sess->ipv4);
-        ogs_hash_set(self.ipv4_hash, sess->ipv4->addr, OGS_IPV4_LEN, sess);
-    } else if (pdn_type == OGS_GTP_PDN_TYPE_IPV6) {
-        if (ue_ip->ipv6 == 0) {
-            ogs_error("Cannot support PDN-Type[%d] != [IPv4:%d, IPv6:%d]",
-                    pdn_type, ue_ip->ipv4, ue_ip->ipv6);
-            goto cleanup;
-        }
-        sess->ipv6 = ogs_pfcp_ue_ip_alloc(AF_INET6, apn, ue_ip->addr6);
-        ogs_assert(sess->ipv6);
-        ogs_hash_set(self.ipv6_hash, sess->ipv6->addr, OGS_IPV6_LEN, sess);
-    } else if (pdn_type == OGS_GTP_PDN_TYPE_IPV4V6) {
-        if (ue_ip->ipv4 == 0 || ue_ip->ipv6 == 0) {
-            ogs_error("Cannot support PDN-Type[%d] != [IPv4:%d, IPv6:%d]",
-                    pdn_type, ue_ip->ipv4, ue_ip->ipv6);
-            goto cleanup;
-        }
-        sess->ipv4 = ogs_pfcp_ue_ip_alloc(
-                AF_INET, apn, (uint8_t *)&(ue_ip->both.addr));
-        ogs_assert(sess->ipv4);
-        ogs_hash_set(self.ipv4_hash, sess->ipv4->addr, OGS_IPV4_LEN, sess);
-
-        sess->ipv6 = ogs_pfcp_ue_ip_alloc(AF_INET6, apn, ue_ip->both.addr6);
-        ogs_assert(sess->ipv6);
-        ogs_hash_set(self.ipv6_hash, sess->ipv6->addr, OGS_IPV6_LEN, sess);
-    } else {
-        ogs_error("Cannot support PDN-Type[%d] != [IPv4:%d, IPv6:%d]",
-                pdn_type, ue_ip->ipv4, ue_ip->ipv6);
-        goto cleanup;
-    }
-
+#if 0
     /* Set Default PDR */
     OGS_SETUP_DEFAULT_PDR(&sess->pfcp,
         ogs_pfcp_pdr_find_or_add(&sess->pfcp, default_pdr_id));
 
     ogs_info("UE F-SEID[CP:0x%lx,UP:0x%lx] "
              "APN[%s] PDN-Type[%d] IPv4[%s] IPv6[%s], Default PDR ID[%d]",
-        (long)sess->sgwu_n4_seid, (long)sess->smf_n4_seid,
+        (long)sess->sgwu_sxa_seid, (long)sess->sgwc_sxa_seid,
         apn, pdn_type,
         sess->ipv4 ? OGS_INET_NTOP(&sess->ipv4->addr, buf1) : "",
         sess->ipv6 ? OGS_INET6_NTOP(&sess->ipv6->addr, buf2) : "",
         sess->pfcp.default_pdr->id);
+#endif
 
     ogs_list_add(&self.sess_list, sess);
 
@@ -467,8 +426,8 @@ int sgwu_sess_remove(sgwu_sess_t *sess)
     ogs_list_remove(&self.sess_list, sess);
     ogs_pfcp_sess_clear(&sess->pfcp);
 
-    ogs_hash_set(self.sess_hash, &sess->smf_n4_seid,
-            sizeof(sess->smf_n4_seid), NULL);
+    ogs_hash_set(self.sess_hash, &sess->sgwc_sxa_seid,
+            sizeof(sess->sgwc_sxa_seid), NULL);
 
     if (sess->ipv4) {
         ogs_hash_set(self.ipv4_hash, sess->ipv4->addr, OGS_IPV4_LEN, NULL);
@@ -531,7 +490,6 @@ sgwu_sess_t *sgwu_sess_add_by_message(ogs_pfcp_message_t *message)
 
     ogs_pfcp_f_seid_t *f_seid = NULL;
     char apn[OGS_MAX_APN_LEN];
-    ogs_pfcp_ue_ip_addr_t *addr = NULL;
     bool default_pdr_found = false;
     ogs_pfcp_pdr_id_t default_pdr_id;
 
@@ -601,15 +559,10 @@ sgwu_sess_t *sgwu_sess_add_by_message(ogs_pfcp_message_t *message)
         return NULL;
     }
 
-    if (!addr) {
-        ogs_error("No UE IP Address in PDR");
-        return NULL;
-    }
-
     sess = sgwu_sess_find_by_cp_seid(f_seid->seid);
     if (!sess) {
         sess = sgwu_sess_add(
-                f_seid, apn, req->pdn_type.u8, addr, default_pdr_id);
+                f_seid, apn, req->pdn_type.u8, default_pdr_id);
         if (!sess) return NULL;
     }
     ogs_assert(sess);

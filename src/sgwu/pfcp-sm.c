@@ -201,7 +201,6 @@ void sgwu_pfcp_state_associated(ogs_fsm_t *s, sgwu_event_t *e)
             sgwu_sxa_handle_association_setup_response(node, xact,
                     &message->pfcp_association_setup_response);
             break;
-#if 0
         case OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE:
             if (message->h.seid_presence && message->h.seid == 0) {
                 ogs_expect(!sess);
@@ -212,6 +211,7 @@ void sgwu_pfcp_state_associated(ogs_fsm_t *s, sgwu_event_t *e)
             sgwu_sxa_handle_session_establishment_request(
                 sess, xact, &message->pfcp_session_establishment_request);
             break;
+#if 0
         case OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE:
             sgwu_sxa_handle_session_modification_request(
                 sess, xact, &message->pfcp_session_modification_request);

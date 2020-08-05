@@ -57,7 +57,6 @@ void sgwu_sxa_handle_heartbeat_response(
             ogs_config()->time.message.pfcp.no_heartbeat_duration);
 }
 
-#if 0
 static void setup_gtp_node(ogs_pfcp_far_t *far,
     ogs_pfcp_tlv_outer_header_creation_t *outer_header_creation)
 {
@@ -143,6 +142,7 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
     pdr->precedence = message->precedence.u32;
     pdr->src_if = message->pdi.source_interface.u8;
 
+#if 0
     for (i = 0; i < OGS_MAX_NUM_OF_RULE; i++) {
         ogs_pfcp_sdf_filter_t sdf_filter_in_message;
         if (message->pdi.sdf_filter[i].presence == 0)
@@ -170,6 +170,8 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
             ogs_free(flow_description);
         }
     }
+#endif
+
 
     /* APN(Network Instance) and UE IP Address
      * has already been processed in sgwu_sess_add() */
@@ -578,11 +580,13 @@ void sgwu_sxa_handle_session_establishment_request(
     }
 
     /* Send Buffered Packet to gNB/SGW */
+#if 0
     ogs_list_for_each(&sess->pfcp.pdr_list, pdr) {
         if (pdr->src_if == OGS_PFCP_INTERFACE_CORE) { /* Downlink */
             sgwu_gtp_send_buffered_packet(pdr);
         }
     }
+#endif
 
     sgwu_pfcp_send_session_establishment_response(
             xact, sess, created_pdr, num_of_created_pdr);
@@ -590,7 +594,7 @@ void sgwu_sxa_handle_session_establishment_request(
 
 cleanup:
     ogs_pfcp_sess_clear(&sess->pfcp);
-    ogs_pfcp_send_error_message(xact, sess ? sess->smf_sxa_seid : 0,
+    ogs_pfcp_send_error_message(xact, sess ? sess->sgwu_sxa_seid : 0,
             OGS_PFCP_SESSION_ESTABLISHMENT_RESPONSE_TYPE,
             cause_value, offending_ie_value);
 }
@@ -699,11 +703,13 @@ void sgwu_sxa_handle_session_modification_request(
     }
 
     /* Send Buffered Packet to gNB/SGW */
+#if 0
     ogs_list_for_each(&sess->pfcp.pdr_list, pdr) {
         if (pdr->src_if == OGS_PFCP_INTERFACE_CORE) { /* Downlink */
             sgwu_gtp_send_buffered_packet(pdr);
         }
     }
+#endif
 
     sgwu_pfcp_send_session_modification_response(
             xact, sess, created_pdr, num_of_created_pdr);
@@ -711,7 +717,7 @@ void sgwu_sxa_handle_session_modification_request(
 
 cleanup:
     ogs_pfcp_sess_clear(&sess->pfcp);
-    ogs_pfcp_send_error_message(xact, sess ? sess->smf_sxa_seid : 0,
+    ogs_pfcp_send_error_message(xact, sess ? sess->sgwu_sxa_seid : 0,
             OGS_PFCP_SESSION_MODIFICATION_RESPONSE_TYPE,
             cause_value, offending_ie_value);
 }
@@ -739,4 +745,3 @@ void sgwu_sxa_handle_session_deletion_request(
 
     sgwu_sess_remove(sess);
 }
-#endif

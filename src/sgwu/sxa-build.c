@@ -123,7 +123,6 @@ ogs_pkbuf_t *sgwu_sxa_build_association_setup_response(uint8_t type,
     return ogs_pfcp_build_msg(&pfcp_message);
 }
 
-#if 0
 ogs_pkbuf_t *sgwu_sxa_build_session_establishment_response(uint8_t type,
     sgwu_sess_t *sess, ogs_pfcp_pdr_t *created_pdr[], int num_of_created_pdr)
 {
@@ -226,4 +225,3 @@ ogs_pkbuf_t *sgwu_sxa_build_session_deletion_response(uint8_t type,
     pfcp_message.h.type = type;
     return ogs_pfcp_build_msg(&pfcp_message);
 }
-#endif

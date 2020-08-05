@@ -30,14 +30,12 @@ ogs_pkbuf_t *sgwu_sxa_build_association_setup_request(uint8_t type);
 ogs_pkbuf_t *sgwu_sxa_build_association_setup_response(uint8_t type,
         uint8_t cause);
 
-#if 0
 ogs_pkbuf_t *sgwu_sxa_build_session_establishment_response(uint8_t type,
     sgwu_sess_t *sess, ogs_pfcp_pdr_t *created_pdr[], int num_of_created_pdr);
 ogs_pkbuf_t *sgwu_sxa_build_session_modification_response(uint8_t type,
     sgwu_sess_t *sess, ogs_pfcp_pdr_t *created_pdr[], int num_of_created_pdr);
 ogs_pkbuf_t *sgwu_sxa_build_session_deletion_response(uint8_t type,
     sgwu_sess_t *sess);
-#endif
 
 #ifdef __cplusplus
 }

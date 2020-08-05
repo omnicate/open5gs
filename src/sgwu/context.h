@@ -67,8 +67,8 @@ typedef struct sgwu_sess_s {
     ogs_pfcp_sess_t pfcp;
     ogs_list_t      sdf_filter_list;    /* SDF Filter List */
 
-    uint64_t        sgwu_n4_seid;        /* SGWU SEID is dervied from INDEX */
-    uint64_t        smf_n4_seid;        /* SMF SEID is received from Peer */
+    uint64_t        sgwu_sxa_seid;      /* SGW-U SEID is dervied from INDEX */
+    uint64_t        sgwc_sxa_seid;      /* SGW-C SEID is received from Peer */
 
     /* APN Configuration */
     ogs_pdn_t       pdn;
@@ -88,8 +88,7 @@ int sgwu_context_parse_config(void);
 sgwu_sess_t *sgwu_sess_add_by_message(ogs_pfcp_message_t *message);
 
 sgwu_sess_t *sgwu_sess_add(ogs_pfcp_f_seid_t *f_seid,
-        const char *apn, uint8_t pdn_type, ogs_pfcp_ue_ip_addr_t *ue_ip,
-        ogs_pfcp_pdr_id_t default_pdr_id);
+        const char *apn, uint8_t pdn_type, ogs_pfcp_pdr_id_t default_pdr_id);
 int sgwu_sess_remove(sgwu_sess_t *sess);
 void sgwu_sess_remove_all(void);
 sgwu_sess_t *sgwu_sess_find(uint32_t index);
