@@ -684,7 +684,7 @@ smf_sess_t *smf_sess_add_by_apn(smf_ue_t *smf_ue, char *apn)
     ogs_pool_alloc(&smf_sess_pool, &sess);
     if (!sess) {
         ogs_error("Maximum number of session[%d] reached",
-        ogs_config()->pool.sess);
+                    ogs_config()->pool.sess);
         return NULL;
     }
     memset(sess, 0, sizeof *sess);

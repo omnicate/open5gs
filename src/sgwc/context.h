@@ -105,9 +105,13 @@ typedef struct sgwc_ue_s {
 
 typedef struct sgwc_sess_s {
     ogs_lnode_t     lnode;      /* A node of list_t */
+    uint32_t        index;          /**< An index of this node */
 
     uint32_t        sgw_s5c_teid;   /* SGW-S5C-TEID is derived from INDEX */
     uint32_t        pgw_s5c_teid;   /* PGW-S5C-TEID is received from PGW */
+
+    uint64_t        sgwc_sxa_seid;  /* SGW-C SEID is dervied from INDEX */
+    uint64_t        sgwu_sxa_seid;  /* SGW-U SEID is received from Peer */
 
     /* APN Configuration */
     ogs_pdn_t       pdn;
@@ -167,7 +171,7 @@ sgwc_ue_t *sgwc_ue_add(uint8_t *imsi, int imsi_len);
 int sgwc_ue_remove(sgwc_ue_t *sgwc_ue);
 void sgwc_ue_remove_all(void);
 
-sgwc_sess_t *sgwc_sess_add(sgwc_ue_t *sgwc_ue, char *apn, uint8_t ebi);
+sgwc_sess_t *sgwc_sess_add(sgwc_ue_t *sgwc_ue, char *apn);
 int sgwc_sess_remove(sgwc_sess_t *sess);
 void sgwc_sess_remove_all(sgwc_ue_t *sgwc_ue);
 

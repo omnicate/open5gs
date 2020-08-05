@@ -108,6 +108,7 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
         return;
     }
 
+    /* Add Session */
     ogs_fqdn_parse(apn,
             req->access_point_name.data, req->access_point_name.len);
     sess = sgwc_sess_find_by_ebi(sgwc_ue,
@@ -117,12 +118,14 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
                 sgwc_ue->imsi_bcd, sess->pdn.apn);
         sgwc_sess_remove(sess);
     }
-    sess = sgwc_sess_add(sgwc_ue, apn,
-            req->bearer_contexts_to_be_created.eps_bearer_id.u8);
+    sess = sgwc_sess_add(sgwc_ue, apn);
     ogs_assert(sess);
 
-    bearer = sgwc_default_bearer_in_sess(sess);
+    /* Add Default Bearer */
+    bearer = sgwc_bearer_add(sess);
     ogs_assert(bearer);
+    bearer->ebi = req->bearer_contexts_to_be_created.eps_bearer_id.u8;
+
     s5u_tunnel = sgwc_s5u_tunnel_in_bearer(bearer);
     ogs_assert(s5u_tunnel);
 
