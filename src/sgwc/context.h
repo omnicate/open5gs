@@ -75,13 +75,13 @@ typedef struct sgwc_context_s {
 
     ogs_hash_t      *imsi_ue_hash;  /* hash table (IMSI : SGW_UE) */
 
-    ogs_list_t      sgwc_ue_list;    /* SGW_UE List */
+    ogs_list_t      sgw_ue_list;    /* SGW_UE List */
 } sgwc_context_t;
 
 typedef struct sgwc_ue_s {
     ogs_lnode_t     lnode;
 
-    uint32_t        sgwc_s11_teid;   /* SGW-S11-TEID is derived from INDEX */
+    uint32_t        sgw_s11_teid;   /* SGW-S11-TEID is derived from INDEX */
     uint32_t        mme_s11_teid;   /* MME-S11-TEID is received from MME */
 
     /* UE identity */
@@ -106,13 +106,7 @@ typedef struct sgwc_ue_s {
 typedef struct sgwc_sess_s {
     ogs_lnode_t     lnode;      /* A node of list_t */
 
-    /* 
-     * SGW-S5C-TEID     = INDEX         | 0x80000000 
-     * INDEX            = SGW-S5C-TEID  & ~0x80000000
-     */
-#define SGW_S5C_TEID_TO_INDEX(__iNDEX) (__iNDEX & ~0x80000000)
-#define SGW_S5C_INDEX_TO_TEID(__iNDEX) (__iNDEX | 0x80000000)
-    uint32_t        sgwc_s5c_teid;   /* SGW-S5C-TEID is derived from INDEX */    
+    uint32_t        sgw_s5c_teid;   /* SGW-S5C-TEID is derived from INDEX */
     uint32_t        pgw_s5c_teid;   /* PGW-S5C-TEID is received from PGW */
 
     /* APN Configuration */
@@ -122,7 +116,7 @@ typedef struct sgwc_sess_s {
 
     /* Related Context */
     ogs_gtp_node_t  *gnode;
-    sgwc_ue_t        *sgwc_ue;
+    sgwc_ue_t       *sgwc_ue;
 } sgwc_sess_t;
 
 typedef struct sgwc_bearer_s {
@@ -141,8 +135,8 @@ typedef struct sgwc_bearer_s {
     ogs_pkbuf_t*    buffered_pkts[MAX_NUM_OF_PACKET_BUFFER];
 
     ogs_list_t      tunnel_list;
-    sgwc_sess_t      *sess;
-    sgwc_ue_t        *sgwc_ue;
+    sgwc_sess_t     *sess;
+    sgwc_ue_t       *sgwc_ue;
 } sgwc_bearer_t;
 
 typedef struct sgwc_tunnel_s {
@@ -154,7 +148,7 @@ typedef struct sgwc_tunnel_s {
     uint32_t        remote_teid;
 
     /* Related Context */
-    sgwc_bearer_t    *bearer;
+    sgwc_bearer_t   *bearer;
     ogs_gtp_node_t  *gnode;
 } sgwc_tunnel_t;
 

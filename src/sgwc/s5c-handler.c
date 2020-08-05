@@ -52,7 +52,7 @@ void sgwc_s5c_handle_create_session_response(ogs_gtp_xact_t *s5c_xact,
     sgwc_ue_t *sgwc_ue = NULL;
 
     ogs_gtp_f_teid_t *pgw_s5c_teid = NULL;
-    ogs_gtp_f_teid_t sgwc_s11_teid;
+    ogs_gtp_f_teid_t sgw_s11_teid;
     ogs_gtp_f_teid_t *pgw_s5u_teid = NULL;
     ogs_gtp_f_teid_t sgwc_s1u_teid;
     int len;
@@ -166,9 +166,9 @@ void sgwc_s5c_handle_create_session_response(ogs_gtp_xact_t *s5c_xact,
     s5u_tunnel->remote_teid = ntohl(pgw_s5u_teid->teid);
     
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
-        sgwc_ue->mme_s11_teid, sgwc_ue->sgwc_s11_teid);
+        sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
-        sess->sgwc_s5c_teid, sess->pgw_s5c_teid);
+        sess->sgw_s5c_teid, sess->pgw_s5c_teid);
     ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d]",
         s1u_tunnel->remote_teid, s1u_tunnel->local_teid);
     ogs_debug("    SGW_S5U_TEID[%d] PGW_S5U_TEID[%d]",
@@ -191,15 +191,15 @@ void sgwc_s5c_handle_create_session_response(ogs_gtp_xact_t *s5c_xact,
     OGS_SETUP_GTP_NODE(s5u_tunnel, pgw);
 
     /* Send Control Plane(UL) : SGW-S11 */
-    memset(&sgwc_s11_teid, 0, sizeof(ogs_gtp_f_teid_t));
-    sgwc_s11_teid.interface_type = OGS_GTP_F_TEID_S11_S4_SGW_GTP_C;
-    sgwc_s11_teid.teid = htonl(sgwc_ue->sgwc_s11_teid);
+    memset(&sgw_s11_teid, 0, sizeof(ogs_gtp_f_teid_t));
+    sgw_s11_teid.interface_type = OGS_GTP_F_TEID_S11_S4_SGW_GTP_C;
+    sgw_s11_teid.teid = htonl(sgwc_ue->sgw_s11_teid);
     rv = ogs_gtp_sockaddr_to_f_teid(
             sgwc_self()->gtpc_addr, sgwc_self()->gtpc_addr6,
-            &sgwc_s11_teid, &len);
+            &sgw_s11_teid, &len);
     ogs_assert(rv == OGS_OK);
     rsp->sender_f_teid_for_control_plane.presence = 1;
-    rsp->sender_f_teid_for_control_plane.data = &sgwc_s11_teid;
+    rsp->sender_f_teid_for_control_plane.data = &sgw_s11_teid;
     rsp->sender_f_teid_for_control_plane.len = len;
 
     /* Send Data Plane(UL) : SGW-S1U */
@@ -291,9 +291,9 @@ void sgwc_s5c_handle_delete_session_response(ogs_gtp_xact_t *s5c_xact,
 
     /* Remove a pgw session */
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
-        sgwc_ue->mme_s11_teid, sgwc_ue->sgwc_s11_teid);
+        sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
-        sess->sgwc_s5c_teid, sess->pgw_s5c_teid);
+        sess->sgw_s5c_teid, sess->pgw_s5c_teid);
 
     sgwc_sess_remove(sess);
 
@@ -375,9 +375,9 @@ void sgwc_s5c_handle_create_bearer_request(ogs_gtp_xact_t *s5c_xact,
     ogs_assert(s5u_tunnel);
 
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
-        sgwc_ue->mme_s11_teid, sgwc_ue->sgwc_s11_teid);
+        sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
-        sess->sgwc_s5c_teid, sess->pgw_s5c_teid);
+        sess->sgw_s5c_teid, sess->pgw_s5c_teid);
 
     /* Receive Data Plane(UL) : PGW-S5U */
     pgw_s5u_teid = req->bearer_contexts.s5_s8_u_sgw_f_teid.data;
@@ -488,9 +488,9 @@ void sgwc_s5c_handle_update_bearer_request(ogs_gtp_xact_t *s5c_xact,
     ogs_assert(sgwc_ue);
 
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
-        sgwc_ue->mme_s11_teid, sgwc_ue->sgwc_s11_teid);
+        sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
-        sess->sgwc_s5c_teid, sess->pgw_s5c_teid);
+        sess->sgw_s5c_teid, sess->pgw_s5c_teid);
 
     message->h.type = OGS_GTP_UPDATE_BEARER_REQUEST_TYPE;
     message->h.teid = sgwc_ue->mme_s11_teid;
@@ -555,9 +555,9 @@ void sgwc_s5c_handle_delete_bearer_request(ogs_gtp_xact_t *s5c_xact,
     ogs_assert(sgwc_ue);
 
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
-        sgwc_ue->mme_s11_teid, sgwc_ue->sgwc_s11_teid);
+        sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
-        sess->sgwc_s5c_teid, sess->pgw_s5c_teid);
+        sess->sgw_s5c_teid, sess->pgw_s5c_teid);
 
     message->h.type = OGS_GTP_DELETE_BEARER_REQUEST_TYPE;
     message->h.teid = sgwc_ue->mme_s11_teid;

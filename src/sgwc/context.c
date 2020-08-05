@@ -64,7 +64,7 @@ void sgwc_context_init(void)
 
     self.imsi_ue_hash = ogs_hash_make();
 
-    ogs_list_init(&self.sgwc_ue_list);
+    ogs_list_init(&self.sgw_ue_list);
 
     context_initialized = 1;
 }
@@ -502,9 +502,9 @@ sgwc_ue_t *sgwc_ue_add(uint8_t *imsi, int imsi_len)
     ogs_assert(sgwc_ue);
     memset(sgwc_ue, 0, sizeof *sgwc_ue);
 
-    sgwc_ue->sgwc_s11_teid = ogs_pool_index(&sgwc_ue_pool, sgwc_ue);
-    ogs_assert(sgwc_ue->sgwc_s11_teid > 0 &&
-                sgwc_ue->sgwc_s11_teid <= ogs_config()->pool.ue);
+    sgwc_ue->sgw_s11_teid = ogs_pool_index(&sgwc_ue_pool, sgwc_ue);
+    ogs_assert(sgwc_ue->sgw_s11_teid > 0 &&
+                sgwc_ue->sgw_s11_teid <= ogs_config()->pool.ue);
 
     /* Set IMSI */
     sgwc_ue->imsi_len = imsi_len;
@@ -515,7 +515,7 @@ sgwc_ue_t *sgwc_ue_add(uint8_t *imsi, int imsi_len)
 
     ogs_hash_set(self.imsi_ue_hash, sgwc_ue->imsi, sgwc_ue->imsi_len, sgwc_ue);
 
-    ogs_list_add(&self.sgwc_ue_list, sgwc_ue);
+    ogs_list_add(&self.sgw_ue_list, sgwc_ue);
 
     return sgwc_ue;
 }
@@ -524,7 +524,7 @@ int sgwc_ue_remove(sgwc_ue_t *sgwc_ue)
 {
     ogs_assert(sgwc_ue);
 
-    ogs_list_remove(&self.sgwc_ue_list, sgwc_ue);
+    ogs_list_remove(&self.sgw_ue_list, sgwc_ue);
 
     ogs_hash_set(self.imsi_ue_hash, sgwc_ue->imsi, sgwc_ue->imsi_len, NULL);
 
@@ -539,7 +539,7 @@ void sgwc_ue_remove_all(void)
 {
     sgwc_ue_t *sgwc_ue = NULL, *next = NULL;;
 
-    ogs_list_for_each_safe(&self.sgwc_ue_list, next, sgwc_ue)
+    ogs_list_for_each_safe(&self.sgw_ue_list, next, sgwc_ue)
         sgwc_ue_remove(sgwc_ue);
 }
 
@@ -579,8 +579,7 @@ sgwc_sess_t *sgwc_sess_add(sgwc_ue_t *sgwc_ue, char *apn, uint8_t ebi)
     ogs_assert(sess);
     memset(sess, 0, sizeof *sess);
 
-    sess->sgwc_s5c_teid = 
-        SGW_S5C_INDEX_TO_TEID(ogs_pool_index(&sgwc_sess_pool, sess));
+    sess->sgw_s5c_teid = ogs_pool_index(&sgwc_sess_pool, sess);
 
     /* Set APN */
     ogs_cpystrn(sess->pdn.apn, apn, OGS_MAX_APN_LEN+1);
@@ -629,7 +628,7 @@ sgwc_sess_t *sgwc_sess_find(uint32_t index)
 
 sgwc_sess_t* sgwc_sess_find_by_teid(uint32_t teid)
 {
-    return ogs_pool_find(&sgwc_sess_pool, SGW_S5C_TEID_TO_INDEX(teid));
+    return ogs_pool_find(&sgwc_sess_pool, teid);
 }
 
 sgwc_sess_t *sgwc_sess_find_by_seid(uint64_t seid)
