@@ -113,7 +113,6 @@ static void build_create_pdr(
     ogs_pfcp_sess_t *pfcp_sess = NULL;
     sgwc_sess_t *sess = NULL;
     sgwc_bearer_t *bearer = NULL;
-    sgwc_tunnel_t *tunnel = NULL;
     int j = 0;
     int len = 0;
 
@@ -224,19 +223,17 @@ static void build_create_far(
     message->forwarding_parameters.destination_interface.u8 =
         far->dst_if;
 
-    if (far->dst_if == OGS_PFCP_INTERFACE_ACCESS) { /* Downlink */
-        if (far->outer_header_creation_len) {
-            memcpy(&farbuf[i].outer_header_creation,
-                &far->outer_header_creation, far->outer_header_creation_len);
-            farbuf[i].outer_header_creation.teid =
-                    htobe32(far->outer_header_creation.teid);
+    if (far->outer_header_creation_len) {
+        memcpy(&farbuf[i].outer_header_creation,
+            &far->outer_header_creation, far->outer_header_creation_len);
+        farbuf[i].outer_header_creation.teid =
+                htobe32(far->outer_header_creation.teid);
 
-            message->forwarding_parameters.outer_header_creation.presence = 1;
-            message->forwarding_parameters.outer_header_creation.data =
-                    &farbuf[i].outer_header_creation;
-            message->forwarding_parameters.outer_header_creation.len =
-                    far->outer_header_creation_len;
-        }
+        message->forwarding_parameters.outer_header_creation.presence = 1;
+        message->forwarding_parameters.outer_header_creation.data =
+                &farbuf[i].outer_header_creation;
+        message->forwarding_parameters.outer_header_creation.len =
+                far->outer_header_creation_len;
     }
 }
 
@@ -373,7 +370,6 @@ ogs_pkbuf_t *sgwc_sxa_build_session_establishment_request(
     ogs_pkbuf_t *pkbuf = NULL;
 
     sgwc_bearer_t *bearer = NULL;
-    sgwc_tunnel_t *tunnel = NULL;
 
     ogs_pfcp_pdr_t *pdr = NULL;
     ogs_pfcp_far_t *far = NULL;
@@ -420,7 +416,6 @@ ogs_pkbuf_t *sgwc_sxa_build_session_establishment_request(
         }
     }
 
-#if 0
     /* Create FAR */
     i = 0;
     ogs_list_for_each(&sess->bearer_list, bearer) {
@@ -447,7 +442,6 @@ ogs_pkbuf_t *sgwc_sxa_build_session_establishment_request(
             i++;
         }
     }
-#endif
 
     /* PDN Type */
     req->pdn_type.presence = 1;
@@ -473,7 +467,6 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
     int i;
 
     sgwc_sess_t *sess = NULL;
-    sgwc_tunnel_t *tunnel = NULL;
 
     ogs_debug("Session Modification Request");
     ogs_assert(bearer);

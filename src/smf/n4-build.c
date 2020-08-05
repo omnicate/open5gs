@@ -224,19 +224,17 @@ static void build_create_far(
     message->forwarding_parameters.destination_interface.u8 =
         far->dst_if;
 
-    if (far->dst_if == OGS_PFCP_INTERFACE_ACCESS) { /* Downlink */
-        if (far->outer_header_creation_len) {
-            memcpy(&farbuf[i].outer_header_creation,
-                &far->outer_header_creation, far->outer_header_creation_len);
-            farbuf[i].outer_header_creation.teid =
-                    htobe32(far->outer_header_creation.teid);
+    if (far->outer_header_creation_len) {
+        memcpy(&farbuf[i].outer_header_creation,
+            &far->outer_header_creation, far->outer_header_creation_len);
+        farbuf[i].outer_header_creation.teid =
+                htobe32(far->outer_header_creation.teid);
 
-            message->forwarding_parameters.outer_header_creation.presence = 1;
-            message->forwarding_parameters.outer_header_creation.data =
-                    &farbuf[i].outer_header_creation;
-            message->forwarding_parameters.outer_header_creation.len =
-                    far->outer_header_creation_len;
-        }
+        message->forwarding_parameters.outer_header_creation.presence = 1;
+        message->forwarding_parameters.outer_header_creation.data =
+                &farbuf[i].outer_header_creation;
+        message->forwarding_parameters.outer_header_creation.len =
+                far->outer_header_creation_len;
     }
 }
 
