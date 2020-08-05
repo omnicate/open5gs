@@ -18,6 +18,8 @@
  */
 
 #include "gtp-path.h"
+#include "pfcp-path.h"
+
 #include "s11-handler.h"
 
 static void timeout(ogs_gtp_xact_t *xact, void *data)
@@ -218,9 +220,7 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
     req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.presence = 1;
     req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.data = &sgwc_s5u_teid;
     req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.len = len;
-#endif
 
-#if 0
     message->h.type = OGS_GTP_CREATE_SESSION_REQUEST_TYPE;
     message->h.teid = sess->pgw_s5c_teid;
 
@@ -236,6 +236,8 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
     rv = ogs_gtp_xact_commit(s5c_xact);
     ogs_expect(rv == OGS_OK);
 #endif
+
+    sgwc_pfcp_send_session_establishment_request(sess, s11_xact);
 }
 
 void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,

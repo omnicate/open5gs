@@ -135,21 +135,10 @@ typedef struct sgwc_sess_s {
     sgwc_ue_t       *sgwc_ue;
 } sgwc_sess_t;
 
-#define SGWC_BEARER(pfcp_sess) ogs_container_of(pfcp_sess, sgwc_bearer_t, pfcp)
 typedef struct sgwc_bearer_s {
     ogs_lnode_t     lnode;
-    uint32_t        index;          /**< An index of this node */
-
-    ogs_pfcp_sess_t pfcp;           /* PFCP session context */
 
     uint8_t         ebi;
-
-    uint32_t        sgw_s5u_teid;   /* SGW-S5U TEID */
-    ogs_sockaddr_t  *sgw_s5u_addr;  /* SGW-S5U IPv4 */
-    ogs_sockaddr_t  *sgw_s5u_addr6; /* SGW-S5U IPv6 */
-
-    uint32_t        enb_s1u_teid;   /* eNB-S1U TEID */
-    ogs_ip_t        enb_s1u_ip;     /* eNB-S1U IPv4/IPv6 */
 
     /* Pkts which will be buffered in case of UE-IDLE */
     uint32_t        num_buffered_pkt;
@@ -162,13 +151,21 @@ typedef struct sgwc_bearer_s {
     sgwc_ue_t       *sgwc_ue;
 } sgwc_bearer_t;
 
+#define SGWC_TUNNEL(pfcp_sess) ogs_container_of(pfcp_sess, sgwc_tunnel_t, pfcp)
 typedef struct sgwc_tunnel_s {
     ogs_lnode_t     lnode;
+    uint32_t        index;          /**< An index of this node */
+
+    ogs_pfcp_sess_t pfcp;           /* PFCP session context */
 
     uint8_t         interface_type;
 
     uint32_t        local_teid;
+    ogs_sockaddr_t  *local_addr;
+    ogs_sockaddr_t  *local_addr6;
+
     uint32_t        remote_teid;
+    ogs_ip_t        remote_ip;
 
     /* Related Context */
     sgwc_bearer_t   *bearer;
