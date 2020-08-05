@@ -1109,6 +1109,19 @@ smf_bearer_t *smf_qos_flow_add(smf_sess_t *sess)
     ul_pdr->id = OGS_NEXT_ID(sess->pdr_id, 1, OGS_MAX_NUM_OF_PDR+1);
     ul_pdr->src_if = OGS_PFCP_INTERFACE_ACCESS;
 
+    ul_pdr->outer_header_removal_len = 1;
+    if (sess->pdn.pdn_type == OGS_GTP_PDN_TYPE_IPV4) {
+        ul_pdr->outer_header_removal.description =
+            OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IPV4;
+    } else if (sess->pdn.pdn_type == OGS_GTP_PDN_TYPE_IPV6) {
+        ul_pdr->outer_header_removal.description =
+            OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IPV6;
+    } else if (sess->pdn.pdn_type == OGS_GTP_PDN_TYPE_IPV4V6) {
+        ul_pdr->outer_header_removal.description =
+            OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IP;
+    } else
+        ogs_assert_if_reached();
+
     dl_far = ogs_pfcp_far_add(&qos_flow->pfcp);
     ogs_assert(dl_far);
     dl_far->id = OGS_NEXT_ID(sess->far_id, 1, OGS_MAX_NUM_OF_FAR+1);
@@ -1182,6 +1195,19 @@ smf_bearer_t *smf_bearer_add(smf_sess_t *sess)
     ogs_assert(ul_pdr);
     ul_pdr->id = OGS_NEXT_ID(sess->pdr_id, 1, OGS_MAX_NUM_OF_PDR+1);
     ul_pdr->src_if = OGS_PFCP_INTERFACE_ACCESS;
+
+    ul_pdr->outer_header_removal_len = 1;
+    if (sess->pdn.pdn_type == OGS_GTP_PDN_TYPE_IPV4) {
+        ul_pdr->outer_header_removal.description =
+            OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IPV4;
+    } else if (sess->pdn.pdn_type == OGS_GTP_PDN_TYPE_IPV6) {
+        ul_pdr->outer_header_removal.description =
+            OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IPV6;
+    } else if (sess->pdn.pdn_type == OGS_GTP_PDN_TYPE_IPV4V6) {
+        ul_pdr->outer_header_removal.description =
+            OGS_PFCP_OUTER_HEADER_REMOVAL_GTPU_UDP_IP;
+    } else
+        ogs_assert_if_reached();
 
     dl_far = ogs_pfcp_far_add(&bearer->pfcp);
     ogs_assert(dl_far);

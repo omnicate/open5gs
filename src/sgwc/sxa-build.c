@@ -86,7 +86,6 @@ ogs_pkbuf_t *sgwc_sxa_build_association_setup_response(uint8_t type,
 }
 
 static struct {
-    ogs_pfcp_outer_header_removal_t outer_header_removal;
     ogs_pfcp_f_teid_t f_teid;
     char dnn[OGS_MAX_DNN_LEN];
     char *sdf_filter[OGS_MAX_NUM_OF_RULE];

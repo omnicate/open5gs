@@ -197,9 +197,10 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
         memcpy(&pdr->f_teid, message->pdi.local_f_teid.data, pdr->f_teid_len);
         pdr->f_teid.teid = be32toh(pdr->f_teid.teid);
 
+        pdr->outer_header_removal_len = message->outer_header_removal.len;
         memcpy(&pdr->outer_header_removal,
                 message->outer_header_removal.data,
-                message->outer_header_removal.len);
+                pdr->outer_header_removal_len);
     } else {
         ogs_error("Invalid Source Interface[%d] in PDR", pdr->src_if);
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_INCORRECT;
