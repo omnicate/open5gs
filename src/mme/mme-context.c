@@ -1390,7 +1390,7 @@ int mme_context_parse_config()
                 } else
                     ogs_warn("unknown key `%s`", mme_key);
             }
-        } else if (!strcmp(root_key, "sgw")) {
+        } else if (!strcmp(root_key, "sgw") || !strcmp(root_key, "sgwc")) {
             ogs_yaml_iter_t sgw_iter;
             ogs_yaml_iter_recurse(&root_iter, &sgw_iter);
             while (ogs_yaml_iter_next(&sgw_iter)) {
