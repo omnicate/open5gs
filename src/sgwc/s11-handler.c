@@ -55,7 +55,9 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
     ogs_gtp_xact_t *s5c_xact = NULL;
     sgwc_sess_t *sess = NULL;
     sgwc_bearer_t *bearer = NULL;
+#if 0
     sgwc_tunnel_t *s5u_tunnel = NULL;
+#endif
 
     char apn[OGS_MAX_APN_LEN];
 
@@ -153,8 +155,10 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
     /* Set Bearer EBI */
     bearer->ebi = req->bearer_contexts_to_be_created.eps_bearer_id.u8;
 
+#if 0
     s5u_tunnel = sgwc_s5u_tunnel_in_bearer(bearer);
     ogs_assert(s5u_tunnel);
+#endif
 
     /* Receive Control Plane(DL) : MME-S11 */
     mme_s11_teid = req->sender_f_teid_for_control_plane.data;
@@ -176,8 +180,10 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
         sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
         sess->sgw_s5c_teid, sess->pgw_s5c_teid);
+#if 0
     ogs_debug("    SGW_S5U_TEID[%d] PGW_S5U_TEID[%d]",
         s5u_tunnel->local_teid, s5u_tunnel->remote_teid);
+#endif
 
     pgw_s5c_teid = req->pgw_s5_s8_address_for_control_plane_or_pmip.data;
     ogs_assert(pgw_s5c_teid);

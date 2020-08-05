@@ -34,23 +34,11 @@ void sgwc_pfcp_send_association_setup_response(ogs_pfcp_xact_t *xact,
         uint8_t cause);
 void sgwc_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node);
 
-#if 0
-void sgwc_5gc_pfcp_send_session_establishment_request(
-        sgwc_sess_t *sess, ogs_sbi_session_t *session);
-void sgwc_5gc_pfcp_send_session_modification_request(
-        sgwc_sess_t *sess, ogs_sbi_session_t *session, uint64_t flags);
-void sgwc_5gc_pfcp_send_session_deletion_request(
-        sgwc_sess_t *sess, ogs_sbi_session_t *session, int trigger);
-
-void sgwc_epc_pfcp_send_session_establishment_request(
+void sgwc_pfcp_send_session_establishment_request(
         sgwc_sess_t *sess, void *gtp_xact);
-void sgwc_epc_pfcp_send_session_modification_request(sgwc_bearer_t *bearer);
-void sgwc_epc_pfcp_send_session_deletion_request(
-        sgwc_sess_t *sess, void *gtp_xact);
-
-void sgwc_5gc_pfcp_send_qos_flow_modification_request(sgwc_bearer_t *qos_flow,
-        ogs_sbi_session_t *session, uint64_t flags);
-#endif
+void sgwc_pfcp_send_session_modification_request(
+        sgwc_bearer_t *bearer, void *gtp_xact, uint64_t flags);
+void sgwc_pfcp_send_session_deletion_request(sgwc_sess_t *sess, void *gtp_xact);
 
 #ifdef __cplusplus
 }
