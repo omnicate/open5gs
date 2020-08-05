@@ -196,6 +196,7 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
             &uli.e_cgi.plmn_id, sizeof(uli.e_cgi.plmn_id));
     bearer->e_cgi.cell_id = uli.e_cgi.cell_id;
 
+#if 0
     message->h.type = OGS_GTP_CREATE_SESSION_REQUEST_TYPE;
     message->h.teid = sess->pgw_s5c_teid;
 
@@ -210,6 +211,7 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
 
     rv = ogs_gtp_xact_commit(s5c_xact);
     ogs_expect(rv == OGS_OK);
+#endif
 }
 
 void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,
