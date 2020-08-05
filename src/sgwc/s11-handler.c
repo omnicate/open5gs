@@ -108,6 +108,15 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
         return;
     }
 
+    /* Set User Location Information */
+    decoded = ogs_gtp_parse_uli(&uli, &req->user_location_information);
+    ogs_assert(req->user_location_information.len == decoded);
+    memcpy(&sgwc_ue->e_tai.plmn_id, &uli.tai.plmn_id, sizeof(uli.tai.plmn_id));
+    sgwc_ue->e_tai.tac = uli.tai.tac;
+    memcpy(&sgwc_ue->e_cgi.plmn_id,
+            &uli.e_cgi.plmn_id, sizeof(uli.e_cgi.plmn_id));
+    sgwc_ue->e_cgi.cell_id = uli.e_cgi.cell_id;
+
     /* Add Session */
     ogs_fqdn_parse(apn,
             req->access_point_name.data, req->access_point_name.len);
@@ -186,15 +195,6 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
     req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.data = &sgwc_s5u_teid;
     req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.len = len;
 #endif
-
-    /* Set User Location Information */
-    decoded = ogs_gtp_parse_uli(&uli, &req->user_location_information);
-    ogs_assert(req->user_location_information.len == decoded);
-    memcpy(&bearer->tai.plmn_id, &uli.tai.plmn_id, sizeof(uli.tai.plmn_id));
-    bearer->tai.tac = uli.tai.tac;
-    memcpy(&bearer->e_cgi.plmn_id,
-            &uli.e_cgi.plmn_id, sizeof(uli.e_cgi.plmn_id));
-    bearer->e_cgi.cell_id = uli.e_cgi.cell_id;
 
 #if 0
     message->h.type = OGS_GTP_CREATE_SESSION_REQUEST_TYPE;
@@ -339,18 +339,18 @@ void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,
         /* Set User Location Information */
         decoded = ogs_gtp_parse_uli(&uli, &req->user_location_information);
         ogs_assert(req->user_location_information.len == decoded);
-        memcpy(&bearer->tai.plmn_id, &uli.tai.plmn_id,
+        memcpy(&sgwc_ue->e_tai.plmn_id, &uli.tai.plmn_id,
                 sizeof(uli.tai.plmn_id));
-        bearer->tai.tac = uli.tai.tac;
-        memcpy(&bearer->e_cgi.plmn_id, &uli.e_cgi.plmn_id,
+        sgwc_ue->e_tai.tac = uli.tai.tac;
+        memcpy(&sgwc_ue->e_cgi.plmn_id, &uli.e_cgi.plmn_id,
                 sizeof(uli.e_cgi.plmn_id));
-        bearer->e_cgi.cell_id = uli.e_cgi.cell_id;
+        sgwc_ue->e_cgi.cell_id = uli.e_cgi.cell_id;
         ogs_debug("    TAI[PLMN_ID:%06x,TAC:%d]",
-                ogs_plmn_id_hexdump(&bearer->tai.plmn_id),
-                bearer->tai.tac);
+                ogs_plmn_id_hexdump(&sgwc_ue->e_tai.plmn_id),
+                sgwc_ue->e_tai.tac);
         ogs_debug("    E_CGI[PLMN_ID:%06x,CELL_ID:%d]",
-                ogs_plmn_id_hexdump(&bearer->e_cgi.plmn_id),
-                bearer->e_cgi.cell_id);
+                ogs_plmn_id_hexdump(&sgwc_ue->e_cgi.plmn_id),
+                sgwc_ue->e_cgi.cell_id);
     }
 
     if (s1u_tunnel->gnode && s1u_tunnel->gnode != enb) {
@@ -580,11 +580,11 @@ void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact,
 
     decoded = ogs_gtp_parse_uli(&uli, &req->user_location_information);
     ogs_assert(req->user_location_information.len == decoded);
-    memcpy(&bearer->tai.plmn_id, &uli.tai.plmn_id, sizeof(uli.tai.plmn_id));
-    bearer->tai.tac = uli.tai.tac;
-    memcpy(&bearer->e_cgi.plmn_id,
+    memcpy(&sgwc_ue->e_tai.plmn_id, &uli.tai.plmn_id, sizeof(uli.tai.plmn_id));
+    sgwc_ue->e_tai.tac = uli.tai.tac;
+    memcpy(&sgwc_ue->e_cgi.plmn_id,
             &uli.e_cgi.plmn_id, sizeof(uli.e_cgi.plmn_id));
-    bearer->e_cgi.cell_id = uli.e_cgi.cell_id;
+    sgwc_ue->e_cgi.cell_id = uli.e_cgi.cell_id;
 
     /* Reset UE state */
     SGW_RESET_UE_STATE(sgwc_ue, SGW_S1U_INACTIVE);

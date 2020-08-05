@@ -89,6 +89,10 @@ typedef struct sgwc_ue_s {
     int             imsi_len;
     char            imsi_bcd[OGS_MAX_IMSI_BCD_LEN+1];
 
+    /* User-Location-Info */
+    ogs_eps_tai_t   e_tai;
+    ogs_e_cgi_t     e_cgi;
+
 #define SGW_S1U_INACTIVE  0x0001
 #define SGW_DL_NOTI_SENT  0x0002
 
@@ -127,10 +131,6 @@ typedef struct sgwc_bearer_s {
     ogs_lnode_t     lnode;
 
     uint8_t         ebi;
-
-    /* User-Lication-Info */
-    ogs_eps_tai_t   tai;
-    ogs_e_cgi_t     e_cgi;
 
     /* Pkts which will be buffered in case of UE-IDLE */
     uint32_t        num_buffered_pkt;
