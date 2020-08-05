@@ -323,7 +323,7 @@ int upf_context_parse_config(void)
                         ogs_list_for_each_safe(&list6, next_iter, iter)
                             ogs_list_add(&self.gtpu_list, iter);
 
-                    } while (ogs_yaml_iter_type(&gtpu_array) == 
+                    } while (ogs_yaml_iter_type(&gtpu_array) ==
                             YAML_SEQUENCE_NODE);
 
                     if (ogs_list_first(&self.gtpu_list) == NULL) {
@@ -457,7 +457,7 @@ upf_sess_t *upf_sess_add(ogs_pfcp_f_seid_t *cp_f_seid,
         sess->pfcp.default_pdr->id);
 
     ogs_list_add(&self.sess_list, sess);
-    
+
     ogs_info("Added a session. Number of active sessions is now %d",
             ogs_list_count(&self.sess_list));
 

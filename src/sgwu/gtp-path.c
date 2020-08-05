@@ -30,7 +30,9 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
     ogs_sockaddr_t from;
     ogs_gtp_header_t *gtp_h = NULL;
     sgwu_bearer_t *bearer = NULL;
+#if 0
     sgwu_tunnel_t *tunnel = NULL;
+#endif
     uint32_t teid;
     int i;
 
@@ -81,6 +83,7 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
             ogs_debug("[SGW] RECV End Marker from [%s] : TEID[0x%x]",
                     OGS_ADDR(&from, buf), teid);
 
+#if 0
         tunnel = sgwu_tunnel_find_by_teid(teid);
         if (!tunnel) {
             if (gtp_h->type == OGS_GTPU_MSGTYPE_GPDU)
@@ -200,6 +203,7 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
                 }
             }
         }
+#endif
     }
 
     ogs_pkbuf_free(pkbuf);
@@ -222,26 +226,16 @@ int sgwu_gtp_open(void)
         sock = ogs_gtp_server(node);
         ogs_assert(sock);
 
-        node->poll = ogs_pollset_add(sgwu_self()->pollset,
-                OGS_POLLIN, sock->fd, _gtpv1_u_recv_cb, sock);
-    }
-    ogs_list_for_each(&sgwu_self()->gtpu_list6, node) {
-        sock = ogs_gtp_server(node);
-        ogs_assert(sock);
+        if (sock->family == AF_INET)
+            sgwu_self()->gtpu_sock = sock;
+        else if (sock->family == AF_INET6)
+            sgwu_self()->gtpu_sock6 = sock;
 
         node->poll = ogs_pollset_add(sgwu_self()->pollset,
                 OGS_POLLIN, sock->fd, _gtpv1_u_recv_cb, sock);
     }
 
-    sgwu_self()->gtpu_sock = ogs_socknode_sock_first(&sgwu_self()->gtpu_list);
-    if (sgwu_self()->gtpu_sock)
-        sgwu_self()->gtpu_addr = &sgwu_self()->gtpu_sock->local_addr;
-
-    sgwu_self()->gtpu_sock6 = ogs_socknode_sock_first(&sgwu_self()->gtpu_list6);
-    if (sgwu_self()->gtpu_sock6)
-        sgwu_self()->gtpu_addr6 = &sgwu_self()->gtpu_sock6->local_addr;
-
-    ogs_assert(sgwu_self()->gtpu_addr || sgwu_self()->gtpu_addr6);
+    ogs_assert(sgwu_self()->gtpu_sock || sgwu_self()->gtpu_sock6);
 
     return OGS_OK;
 }
@@ -249,13 +243,11 @@ int sgwu_gtp_open(void)
 void sgwu_gtp_close(void)
 {
     ogs_socknode_remove_all(&sgwu_self()->gtpu_list);
-    ogs_socknode_remove_all(&sgwu_self()->gtpu_list6);
-    ogs_socknode_remove_all(&sgwu_self()->adv_gtpu_list);
-    ogs_socknode_remove_all(&sgwu_self()->adv_gtpu_list6);
 
     ogs_pkbuf_pool_destroy(packet_pool);
 }
 
+#if 0
 void sgwu_gtp_send_end_marker(sgwu_tunnel_t *s1u_tunnel)
 {
     char buf[OGS_ADDRSTRLEN];
@@ -291,3 +283,4 @@ void sgwu_gtp_send_end_marker(sgwu_tunnel_t *s1u_tunnel)
     ogs_expect(rv == OGS_OK);
     ogs_pkbuf_free(pkbuf);
 }
+#endif
