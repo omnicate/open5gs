@@ -329,26 +329,24 @@ static void build_update_dl_far_deactivate(
     }
 }
 
-static void build_update_dl_far_activate(
+static void build_update_far_activate(
         ogs_pfcp_tlv_update_far_t *message, int i, ogs_pfcp_far_t *far)
 {
     ogs_assert(message);
     ogs_assert(far);
 
-    if (far->dst_if == OGS_PFCP_INTERFACE_ACCESS) {
-        ogs_assert(far->outer_header_creation_len);
+    message->presence = 1;
+    message->far_id.presence = 1;
+    message->far_id.u32 = far->id;
 
-        message->presence = 1;
-        message->far_id.presence = 1;
-        message->far_id.u32 = far->id;
+    if (far->apply_action != OGS_PFCP_APPLY_ACTION_FORW) {
+        far->apply_action = OGS_PFCP_APPLY_ACTION_FORW;
 
-        if (far->apply_action != OGS_PFCP_APPLY_ACTION_FORW) {
-            far->apply_action = OGS_PFCP_APPLY_ACTION_FORW;
+        message->apply_action.presence = 1;
+        message->apply_action.u8 = far->apply_action;
+    }
 
-            message->apply_action.presence = 1;
-            message->apply_action.u8 = far->apply_action;
-        }
-
+    if (far->outer_header_creation_len) {
         memcpy(&farbuf[i].outer_header_creation,
             &far->outer_header_creation, far->outer_header_creation_len);
         farbuf[i].outer_header_creation.teid =
@@ -543,6 +541,24 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
             ogs_list_for_each(&bearer->pfcp.qer_list, qer) {
                 build_update_qer(&req->update_qer[i], i, qer);
                 i++;
+            }
+        }
+        if (modify_flags & OGS_PFCP_MODIFY_ACTIVATE) {
+            /* Update FAR */
+            i = 0;
+            ogs_list_for_each(&bearer->pfcp.far_list, far) {
+                if ((modify_flags &
+                     (OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_UL_ONLY)) == 0 ||
+
+                    ((modify_flags & OGS_PFCP_MODIFY_DL_ONLY) &&
+                     (far->dst_if == OGS_PFCP_INTERFACE_ACCESS)) ||
+
+                    ((modify_flags & OGS_PFCP_MODIFY_UL_ONLY) &&
+                     (far->dst_if == OGS_PFCP_INTERFACE_CORE))) {
+
+                    build_update_far_activate(&req->update_far[i], i, far);
+                    i++;
+                }
             }
         }
     }

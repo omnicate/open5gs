@@ -214,19 +214,15 @@ void sgwc_pfcp_state_associated(ogs_fsm_t *s, sgwc_event_t *e)
                 &message->pfcp_session_establishment_response);
             break;
 
-#if 0
         case OGS_PFCP_SESSION_MODIFICATION_RESPONSE_TYPE:
             if (!message->h.seid_presence) {
                 ogs_error("No SEID");
                 break;
             }
 
-            if (SGWC_EPC_SEID(message->h.seid))
-                sgwc_epc_n4_handle_session_modification_response(
-                    sess, xact, &message->pfcp_session_modification_response);
-            else
-                sgwc_5gc_n4_handle_session_modification_response(
-                    sess, xact, &message->pfcp_session_modification_response);
+            sgwc_sxa_handle_session_modification_response(
+                sess, xact, e->gtp_message,
+                &message->pfcp_session_modification_response);
             break;
 
         case OGS_PFCP_SESSION_DELETION_RESPONSE_TYPE:
@@ -235,14 +231,10 @@ void sgwc_pfcp_state_associated(ogs_fsm_t *s, sgwc_event_t *e)
                 break;
             }
 
-            if (SGWC_EPC_SEID(message->h.seid))
-                sgwc_epc_n4_handle_session_deletion_response(
-                    sess, xact, &message->pfcp_session_deletion_response);
-            else
-                sgwc_5gc_n4_handle_session_deletion_response(
-                    sess, xact, &message->pfcp_session_deletion_response);
+            sgwc_sxa_handle_session_deletion_response(
+                sess, xact, e->gtp_message,
+                &message->pfcp_session_deletion_response);
             break;
-#endif
 
         default:
             ogs_error("Not implemented PFCP message type[%d]",

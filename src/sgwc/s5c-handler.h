@@ -27,7 +27,8 @@ extern "C" {
 #endif
 
 void sgwc_s5c_handle_create_session_response(
-    ogs_gtp_xact_t *s5c_xact, sgwc_sess_t *sess, ogs_gtp_message_t *message);
+    sgwc_sess_t *sess, ogs_gtp_xact_t *s5c_xact, ogs_pkbuf_t *gtpbuf,
+    ogs_gtp_create_session_response_t *rsp);
 void sgwc_s5c_handle_delete_session_response(
     ogs_gtp_xact_t *s5c_xact, sgwc_sess_t *sess, ogs_gtp_message_t *message);
 void sgwc_s5c_handle_create_bearer_request(

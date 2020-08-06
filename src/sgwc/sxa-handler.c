@@ -157,14 +157,14 @@ void sgwc_sxa_handle_heartbeat_response(
 void sgwc_sxa_handle_session_establishment_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *pfcp_xact,
         ogs_gtp_message_t *gtp_message,
-        ogs_pfcp_session_establishment_response_t *rsp)
+        ogs_pfcp_session_establishment_response_t *pfcp_rsp)
 {
     int rv;
     uint8_t cause_value = 0;
     ogs_gtp_xact_t *s11_xact = NULL;
     ogs_pfcp_f_seid_t *up_f_seid = NULL;
 
-    ogs_gtp_create_session_request_t *req = NULL;
+    ogs_gtp_create_session_request_t *gtp_req = NULL;
     ogs_pkbuf_t *pkbuf = NULL;
     ogs_gtp_f_teid_t *pgw_s5c_teid = NULL;
     int len = 0;
@@ -176,11 +176,11 @@ void sgwc_sxa_handle_session_establishment_response(
     sgwc_tunnel_t *dl_tunnel = NULL;
 
     ogs_assert(pfcp_xact);
-    ogs_assert(rsp);
+    ogs_assert(pfcp_rsp);
     ogs_assert(gtp_message);
 
-    req = &gtp_message->create_session_request;
-    ogs_assert(req);
+    gtp_req = &gtp_message->create_session_request;
+    ogs_assert(gtp_req);
 
     s11_xact = pfcp_xact->assoc_xact;
     ogs_assert(s11_xact);
@@ -194,15 +194,15 @@ void sgwc_sxa_handle_session_establishment_response(
         cause_value = OGS_GTP_CAUSE_CONTEXT_NOT_FOUND;
     }
 
-    if (rsp->up_f_seid.presence == 0) {
+    if (pfcp_rsp->up_f_seid.presence == 0) {
         ogs_error("No UP F-SEID");
         cause_value = OGS_GTP_CAUSE_MANDATORY_IE_MISSING;
     }
 
-    if (rsp->cause.presence) {
-        if (rsp->cause.u8 != OGS_PFCP_CAUSE_REQUEST_ACCEPTED) {
-            ogs_warn("PFCP Cause [%d] : Not Accepted", rsp->cause.u8);
-            cause_value = gtp_cause_from_pfcp(rsp->cause.u8);
+    if (pfcp_rsp->cause.presence) {
+        if (pfcp_rsp->cause.u8 != OGS_PFCP_CAUSE_REQUEST_ACCEPTED) {
+            ogs_warn("PFCP Cause [%d] : Not Accepted", pfcp_rsp->cause.u8);
+            cause_value = gtp_cause_from_pfcp(pfcp_rsp->cause.u8);
         }
     } else {
         ogs_error("No Cause");
@@ -223,7 +223,7 @@ void sgwc_sxa_handle_session_establishment_response(
     ogs_assert(dl_tunnel);
 
     /* UP F-SEID */
-    up_f_seid = rsp->up_f_seid.data;
+    up_f_seid = pfcp_rsp->up_f_seid.data;
     ogs_assert(up_f_seid);
     sess->sgwu_sxa_seid = be64toh(up_f_seid->seid);
 
@@ -234,16 +234,16 @@ void sgwc_sxa_handle_session_establishment_response(
     rv = ogs_gtp_sockaddr_to_f_teid(
         sgwc_self()->gtpc_addr, sgwc_self()->gtpc_addr6, &sgw_s5c_teid, &len);
     ogs_assert(rv == OGS_OK);
-    req->sender_f_teid_for_control_plane.presence = 1;
-    req->sender_f_teid_for_control_plane.data = &sgw_s5c_teid;
-    req->sender_f_teid_for_control_plane.len = len;
+    gtp_req->sender_f_teid_for_control_plane.presence = 1;
+    gtp_req->sender_f_teid_for_control_plane.data = &sgw_s5c_teid;
+    gtp_req->sender_f_teid_for_control_plane.len = len;
 
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
         sess->sgw_s5c_teid, sess->pgw_s5c_teid);
     ogs_debug("    SGW_S5U_TEID[%d] PGW_S5U_TEID[%d]",
         dl_tunnel->local_teid, dl_tunnel->remote_teid);
 
-    pgw_s5c_teid = req->pgw_s5_s8_address_for_control_plane_or_pmip.data;
+    pgw_s5c_teid = gtp_req->pgw_s5_s8_address_for_control_plane_or_pmip.data;
     ogs_assert(pgw_s5c_teid);
 
     pgw = ogs_gtp_node_find_by_f_teid(&sgwc_self()->pgw_s5c_list, pgw_s5c_teid);
@@ -263,7 +263,7 @@ void sgwc_sxa_handle_session_establishment_response(
     OGS_SETUP_GTP_NODE(sess, pgw);
 
     /* Remove PGW-S5C */
-    req->pgw_s5_s8_address_for_control_plane_or_pmip.presence = 0;
+    gtp_req->pgw_s5_s8_address_for_control_plane_or_pmip.presence = 0;
 
     /* Data Plane(DL) : SGW-S5U */
     memset(&sgw_s5u_teid, 0, sizeof(ogs_gtp_f_teid_t));
@@ -272,9 +272,10 @@ void sgwc_sxa_handle_session_establishment_response(
     rv = ogs_gtp_sockaddr_to_f_teid(
         dl_tunnel->local_addr, dl_tunnel->local_addr6, &sgw_s5u_teid, &len);
     ogs_assert(rv == OGS_OK);
-    req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.presence = 1;
-    req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.data = &sgw_s5u_teid;
-    req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.len = len;
+    gtp_req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.presence = 1;
+    gtp_req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.data =
+        &sgw_s5u_teid;
+    gtp_req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.len = len;
 
     gtp_message->h.type = OGS_GTP_CREATE_SESSION_REQUEST_TYPE;
     gtp_message->h.teid = sess->pgw_s5c_teid;
@@ -294,13 +295,20 @@ void sgwc_sxa_handle_session_establishment_response(
 
 void sgwc_sxa_handle_session_modification_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_session_modification_response_t *rsp)
+        ogs_gtp_message_t *gtp_message,
+        ogs_pfcp_session_modification_response_t *pfcp_rsp)
 {
     sgwc_bearer_t *bearer = NULL;
     uint64_t flags;
 
+    ogs_gtp_create_session_response_t *gtp_rsp = NULL;
+
     ogs_assert(xact);
-    ogs_assert(rsp);
+    ogs_assert(pfcp_rsp);
+    ogs_assert(gtp_message);
+
+    gtp_rsp = &gtp_message->create_session_response;
+    ogs_assert(gtp_rsp);
 
     bearer = xact->data;
     ogs_assert(bearer);
@@ -315,13 +323,14 @@ void sgwc_sxa_handle_session_modification_response(
 
 void sgwc_sxa_handle_session_deletion_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_session_deletion_response_t *rsp)
+        ogs_gtp_message_t *gtp_message,
+        ogs_pfcp_session_deletion_response_t *pfcp_rsp)
 {
     uint8_t cause_value = 0;
     ogs_gtp_xact_t *gtp_xact = NULL;
 
     ogs_assert(xact);
-    ogs_assert(rsp);
+    ogs_assert(pfcp_rsp);
 
     gtp_xact = xact->assoc_xact;
     ogs_assert(gtp_xact);
@@ -335,10 +344,10 @@ void sgwc_sxa_handle_session_deletion_response(
         cause_value = OGS_GTP_CAUSE_CONTEXT_NOT_FOUND;
     }
 
-    if (rsp->cause.presence) {
-        if (rsp->cause.u8 != OGS_PFCP_CAUSE_REQUEST_ACCEPTED) {
-            ogs_warn("PFCP Cause[%d] : Not Accepted", rsp->cause.u8);
-            cause_value = gtp_cause_from_pfcp(rsp->cause.u8);
+    if (pfcp_rsp->cause.presence) {
+        if (pfcp_rsp->cause.u8 != OGS_PFCP_CAUSE_REQUEST_ACCEPTED) {
+            ogs_warn("PFCP Cause[%d] : Not Accepted", pfcp_rsp->cause.u8);
+            cause_value = gtp_cause_from_pfcp(pfcp_rsp->cause.u8);
         }
     } else {
         ogs_error("No Cause");

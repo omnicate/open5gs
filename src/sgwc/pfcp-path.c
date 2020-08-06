@@ -350,6 +350,9 @@ void sgwc_pfcp_send_session_modification_request(
             sess->pfcp_node, &h, sxabuf, sess_timeout, bearer);
     ogs_expect_or_return(xact);
     xact->assoc_xact = gtp_xact;
+    xact->modify_flags = flags;
+    if (gtpbuf)
+        xact->gtpbuf = ogs_pkbuf_copy(gtpbuf);
 
     rv = ogs_pfcp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);
@@ -376,6 +379,8 @@ void sgwc_pfcp_send_session_deletion_request(
             sess->pfcp_node, &h, sxabuf, sess_timeout, sess);
     ogs_expect_or_return(xact);
     xact->assoc_xact = gtp_xact;
+    if (gtpbuf)
+        xact->gtpbuf = ogs_pkbuf_copy(gtpbuf);
 
     rv = ogs_pfcp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);
