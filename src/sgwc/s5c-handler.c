@@ -182,8 +182,8 @@ void sgwc_s5c_handle_create_session_response(
     ogs_debug("    SGW_S5U_TEID[%d] PGW_S5U_TEID[%d]",
         ul_tunnel->local_teid, ul_tunnel->remote_teid);
 
-    sgwc_pfcp_send_tunnel_modification_request(ul_tunnel, s11_xact, gtpbuf,
-            OGS_PFCP_MODIFY_UL_ONLY | OGS_PFCP_MODIFY_ACTIVATE);
+    sgwc_pfcp_send_tunnel_modification_request(
+            ul_tunnel, s11_xact, gtpbuf, OGS_PFCP_MODIFY_ACTIVATE);
 }
 
 void sgwc_s5c_handle_delete_session_response(ogs_gtp_xact_t *s5c_xact,

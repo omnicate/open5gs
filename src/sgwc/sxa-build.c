@@ -543,24 +543,6 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
                 i++;
             }
         }
-        if (modify_flags & OGS_PFCP_MODIFY_ACTIVATE) {
-            /* Update FAR */
-            i = 0;
-            ogs_list_for_each(&bearer->pfcp.far_list, far) {
-                if ((modify_flags &
-                     (OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_UL_ONLY)) == 0 ||
-
-                    ((modify_flags & OGS_PFCP_MODIFY_DL_ONLY) &&
-                     (far->dst_if == OGS_PFCP_INTERFACE_ACCESS)) ||
-
-                    ((modify_flags & OGS_PFCP_MODIFY_UL_ONLY) &&
-                     (far->dst_if == OGS_PFCP_INTERFACE_CORE))) {
-
-                    build_update_far_activate(&req->update_far[i], i, far);
-                    i++;
-                }
-            }
-        }
     }
 
     pfcp_message.h.type = type;

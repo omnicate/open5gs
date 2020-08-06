@@ -332,7 +332,7 @@ void sgwc_sxa_handle_session_modification_response(
     ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d]",
         ul_tunnel->remote_teid, ul_tunnel->local_teid);
 
-    if (flags == (OGS_PFCP_MODIFY_UL_ONLY|OGS_PFCP_MODIFY_ACTIVATE)) {
+    if (flags & OGS_PFCP_MODIFY_ACTIVATE) {
         ogs_gtp_f_teid_t sgw_s11_teid;
         ogs_gtp_f_teid_t sgw_s1u_teid;
 
@@ -401,7 +401,7 @@ void sgwc_sxa_handle_session_modification_response(
         rv = ogs_gtp_xact_commit(s11_xact);
         ogs_expect(rv == OGS_OK);
 
-    } else if (flags == OGS_PFCP_MODIFY_REMOVE) {
+    } else if (flags & OGS_PFCP_MODIFY_REMOVE) {
         sgwc_bearer_remove(bearer);
     }
 }

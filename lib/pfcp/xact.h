@@ -68,12 +68,10 @@ typedef struct ogs_pfcp_xact_s {
 
 #define OGS_PFCP_MODIFY_CREATE ((uint64_t)1<<0)
 #define OGS_PFCP_MODIFY_REMOVE ((uint64_t)1<<1)
-#define OGS_PFCP_MODIFY_DL_ONLY ((uint64_t)1<<2)
-#define OGS_PFCP_MODIFY_UL_ONLY ((uint64_t)1<<3)
-#define OGS_PFCP_MODIFY_TFT_UPDATE ((uint64_t)1<<4)
-#define OGS_PFCP_MODIFY_QOS_UPDATE ((uint64_t)1<<5)
-#define OGS_PFCP_MODIFY_ACTIVATE ((uint64_t)1<<6)
-#define OGS_PFCP_MODIFY_DEACTIVATE ((uint64_t)1<<7)
+#define OGS_PFCP_MODIFY_TFT_UPDATE ((uint64_t)1<<2)
+#define OGS_PFCP_MODIFY_QOS_UPDATE ((uint64_t)1<<3)
+#define OGS_PFCP_MODIFY_ACTIVATE ((uint64_t)1<<4)
+#define OGS_PFCP_MODIFY_DEACTIVATE ((uint64_t)1<<5)
     int             modify_flags;
 
 #define OGS_PFCP_DELETE_TRIGGER_UE_REQUESTED 1
