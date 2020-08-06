@@ -159,21 +159,21 @@ void sgwc_sxa_handle_session_establishment_response(
         ogs_gtp_message_t *gtp_message,
         ogs_pfcp_session_establishment_response_t *pfcp_rsp)
 {
-    int rv;
+    int rv, len = 0;
     uint8_t cause_value = 0;
-    ogs_gtp_xact_t *s11_xact = NULL;
     ogs_pfcp_f_seid_t *up_f_seid = NULL;
 
-    ogs_gtp_create_session_request_t *gtp_req = NULL;
-    ogs_pkbuf_t *pkbuf = NULL;
-    ogs_gtp_f_teid_t *pgw_s5c_teid = NULL;
-    int len = 0;
-    ogs_gtp_node_t *pgw = NULL;
     ogs_gtp_f_teid_t sgw_s5c_teid, sgw_s5u_teid;
-    ogs_gtp_xact_t *s5c_xact = NULL;
+    ogs_gtp_f_teid_t *pgw_s5c_teid = NULL;
+
+    ogs_gtp_xact_t *s11_xact = NULL, *s5c_xact = NULL;
+    ogs_gtp_node_t *pgw = NULL;
 
     sgwc_bearer_t *bearer = NULL;
     sgwc_tunnel_t *dl_tunnel = NULL;
+
+    ogs_gtp_create_session_request_t *gtp_req = NULL;
+    ogs_pkbuf_t *pkbuf = NULL;
 
     ogs_assert(pfcp_xact);
     ogs_assert(pfcp_rsp);
@@ -294,48 +294,133 @@ void sgwc_sxa_handle_session_establishment_response(
 }
 
 void sgwc_sxa_handle_session_modification_response(
-        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
+        sgwc_sess_t *sess, ogs_pfcp_xact_t *pfcp_xact,
         ogs_gtp_message_t *gtp_message,
         ogs_pfcp_session_modification_response_t *pfcp_rsp)
 {
-    sgwc_bearer_t *bearer = NULL;
+    int rv, len = 0;
     uint64_t flags;
 
-    ogs_gtp_create_session_response_t *gtp_rsp = NULL;
+    ogs_gtp_xact_t *s11_xact = NULL;
 
-    ogs_assert(xact);
+    sgwc_bearer_t *bearer = NULL;
+    sgwc_tunnel_t *ul_tunnel = NULL;
+    sgwc_ue_t *sgwc_ue = NULL;
+
+    ogs_gtp_create_session_response_t *gtp_rsp = NULL;
+    ogs_pkbuf_t *pkbuf = NULL;
+
+    ogs_assert(pfcp_xact);
     ogs_assert(pfcp_rsp);
     ogs_assert(gtp_message);
 
-    gtp_rsp = &gtp_message->create_session_response;
-    ogs_assert(gtp_rsp);
-
-    bearer = xact->data;
-    ogs_assert(bearer);
-    flags = xact->modify_flags;
+    flags = pfcp_xact->modify_flags;
     ogs_assert(flags);
 
-    ogs_pfcp_xact_commit(xact);
+    s11_xact = pfcp_xact->assoc_xact;
+    ogs_assert(s11_xact);
 
-    if (flags & OGS_PFCP_MODIFY_REMOVE)
+    bearer = pfcp_xact->data;
+    ogs_assert(bearer);
+    sgwc_ue = bearer->sgwc_ue;
+    ogs_assert(sgwc_ue);
+    ul_tunnel = sgwc_ul_tunnel_in_bearer(bearer);
+    ogs_assert(ul_tunnel);
+
+    ogs_pfcp_xact_commit(pfcp_xact);
+
+    ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d]",
+        ul_tunnel->remote_teid, ul_tunnel->local_teid);
+
+    if (flags == (OGS_PFCP_MODIFY_UL_ONLY|OGS_PFCP_MODIFY_ACTIVATE)) {
+        ogs_gtp_f_teid_t sgw_s11_teid;
+        ogs_gtp_f_teid_t sgw_s1u_teid;
+
+#if 0
+        ogs_sockaddr_t *addr = NULL, *addr6 = NULL;
+#endif
+
+        gtp_rsp = &gtp_message->create_session_response;
+        ogs_assert(gtp_rsp);
+
+        /* Send Control Plane(UL) : SGW-S11 */
+        memset(&sgw_s11_teid, 0, sizeof(ogs_gtp_f_teid_t));
+        sgw_s11_teid.interface_type = OGS_GTP_F_TEID_S11_S4_SGW_GTP_C;
+        sgw_s11_teid.teid = htobe32(sgwc_ue->sgw_s11_teid);
+        rv = ogs_gtp_sockaddr_to_f_teid(
+                sgwc_self()->gtpc_addr, sgwc_self()->gtpc_addr6,
+                &sgw_s11_teid, &len);
+        ogs_assert(rv == OGS_OK);
+        gtp_rsp->sender_f_teid_for_control_plane.presence = 1;
+        gtp_rsp->sender_f_teid_for_control_plane.data = &sgw_s11_teid;
+        gtp_rsp->sender_f_teid_for_control_plane.len = len;
+
+        /* Send Data Plane(UL) : SGW-S1U */
+        memset(&sgw_s1u_teid, 0, sizeof(ogs_gtp_f_teid_t));
+        sgw_s1u_teid.interface_type = OGS_GTP_F_TEID_S1_U_SGW_GTP_U;
+        sgw_s1u_teid.teid = htobe32(ul_tunnel->local_teid);
+        rv = ogs_gtp_sockaddr_to_f_teid(
+            ul_tunnel->local_addr, ul_tunnel->local_addr6, &sgw_s1u_teid, &len);
+        ogs_assert(rv == OGS_OK);
+#if 0
+        if (sgwc_self()->gtpu_addr) {
+            addr = ogs_hash_get(sgwc_self()->adv_gtpu_hash,
+                            &sgwc_self()->gtpu_addr->sin.sin_addr,
+                            sizeof(sgwc_self()->gtpu_addr->sin.sin_addr));
+        }
+        if (sgwc_self()->gtpu_addr6) {
+            addr6 = ogs_hash_get(sgwc_self()->adv_gtpu_hash6,
+                            &sgwc_self()->gtpu_addr6->sin6.sin6_addr,
+                            sizeof(sgwc_self()->gtpu_addr6->sin6.sin6_addr));
+        }
+        // Swap the SGW-S1U IP to IP to be advertised to UE
+        if (addr || addr6) {
+            rv = ogs_gtp_sockaddr_to_f_teid(addr, addr6, &sgw_s1u_teid, &len);
+            ogs_assert(rv == OGS_OK);
+        } else {
+            rv = ogs_gtp_sockaddr_to_f_teid(
+                    sgwc_self()->gtpu_addr, sgwc_self()->gtpu_addr6,
+                    &sgw_s1u_teid, &len);
+            ogs_assert(rv == OGS_OK);
+        }
+#endif
+        gtp_rsp->bearer_contexts_created.s1_u_enodeb_f_teid.presence = 1;
+        gtp_rsp->bearer_contexts_created.s1_u_enodeb_f_teid.data =
+            &sgw_s1u_teid;
+        gtp_rsp->bearer_contexts_created.s1_u_enodeb_f_teid.len = len;
+
+        gtp_message->h.type = OGS_GTP_CREATE_SESSION_RESPONSE_TYPE;
+        gtp_message->h.teid = sgwc_ue->mme_s11_teid;
+
+        pkbuf = ogs_gtp_build_msg(gtp_message);
+        ogs_expect_or_return(pkbuf);
+
+        rv = ogs_gtp_xact_update_tx(s11_xact, &gtp_message->h, pkbuf);
+        ogs_expect_or_return(rv == OGS_OK);
+
+        rv = ogs_gtp_xact_commit(s11_xact);
+        ogs_expect(rv == OGS_OK);
+
+    } else if (flags == OGS_PFCP_MODIFY_REMOVE) {
         sgwc_bearer_remove(bearer);
+    }
 }
 
 void sgwc_sxa_handle_session_deletion_response(
-        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
+        sgwc_sess_t *sess, ogs_pfcp_xact_t *pfcp_xact,
         ogs_gtp_message_t *gtp_message,
         ogs_pfcp_session_deletion_response_t *pfcp_rsp)
 {
     uint8_t cause_value = 0;
     ogs_gtp_xact_t *gtp_xact = NULL;
 
-    ogs_assert(xact);
+    ogs_assert(pfcp_xact);
     ogs_assert(pfcp_rsp);
 
-    gtp_xact = xact->assoc_xact;
+    gtp_xact = pfcp_xact->assoc_xact;
     ogs_assert(gtp_xact);
 
-    ogs_pfcp_xact_commit(xact);
+    ogs_pfcp_xact_commit(pfcp_xact);
 
     cause_value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
 
