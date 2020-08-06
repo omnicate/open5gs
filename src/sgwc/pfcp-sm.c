@@ -203,21 +203,17 @@ void sgwc_pfcp_state_associated(ogs_fsm_t *s, sgwc_event_t *e)
             sgwc_sxa_handle_association_setup_response(node, xact,
                     &message->pfcp_association_setup_response);
             break;
-#if 0
         case OGS_PFCP_SESSION_ESTABLISHMENT_RESPONSE_TYPE:
             if (!message->h.seid_presence) {
                 ogs_error("No SEID");
                 break;
             }
 
-            if (SGWC_EPC_SEID(message->h.seid))
-                sgwc_epc_n4_handle_session_establishment_response(
-                    sess, xact, &message->pfcp_session_establishment_response);
-            else
-                sgwc_5gc_n4_handle_session_establishment_response(
-                    sess, xact, &message->pfcp_session_establishment_response);
+            sgwc_sxa_handle_session_establishment_response(
+                sess, xact, &message->pfcp_session_establishment_response);
             break;
 
+#if 0
         case OGS_PFCP_SESSION_MODIFICATION_RESPONSE_TYPE:
             if (!message->h.seid_presence) {
                 ogs_error("No SEID");

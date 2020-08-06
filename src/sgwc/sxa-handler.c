@@ -137,182 +137,7 @@ void sgwc_sxa_handle_heartbeat_response(
             ogs_config()->time.message.pfcp.no_heartbeat_duration);
 }
 
-#if 0
-void sgwc_5gc_sxa_handle_session_establishment_response(
-        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_session_establishment_response_t *rsp)
-{
-    ogs_sbi_session_t *session = NULL;
-
-    ogs_pfcp_f_seid_t *up_f_seid = NULL;
-
-    ogs_assert(xact);
-    ogs_assert(rsp);
-
-    session = xact->assoc_session;
-    ogs_assert(session);
-
-    ogs_pfcp_xact_commit(xact);
-
-    if (!sess) {
-        ogs_warn("No Context");
-        return;
-    }
-
-    if (rsp->up_f_seid.presence == 0) {
-        ogs_error("No UP F-SEID");
-        return;
-    }
-
-    if (rsp->cause.presence) {
-        if (rsp->cause.u8 != OGS_PFCP_CAUSE_REQUEST_ACCEPTED) {
-            ogs_error("PFCP Cause [%d] : Not Accepted", rsp->cause.u8);
-            return;
-        }
-    } else {
-        ogs_error("No Cause");
-        return;
-    }
-
-    ogs_assert(sess);
-
-    /* UP F-SEID */
-    up_f_seid = rsp->up_f_seid.data;
-    ogs_assert(up_f_seid);
-    sess->upf_sxa_seid = be64toh(up_f_seid->seid);
-
-    sgwc_sbi_discover_and_send(OpenAPI_nf_type_AMF, sess, session, NULL,
-            sgwc_namf_comm_build_n1_n2_message_transfer);
-
-#if 0
-    sgwc_bearer_binding(sess);
-#endif
-}
-
-void sgwc_5gc_sxa_handle_session_modification_response(
-        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_session_modification_response_t *rsp)
-{
-    int status = 0;
-    uint64_t flags = 0;
-    ogs_sbi_session_t *session = NULL;
-
-    ogs_assert(xact);
-    ogs_assert(rsp);
-
-    session = xact->assoc_session;
-    ogs_assert(session);
-    flags = xact->modify_flags;
-    ogs_assert(flags);
-
-    ogs_pfcp_xact_commit(xact);
-
-    status = OGS_SBI_HTTP_STATUS_OK;
-
-    if (!sess) {
-        ogs_warn("No Context");
-        status = OGS_SBI_HTTP_STATUS_NOT_FOUND;
-    }
-
-    if (rsp->cause.presence) {
-        if (rsp->cause.u8 != OGS_PFCP_CAUSE_REQUEST_ACCEPTED) {
-            ogs_warn("PFCP Cause [%d] : Not Accepted", rsp->cause.u8);
-            status = sbi_status_from_pfcp(rsp->cause.u8);
-        }
-    } else {
-        ogs_error("No Cause");
-        status = OGS_SBI_HTTP_STATUS_BAD_REQUEST;
-    }
-
-    if (status != OGS_SBI_HTTP_STATUS_OK) {
-        char *strerror = ogs_msprintf(
-                "PFCP Cause [%d] : Not Accepted", rsp->cause.u8);
-        sgwc_sbi_send_sm_context_update_error(session, status, strerror,
-                NULL, NULL, NULL);
-        ogs_free(strerror);
-        return;
-    }
-
-    ogs_assert(sess);
-
-    if (flags & OGS_PFCP_5GC_MODIFY_ACTIVATE) {
-        /* ACTIVATED Is NOT Inlcuded in RESPONSE */
-        sgwc_sbi_send_sm_context_updated_data(sess, session, 0);
-
-    } else if (flags & OGS_PFCP_5GC_MODIFY_DEACTIVATE) {
-        /* Only ACTIVING & DEACTIVATED is Included */
-        sgwc_sbi_send_sm_context_updated_data(
-                sess, session, OpenAPI_up_cnx_state_DEACTIVATED);
-    }
-}
-
-void sgwc_5gc_sxa_handle_session_deletion_response(
-        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_session_deletion_response_t *rsp)
-{
-    int status = 0;
-    int trigger;
-
-    ogs_sbi_session_t *session = NULL;
-
-    ogs_sbi_message_t sendmsg;
-    ogs_sbi_response_t *response = NULL;
-
-    ogs_assert(xact);
-    ogs_assert(rsp);
-
-    session = xact->assoc_session;
-    ogs_assert(session);
-    trigger = xact->delete_trigger;
-    ogs_assert(trigger);
-
-    ogs_pfcp_xact_commit(xact);
-
-    status = OGS_SBI_HTTP_STATUS_OK;
-
-    if (!sess) {
-        ogs_warn("No Context");
-        status = OGS_SBI_HTTP_STATUS_NOT_FOUND;
-    }
-
-    if (rsp->cause.presence) {
-        if (rsp->cause.u8 != OGS_PFCP_CAUSE_REQUEST_ACCEPTED) {
-            ogs_warn("PFCP Cause [%d] : Not Accepted", rsp->cause.u8);
-            status = sbi_status_from_pfcp(rsp->cause.u8);
-        }
-    } else {
-        ogs_error("No Cause");
-        status = OGS_SBI_HTTP_STATUS_BAD_REQUEST;
-    }
-
-    if (status != OGS_SBI_HTTP_STATUS_OK) {
-        char *strerror = ogs_msprintf(
-                "PFCP Cause [%d] : Not Accepted", rsp->cause.u8);
-        ogs_sbi_server_send_error(session, status, NULL, NULL, NULL);
-        ogs_free(strerror);
-        return;
-    }
-
-    ogs_assert(sess);
-
-    if (trigger == OGS_PFCP_5GC_DELETE_TRIGGER_UE_REQUESTED) {
-
-        sgwc_sbi_send_sm_context_updated_data_in_session_deletion(sess, session);
-
-    } else {
-
-        memset(&sendmsg, 0, sizeof(sendmsg));
-
-        response = ogs_sbi_build_response(
-                &sendmsg, OGS_SBI_HTTP_STATUS_NO_CONTENT);
-        ogs_assert(response);
-        ogs_sbi_server_send_response(session, response);
-
-        SMF_SESS_CLEAR(sess);
-    }
-}
-
-void sgwc_epc_sxa_handle_session_establishment_response(
+void sgwc_sxa_handle_session_establishment_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_establishment_response_t *rsp)
 {
@@ -361,32 +186,37 @@ void sgwc_epc_sxa_handle_session_establishment_response(
     /* UP F-SEID */
     up_f_seid = rsp->up_f_seid.data;
     ogs_assert(up_f_seid);
-    sess->upf_sxa_seid = be64toh(up_f_seid->seid);
+    sess->sgwu_sxa_seid = be64toh(up_f_seid->seid);
 
+#if 0
     sgwc_gtp_send_create_session_response(sess, gtp_xact);
 
     sgwc_bearer_binding(sess);
+#endif
 }
 
-void sgwc_epc_sxa_handle_session_modification_response(
+void sgwc_sxa_handle_session_modification_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_modification_response_t *rsp)
 {
     sgwc_bearer_t *bearer = NULL;
+    uint64_t flags;
 
     ogs_assert(xact);
     ogs_assert(rsp);
 
     bearer = xact->data;
     ogs_assert(bearer);
+    flags = xact->modify_flags;
+    ogs_assert(flags);
 
     ogs_pfcp_xact_commit(xact);
 
-    if (bearer->pfcp_epc_modify.remove)
+    if (flags & OGS_PFCP_5GC_MODIFY_REMOVE)
         sgwc_bearer_remove(bearer);
 }
 
-void sgwc_epc_sxa_handle_session_deletion_response(
+void sgwc_sxa_handle_session_deletion_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_deletion_response_t *rsp)
 {
@@ -426,8 +256,9 @@ void sgwc_epc_sxa_handle_session_deletion_response(
 
     ogs_assert(sess);
 
+#if 0
     sgwc_gtp_send_delete_session_response(sess, gtp_xact);
 
     SMF_SESS_CLEAR(sess);
-}
 #endif
+}

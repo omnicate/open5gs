@@ -39,27 +39,15 @@ void sgwc_sxa_handle_heartbeat_response(
         ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
         ogs_pfcp_heartbeat_response_t *req);
 
-#if 0
-void sgwc_5gc_sxa_handle_session_establishment_response(
+void sgwc_sxa_handle_session_establishment_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_establishment_response_t *rsp);
-void sgwc_5gc_sxa_handle_session_modification_response(
+void sgwc_sxa_handle_session_modification_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_modification_response_t *rsp);
-void sgwc_5gc_sxa_handle_session_deletion_response(
+void sgwc_sxa_handle_session_deletion_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_deletion_response_t *rsp);
-
-void sgwc_epc_sxa_handle_session_establishment_response(
-        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_session_establishment_response_t *rsp);
-void sgwc_epc_sxa_handle_session_modification_response(
-        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_session_modification_response_t *rsp);
-void sgwc_epc_sxa_handle_session_deletion_response(
-        sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_session_deletion_response_t *rsp);
-#endif
 
 #ifdef __cplusplus
 }
