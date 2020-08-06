@@ -57,9 +57,6 @@ void sgwc_s11_handle_create_session_request(
     ogs_gtp_xact_t *s5c_xact = NULL;
     sgwc_sess_t *sess = NULL;
     sgwc_bearer_t *bearer = NULL;
-#if 0
-    sgwc_tunnel_t *s5u_tunnel = NULL;
-#endif
 
     char apn[OGS_MAX_APN_LEN];
 
@@ -165,85 +162,13 @@ void sgwc_s11_handle_create_session_request(
     /* Set Bearer EBI */
     bearer->ebi = req->bearer_contexts_to_be_created.eps_bearer_id.u8;
 
-#if 0
-    s5u_tunnel = sgwc_s5u_tunnel_in_bearer(bearer);
-    ogs_assert(s5u_tunnel);
-#endif
-
     /* Receive Control Plane(DL) : MME-S11 */
     mme_s11_teid = req->sender_f_teid_for_control_plane.data;
     ogs_assert(mme_s11_teid);
     sgwc_ue->mme_s11_teid = be32toh(mme_s11_teid->teid);
 
-    /* Send Control Plane(DL) : SGW-S5C */
-    memset(&sgw_s5c_teid, 0, sizeof(ogs_gtp_f_teid_t));
-    sgw_s5c_teid.interface_type = OGS_GTP_F_TEID_S5_S8_SGW_GTP_C;
-    sgw_s5c_teid.teid = htonl(sess->sgw_s5c_teid);
-    rv = ogs_gtp_sockaddr_to_f_teid(
-        sgwc_self()->gtpc_addr, sgwc_self()->gtpc_addr6, &sgw_s5c_teid, &len);
-    ogs_assert(rv == OGS_OK);
-    req->sender_f_teid_for_control_plane.presence = 1;
-    req->sender_f_teid_for_control_plane.data = &sgw_s5c_teid;
-    req->sender_f_teid_for_control_plane.len = len;
-
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
         sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
-    ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
-        sess->sgw_s5c_teid, sess->pgw_s5c_teid);
-#if 0
-    ogs_debug("    SGW_S5U_TEID[%d] PGW_S5U_TEID[%d]",
-        s5u_tunnel->local_teid, s5u_tunnel->remote_teid);
-#endif
-
-    pgw_s5c_teid = req->pgw_s5_s8_address_for_control_plane_or_pmip.data;
-    ogs_assert(pgw_s5c_teid);
-
-    pgw = ogs_gtp_node_find_by_f_teid(&sgwc_self()->pgw_s5c_list, pgw_s5c_teid);
-    if (!pgw) {
-        pgw = ogs_gtp_node_add_by_f_teid(
-            &sgwc_self()->pgw_s5c_list, pgw_s5c_teid, sgwc_self()->gtpc_port,
-            ogs_config()->parameter.no_ipv4,
-            ogs_config()->parameter.no_ipv6,
-            ogs_config()->parameter.prefer_ipv4);
-        ogs_assert(pgw);
-
-        rv = ogs_gtp_connect(
-                sgwc_self()->gtpc_sock, sgwc_self()->gtpc_sock6, pgw);
-        ogs_assert(rv == OGS_OK);
-    }
-    /* Setup GTP Node */
-    OGS_SETUP_GTP_NODE(sess, pgw);
-
-    /* Remove PGW-S5C */
-    req->pgw_s5_s8_address_for_control_plane_or_pmip.presence = 0;
-
-    /* Data Plane(DL) : SGW-S5U */
-#if 0 /* TODO */
-    memset(&sgwc_s5u_teid, 0, sizeof(ogs_gtp_f_teid_t));
-    sgwc_s5u_teid.teid = htonl(s5u_tunnel->local_teid);
-    sgwc_s5u_teid.interface_type = OGS_GTP_F_TEID_S5_S8_SGW_GTP_U;
-    rv = ogs_gtp_sockaddr_to_f_teid(
-        sgwc_self()->gtpu_addr, sgwc_self()->gtpu_addr6, &sgwc_s5u_teid, &len);
-    ogs_assert(rv == OGS_OK);
-    req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.presence = 1;
-    req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.data = &sgwc_s5u_teid;
-    req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.len = len;
-
-    message->h.type = OGS_GTP_CREATE_SESSION_REQUEST_TYPE;
-    message->h.teid = sess->pgw_s5c_teid;
-
-    pkbuf = ogs_gtp_build_msg(message);
-    ogs_expect_or_return(pkbuf);
-
-    s5c_xact = ogs_gtp_xact_local_create(
-            sess->gnode, &message->h, pkbuf, timeout, sess);
-    ogs_expect_or_return(s5c_xact);
-
-    ogs_gtp_xact_associate(s11_xact, s5c_xact);
-
-    rv = ogs_gtp_xact_commit(s5c_xact);
-    ogs_expect(rv == OGS_OK);
-#endif
 
     sgwc_pfcp_send_session_establishment_request(sess, s11_xact, gtpbuf);
 }
