@@ -134,8 +134,10 @@ static void build_create_pdr(
     message->pdr_id.presence = 1;
     message->pdr_id.u16 = pdr->id;
 
-    message->precedence.presence = 1;
-    message->precedence.u32 = pdr->precedence;
+    if (pdr->precedence) {
+        message->precedence.presence = 1;
+        message->precedence.u32 = pdr->precedence;
+    }
 
     message->pdi.presence = 1;
     message->pdi.source_interface.presence = 1;

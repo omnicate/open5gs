@@ -109,14 +109,14 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
         return NULL;
 
     if (message->pdr_id.presence == 0) {
-        ogs_warn("No PDR-ID");
+        ogs_error("No PDR-ID");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_PDR_ID_TYPE;
         return NULL;
     }
 
     if (message->precedence.presence == 0) {
-        ogs_warn("No Presence in PDR");
+        ogs_error("No Presence in PDR");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_PRECEDENCE_TYPE;
         return NULL;
@@ -127,14 +127,14 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
     ogs_pfcp_pdr_reorder_by_precedence(pdr, message->precedence.u32);
 
     if (message->pdi.presence == 0) {
-        ogs_warn("No PDI in PDR");
+        ogs_error("No PDI in PDR");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_PDI_TYPE;
         return NULL;
     }
 
     if (message->pdi.source_interface.presence == 0) {
-        ogs_warn("No Source Interface in PDI");
+        ogs_error("No Source Interface in PDI");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_SOURCE_INTERFACE_TYPE;
         return NULL;
@@ -180,14 +180,14 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
 
     } else if (pdr->src_if == OGS_PFCP_INTERFACE_ACCESS) { /* Uplink */
         if (message->pdi.local_f_teid.presence == 0) {
-            ogs_warn("No F-TEID in PDI");
+            ogs_error("No F-TEID in PDI");
             *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
             *offending_ie_value = OGS_PFCP_F_TEID_TYPE;
             return NULL;
         }
 
         if (message->outer_header_removal.presence == 0) {
-            ogs_warn("No Outer Header Removal in PDI");
+            ogs_error("No Outer Header Removal in PDI");
             *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
             *offending_ie_value = OGS_PFCP_OUTER_HEADER_REMOVAL_TYPE;
             return NULL;
@@ -236,7 +236,7 @@ static bool handle_remove_pdr(ogs_pfcp_sess_t *sess,
         return false;
 
     if (message->pdr_id.presence == 0) {
-        ogs_warn("No PDR-ID");
+        ogs_error("No PDR-ID");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_PDR_ID_TYPE;
         return false;
@@ -267,7 +267,7 @@ static ogs_pfcp_far_t *handle_create_far(ogs_pfcp_sess_t *sess,
         return NULL;
 
     if (message->far_id.presence == 0) {
-        ogs_warn("No FAR-ID");
+        ogs_error("No FAR-ID");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_FAR_ID_TYPE;
         return NULL;
@@ -282,7 +282,7 @@ static ogs_pfcp_far_t *handle_create_far(ogs_pfcp_sess_t *sess,
     }
 
     if (message->apply_action.presence == 0) {
-        ogs_warn("No Apply Action");
+        ogs_error("No Apply Action");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_APPLY_ACTION_TYPE;
         return NULL;
@@ -328,7 +328,7 @@ static ogs_pfcp_far_t *handle_update_far(ogs_pfcp_sess_t *sess,
         return NULL;
 
     if (message->far_id.presence == 0) {
-        ogs_warn("No FAR-ID");
+        ogs_error("No FAR-ID");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_FAR_ID_TYPE;
         return NULL;
@@ -384,7 +384,7 @@ static bool handle_remove_far(ogs_pfcp_sess_t *sess,
         return false;
 
     if (message->far_id.presence == 0) {
-        ogs_warn("No FAR-ID");
+        ogs_error("No FAR-ID");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_FAR_ID_TYPE;
         return false;
@@ -415,7 +415,7 @@ static ogs_pfcp_qer_t *handle_create_qer(ogs_pfcp_sess_t *sess,
         return NULL;
 
     if (message->qer_id.presence == 0) {
-        ogs_warn("No QER-ID");
+        ogs_error("No QER-ID");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_FAR_ID_TYPE;
         return NULL;
@@ -430,7 +430,7 @@ static ogs_pfcp_qer_t *handle_create_qer(ogs_pfcp_sess_t *sess,
     }
 
     if (message->gate_status.presence == 0) {
-        ogs_warn("No Gate Status");
+        ogs_error("No Gate Status");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_APPLY_ACTION_TYPE;
         return NULL;
@@ -462,7 +462,7 @@ static ogs_pfcp_qer_t *handle_update_qer(ogs_pfcp_sess_t *sess,
         return NULL;
 
     if (message->qer_id.presence == 0) {
-        ogs_warn("No QER-ID");
+        ogs_error("No QER-ID");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_FAR_ID_TYPE;
         return NULL;
@@ -497,7 +497,7 @@ static bool handle_remove_qer(ogs_pfcp_sess_t *sess,
         return false;
 
     if (message->qer_id.presence == 0) {
-        ogs_warn("No QER-ID");
+        ogs_error("No QER-ID");
         *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
         *offending_ie_value = OGS_PFCP_QER_ID_TYPE;
         return false;
@@ -534,7 +534,7 @@ void upf_n4_handle_session_establishment_request(
     cause_value = OGS_PFCP_CAUSE_REQUEST_ACCEPTED;
 
     if (!sess) {
-        ogs_warn("No Context");
+        ogs_error("No Context");
         ogs_pfcp_send_error_message(xact, 0,
                 OGS_PFCP_SESSION_ESTABLISHMENT_RESPONSE_TYPE,
                 OGS_PFCP_CAUSE_SESSION_CONTEXT_NOT_FOUND, 0);
@@ -615,7 +615,7 @@ void upf_n4_handle_session_modification_request(
     cause_value = OGS_PFCP_CAUSE_REQUEST_ACCEPTED;
 
     if (!sess) {
-        ogs_warn("No Context");
+        ogs_error("No Context");
         ogs_pfcp_send_error_message(xact, 0,
                 OGS_PFCP_SESSION_MODIFICATION_RESPONSE_TYPE,
                 OGS_PFCP_CAUSE_SESSION_CONTEXT_NOT_FOUND, 0);
@@ -727,7 +727,7 @@ void upf_n4_handle_session_deletion_request(
     ogs_debug("Session Deletion Request");
 
     if (!sess) {
-        ogs_warn("No Context");
+        ogs_error("No Context");
         ogs_pfcp_send_error_message(xact, 0,
                 OGS_PFCP_SESSION_DELETION_RESPONSE_TYPE,
                 OGS_PFCP_CAUSE_SESSION_CONTEXT_NOT_FOUND, 0);
