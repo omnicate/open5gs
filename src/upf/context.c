@@ -24,7 +24,6 @@ static upf_context_t self;
 int __upf_log_domain;
 
 static OGS_POOL(upf_sess_pool, upf_sess_t);
-static OGS_POOL(upf_sdf_filter_pool, upf_sdf_filter_t);
 
 static int context_initialized = 0;
 
@@ -48,8 +47,6 @@ void upf_context_init(void)
     ogs_list_init(&self.gnb_n3_list);
 
     ogs_pool_init(&upf_sess_pool, ogs_config()->pool.sess);
-    ogs_pool_init(&upf_sdf_filter_pool,
-            ogs_config()->pool.sess * OGS_MAX_NUM_OF_RULE);
 
     self.sess_hash = ogs_hash_make();
     self.ipv4_hash = ogs_hash_make();
@@ -72,7 +69,6 @@ void upf_context_final(void)
     ogs_hash_destroy(self.ipv6_hash);
 
     ogs_pool_final(&upf_sess_pool);
-    ogs_pool_final(&upf_sdf_filter_pool);
 
     ogs_gtp_node_remove_all(&self.gnb_n3_list);
 
@@ -474,7 +470,6 @@ int upf_sess_remove(upf_sess_t *sess)
 
     ogs_list_remove(&self.sess_list, sess);
     ogs_pfcp_sess_clear(&sess->pfcp);
-    upf_sdf_filter_remove_all(sess);
 
     ogs_hash_set(self.sess_hash, &sess->smf_n4_seid,
             sizeof(sess->smf_n4_seid), NULL);
@@ -622,54 +617,4 @@ upf_sess_t *upf_sess_add_by_message(ogs_pfcp_message_t *message)
     ogs_assert(sess);
 
     return sess;
-}
-
-upf_sdf_filter_t *upf_sdf_filter_add(ogs_pfcp_pdr_t *pdr)
-{
-    upf_sdf_filter_t *sdf_filter = NULL;
-    ogs_pfcp_sess_t *pfcp = NULL;
-    upf_sess_t *sess = NULL;
-
-    ogs_assert(pdr);
-    pfcp = pdr->sess;
-    ogs_assert(pfcp);
-    sess = UPF_SESS(pfcp);
-    ogs_assert(sess);
-
-    ogs_pool_alloc(&upf_sdf_filter_pool, &sdf_filter);
-    ogs_assert(sdf_filter);
-    memset(sdf_filter, 0, sizeof *sdf_filter);
-
-    sdf_filter->pdr = pdr;
-    ogs_list_add(&sess->sdf_filter_list, sdf_filter);
-
-    return sdf_filter;
-}
-
-void upf_sdf_filter_remove(upf_sdf_filter_t *sdf_filter)
-{
-    ogs_pfcp_pdr_t *pdr = NULL;
-    ogs_pfcp_sess_t *pfcp = NULL;
-    upf_sess_t *sess = NULL;
-
-    ogs_assert(sdf_filter);
-    pdr = sdf_filter->pdr;
-    ogs_assert(pdr);
-    pfcp = pdr->sess;
-    ogs_assert(pfcp);
-    sess = UPF_SESS(pfcp);
-    ogs_assert(sess);
-
-    ogs_list_remove(&sess->sdf_filter_list, sdf_filter);
-    ogs_pool_free(&upf_sdf_filter_pool, sdf_filter);
-}
-
-void upf_sdf_filter_remove_all(upf_sess_t *sess)
-{
-    upf_sdf_filter_t *sdf_filter = NULL, *next_sdf_filter = NULL;
-
-    ogs_assert(sess);
-
-    ogs_list_for_each_safe(&sess->sdf_filter_list, next_sdf_filter, sdf_filter)
-        upf_sdf_filter_remove(sdf_filter);
 }

@@ -34,6 +34,7 @@ static OGS_POOL(ogs_pfcp_bar_pool, ogs_pfcp_bar_t);
 
 static OGS_POOL(ogs_pfcp_dev_pool, ogs_pfcp_dev_t);
 static OGS_POOL(ogs_pfcp_subnet_pool, ogs_pfcp_subnet_t);
+static OGS_POOL(ogs_pfcp_rule_pool, ogs_pfcp_rule_t);
 
 static int context_initialized = 0;
 
@@ -80,6 +81,8 @@ void ogs_pfcp_context_init(int num_of_gtpu_resource)
             ogs_config()->pool.sess * OGS_MAX_NUM_OF_QER);
     ogs_pool_init(&ogs_pfcp_bar_pool,
             ogs_config()->pool.sess * OGS_MAX_NUM_OF_BAR);
+    ogs_pool_init(&ogs_pfcp_rule_pool,
+            ogs_config()->pool.sess * OGS_MAX_NUM_OF_RULE);
 
     ogs_list_init(&self.dev_list);
     ogs_pool_init(&ogs_pfcp_dev_pool, OGS_MAX_NUM_OF_DEV);
@@ -103,6 +106,7 @@ void ogs_pfcp_context_final(void)
 
     ogs_pool_final(&ogs_pfcp_dev_pool);
     ogs_pool_final(&ogs_pfcp_subnet_pool);
+    ogs_pool_final(&ogs_pfcp_rule_pool);
 
     ogs_pool_final(&ogs_pfcp_sess_pool);
     ogs_pool_final(&ogs_pfcp_pdr_pool);
@@ -822,6 +826,7 @@ void ogs_pfcp_sess_clear(ogs_pfcp_sess_t *sess)
     ogs_pfcp_urr_remove_all(sess);
     ogs_pfcp_qer_remove_all(sess);
     if (sess->bar) ogs_pfcp_bar_delete(sess->bar);
+    ogs_pfcp_rule_remove_all(sess);
 }
 
 static int precedence_compare(ogs_pfcp_pdr_t *pdr1, ogs_pfcp_pdr_t *pdr2)
@@ -1211,6 +1216,50 @@ void ogs_pfcp_bar_delete(ogs_pfcp_bar_t *bar)
     sess->bar = NULL;
 
     ogs_pool_free(&ogs_pfcp_bar_pool, bar);
+}
+
+ogs_pfcp_rule_t *ogs_pfcp_rule_add(ogs_pfcp_pdr_t *pdr)
+{
+    ogs_pfcp_rule_t *rule = NULL;
+    ogs_pfcp_sess_t *sess = NULL;
+
+    ogs_assert(pdr);
+    sess = pdr->sess;
+    ogs_assert(sess);
+
+    ogs_pool_alloc(&ogs_pfcp_rule_pool, &rule);
+    ogs_assert(rule);
+    memset(rule, 0, sizeof *rule);
+
+    rule->pdr = pdr;
+    ogs_list_add(&sess->rule_list, rule);
+
+    return rule;
+}
+
+void ogs_pfcp_rule_remove(ogs_pfcp_rule_t *rule)
+{
+    ogs_pfcp_pdr_t *pdr = NULL;
+    ogs_pfcp_sess_t *sess = NULL;
+
+    ogs_assert(rule);
+    pdr = rule->pdr;
+    ogs_assert(pdr);
+    sess = pdr->sess;
+    ogs_assert(sess);
+
+    ogs_list_remove(&sess->rule_list, rule);
+    ogs_pool_free(&ogs_pfcp_rule_pool, rule);
+}
+
+void ogs_pfcp_rule_remove_all(ogs_pfcp_sess_t *sess)
+{
+    ogs_pfcp_rule_t *rule = NULL, *next_rule = NULL;
+
+    ogs_assert(sess);
+
+    ogs_list_for_each_safe(&sess->rule_list, next_rule, rule)
+        ogs_pfcp_rule_remove(rule);
 }
 
 int ogs_pfcp_ue_pool_generate(void)

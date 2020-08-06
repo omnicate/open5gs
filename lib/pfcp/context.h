@@ -107,6 +107,7 @@ typedef struct ogs_pfcp_sess_s {
     ogs_list_t          urr_list;       /* URR List */
     ogs_list_t          qer_list;       /* QER List */
     ogs_pfcp_bar_t      *bar;           /* BAR Item */
+    ogs_list_t          rule_list;      /* Rule List */
 
     /* Related Context */
     ogs_pfcp_pdr_t      *default_pdr;   /* Used by UPF */
@@ -226,6 +227,15 @@ typedef struct ogs_pfcp_subnet_s {
     ogs_pfcp_dev_t  *dev;           /* Related Context */
 } ogs_pfcp_subnet_t;
 
+typedef struct ogs_pfcp_rule_s {
+    ogs_lnode_t lnode;
+
+    ogs_ipfw_rule_t ipfw;
+
+    /* Related Context */
+    ogs_pfcp_pdr_t  *pdr;
+} ogs_pfcp_rule_t;
+
 void ogs_pfcp_context_init(int num_of_gtpu_resource);
 void ogs_pfcp_context_final(void);
 ogs_pfcp_context_t *ogs_pfcp_self(void);
@@ -301,6 +311,10 @@ void ogs_pfcp_qer_remove_all(ogs_pfcp_sess_t *sess);
 
 ogs_pfcp_bar_t *ogs_pfcp_bar_new(ogs_pfcp_sess_t *sess);
 void ogs_pfcp_bar_delete(ogs_pfcp_bar_t *bar);
+
+ogs_pfcp_rule_t *ogs_pfcp_rule_add(ogs_pfcp_pdr_t *pdr);
+void ogs_pfcp_rule_remove(ogs_pfcp_rule_t *rule);
+void ogs_pfcp_rule_remove_all(ogs_pfcp_sess_t *sess);
 
 int ogs_pfcp_ue_pool_generate(void);
 ogs_pfcp_ue_ip_t *ogs_pfcp_ue_ip_alloc(
