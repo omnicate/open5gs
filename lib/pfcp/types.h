@@ -587,4 +587,3 @@ ED3(uint8_t     spare:4;,
 #endif
 
 #endif /* OGS_PFCP_TYPES_H */
-
