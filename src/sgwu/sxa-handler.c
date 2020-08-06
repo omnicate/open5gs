@@ -114,16 +114,13 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
         return NULL;
     }
 
-    if (message->precedence.presence == 0) {
-        ogs_error("No Presence in PDR");
-        *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
-        *offending_ie_value = OGS_PFCP_PRECEDENCE_TYPE;
-        return NULL;
-    }
-
     pdr = ogs_pfcp_pdr_find_or_add(sess, message->pdr_id.u16);
     ogs_assert(pdr);
-    ogs_pfcp_pdr_reorder_by_precedence(pdr, message->precedence.u32);
+
+    if (message->precedence.presence) {
+        ogs_pfcp_pdr_reorder_by_precedence(pdr, message->precedence.u32);
+        pdr->precedence = message->precedence.u32;
+    }
 
     if (message->pdi.presence == 0) {
         ogs_error("No PDI in PDR");
@@ -139,7 +136,6 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
         return NULL;
     }
 
-    pdr->precedence = message->precedence.u32;
     pdr->src_if = message->pdi.source_interface.u8;
 
 #if 0
