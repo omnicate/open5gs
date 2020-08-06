@@ -39,13 +39,13 @@ static void timeout(ogs_gtp_xact_t *xact, void *data)
             sgwc_ue->imsi_bcd, type);
 }
 
-void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
-        sgwc_ue_t *sgwc_ue, ogs_gtp_message_t *message)
+void sgwc_s11_handle_create_session_request(
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_create_session_request_t *req)
 {
     int rv;
     uint8_t cause_value = 0;
     uint16_t decoded;
-    ogs_gtp_create_session_request_t *req = NULL;
     ogs_pkbuf_t *pkbuf = NULL;
     ogs_gtp_f_teid_t *mme_s11_teid = NULL;
     ogs_gtp_f_teid_t *pgw_s5c_teid = NULL;
@@ -64,12 +64,12 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
     char apn[OGS_MAX_APN_LEN];
 
     ogs_assert(s11_xact);
-    ogs_assert(message);
+    ogs_assert(gtpbuf);
+    ogs_assert(req);
 
     ogs_debug("[SGW] Create Session Request");
 
     cause_value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
-    req = &message->create_session_request;
 
     if (!sgwc_ue) {
         ogs_warn("No Context");
@@ -245,7 +245,7 @@ void sgwc_s11_handle_create_session_request(ogs_gtp_xact_t *s11_xact,
     ogs_expect(rv == OGS_OK);
 #endif
 
-    sgwc_pfcp_send_session_establishment_request(sess, s11_xact);
+    sgwc_pfcp_send_session_establishment_request(sess, s11_xact, gtpbuf);
 }
 
 void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,

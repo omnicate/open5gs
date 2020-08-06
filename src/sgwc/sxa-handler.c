@@ -139,6 +139,7 @@ void sgwc_sxa_handle_heartbeat_response(
 
 void sgwc_sxa_handle_session_establishment_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *xact,
+        ogs_gtp_message_t *gtp_message,
         ogs_pfcp_session_establishment_response_t *rsp)
 {
     uint8_t cause_value = 0;

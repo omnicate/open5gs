@@ -35,10 +35,12 @@ void sgwc_pfcp_send_association_setup_response(ogs_pfcp_xact_t *xact,
 void sgwc_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node);
 
 void sgwc_pfcp_send_session_establishment_request(
-        sgwc_sess_t *sess, void *gtp_xact);
+        sgwc_sess_t *sess, ogs_gtp_xact_t *gtp_xact, ogs_pkbuf_t *gtpbuf);
 void sgwc_pfcp_send_session_modification_request(
-        sgwc_bearer_t *bearer, void *gtp_xact, uint64_t flags);
-void sgwc_pfcp_send_session_deletion_request(sgwc_sess_t *sess, void *gtp_xact);
+        sgwc_bearer_t *bearer, ogs_gtp_xact_t *gtp_xact,
+        ogs_pkbuf_t *gtpbuf, uint64_t flags);
+void sgwc_pfcp_send_session_deletion_request(
+        sgwc_sess_t *sess, ogs_gtp_xact_t *gtp_xact, ogs_pkbuf_t *gtpbuf);
 
 #ifdef __cplusplus
 }

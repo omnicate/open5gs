@@ -67,8 +67,8 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
     sgwc_sess_t *sess = NULL;
     sgwc_bearer_t *bearer = NULL;
 
-    ogs_gtp_xact_t *xact = NULL;
-    ogs_gtp_message_t message;
+    ogs_gtp_xact_t *gtp_xact = NULL;
+    ogs_gtp_message_t gtp_message;
     ogs_gtp_node_t *gnode = NULL;
 
     ogs_pfcp_node_t *pfcp_node = NULL;
@@ -86,17 +86,18 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
             ogs_error("Can't establish SGW path");
             break;
         }
-
         rv = sgwc_pfcp_open();
         if (rv != OGS_OK) {
             ogs_fatal("Can't establish N4-PFCP path");
+            break;
         }
-
         break;
+
     case OGS_FSM_EXIT_SIG:
         sgwc_gtp_close();
         sgwc_pfcp_close();
         break;
+
     case SGWC_EVT_SXA_MESSAGE:
         ogs_assert(e);
         recvbuf = e->pkbuf;
@@ -119,14 +120,24 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
 
         e->pfcp_message = &pfcp_message;
         e->pfcp_xact = pfcp_xact;
+
+        e->gtp_message = NULL;
+        if (pfcp_xact->gtpbuf) {
+            rv = ogs_gtp_parse_msg(&gtp_message, pfcp_xact->gtpbuf);
+            ogs_assert(rv != OGS_OK);
+
+            ogs_pkbuf_free(pfcp_xact->gtpbuf);
+            e->gtp_message = &gtp_message;
+        }
+
         ogs_fsm_dispatch(&pfcp_node->sm, e);
         if (OGS_FSM_CHECK(&pfcp_node->sm, sgwc_pfcp_state_exception)) {
             ogs_error("PFCP state machine exception");
-            break;
         }
 
         ogs_pkbuf_free(recvbuf);
         break;
+
     case SGWC_EVT_SXA_TIMER:
     case SGWC_EVT_SXA_NO_HEARTBEAT:
         ogs_assert(e);
@@ -142,15 +153,15 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
         recvbuf = e->pkbuf;
         ogs_assert(recvbuf);
 
-        if (ogs_gtp_parse_msg(&message, recvbuf) != OGS_OK) {
+        if (ogs_gtp_parse_msg(&gtp_message, recvbuf) != OGS_OK) {
             ogs_error("ogs_gtp_parse_msg() failed");
             ogs_pkbuf_free(recvbuf);
             break;
         }
 
-        if (message.h.teid_presence && message.h.teid != 0) {
+        if (gtp_message.h.teid_presence && gtp_message.h.teid != 0) {
             /* Cause is not "Context not found" */
-            sgwc_ue = sgwc_ue_find_by_teid(message.h.teid);
+            sgwc_ue = sgwc_ue_find_by_teid(gtp_message.h.teid);
         }
 
         if (sgwc_ue) {
@@ -161,66 +172,73 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
             ogs_assert(gnode);
         }
 
-        rv = ogs_gtp_xact_receive(gnode, &message.h, &xact);
+        rv = ogs_gtp_xact_receive(gnode, &gtp_message.h, &gtp_xact);
         if (rv != OGS_OK) {
             ogs_pkbuf_free(recvbuf);
             break;
         }
 
-        switch(message.h.type) {
+        switch(gtp_message.h.type) {
         case OGS_GTP_ECHO_REQUEST_TYPE:
-            sgwc_handle_echo_request(xact, &message.echo_request);
+            sgwc_handle_echo_request(gtp_xact, &gtp_message.echo_request);
             break;
         case OGS_GTP_ECHO_RESPONSE_TYPE:
-            sgwc_handle_echo_response(xact, &message.echo_response);
+            sgwc_handle_echo_response(gtp_xact, &gtp_message.echo_response);
             break;
         case OGS_GTP_CREATE_SESSION_REQUEST_TYPE:
-            if (message.h.teid == 0) {
+            if (gtp_message.h.teid == 0) {
                 ogs_expect(!sgwc_ue);
-                sgwc_ue = sgwc_ue_add_by_message(&message);
+                sgwc_ue = sgwc_ue_add_by_message(&gtp_message);
                 if (sgwc_ue)
                     OGS_SETUP_GTP_NODE(sgwc_ue, gnode);
             }
-            sgwc_s11_handle_create_session_request(xact, sgwc_ue, &message);
+            sgwc_s11_handle_create_session_request(
+                    sgwc_ue, gtp_xact, recvbuf,
+                    &gtp_message.create_session_request);
             break;
         case OGS_GTP_MODIFY_BEARER_REQUEST_TYPE:
-            sgwc_s11_handle_modify_bearer_request(xact, sgwc_ue,
-                    &message.modify_bearer_request);
+            sgwc_s11_handle_modify_bearer_request(gtp_xact, sgwc_ue,
+                    &gtp_message.modify_bearer_request);
             break;
         case OGS_GTP_DELETE_SESSION_REQUEST_TYPE:
-            sgwc_s11_handle_delete_session_request(xact, sgwc_ue, &message);
+            sgwc_s11_handle_delete_session_request(
+                    gtp_xact, sgwc_ue, &gtp_message);
             break;
         case OGS_GTP_CREATE_BEARER_RESPONSE_TYPE:
-            sgwc_s11_handle_create_bearer_response(xact, sgwc_ue, &message);
+            sgwc_s11_handle_create_bearer_response(
+                    gtp_xact, sgwc_ue, &gtp_message);
             break;
         case OGS_GTP_UPDATE_BEARER_RESPONSE_TYPE:
-            sgwc_s11_handle_update_bearer_response(xact, sgwc_ue, &message);
+            sgwc_s11_handle_update_bearer_response(
+                    gtp_xact, sgwc_ue, &gtp_message);
             break;
         case OGS_GTP_DELETE_BEARER_RESPONSE_TYPE:
-            sgwc_s11_handle_delete_bearer_response(xact, sgwc_ue, &message);
+            sgwc_s11_handle_delete_bearer_response(
+                    gtp_xact, sgwc_ue, &gtp_message);
             break;
         case OGS_GTP_RELEASE_ACCESS_BEARERS_REQUEST_TYPE:
-            sgwc_s11_handle_release_access_bearers_request(xact, sgwc_ue,
-                &message.release_access_bearers_request);
+            sgwc_s11_handle_release_access_bearers_request(gtp_xact, sgwc_ue,
+                &gtp_message.release_access_bearers_request);
             break;
         case OGS_GTP_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE_TYPE:
-            sgwc_s11_handle_downlink_data_notification_ack(xact, sgwc_ue,
-                &message.downlink_data_notification_acknowledge);
+            sgwc_s11_handle_downlink_data_notification_ack(gtp_xact, sgwc_ue,
+                &gtp_message.downlink_data_notification_acknowledge);
             break;
         case OGS_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_REQUEST_TYPE:
             sgwc_s11_handle_create_indirect_data_forwarding_tunnel_request(
-                xact, sgwc_ue,
-                &message.create_indirect_data_forwarding_tunnel_request);
+                gtp_xact, sgwc_ue,
+                &gtp_message.create_indirect_data_forwarding_tunnel_request);
             break;
         case OGS_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_REQUEST_TYPE:
             sgwc_s11_handle_delete_indirect_data_forwarding_tunnel_request(
-                xact, sgwc_ue);
+                gtp_xact, sgwc_ue);
             break;
         case OGS_GTP_BEARER_RESOURCE_COMMAND_TYPE:
-            sgwc_s11_handle_bearer_resource_command(xact, sgwc_ue, &message);
+            sgwc_s11_handle_bearer_resource_command(
+                    gtp_xact, sgwc_ue, &gtp_message);
             break;
         default:
-            ogs_warn("Not implemented(type:%d)", message.h.type);
+            ogs_warn("Not implemented(type:%d)", gtp_message.h.type);
             break;
         }
         ogs_pkbuf_free(recvbuf);
@@ -231,14 +249,14 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
         recvbuf = e->pkbuf;
         ogs_assert(recvbuf);
 
-        if (ogs_gtp_parse_msg(&message, recvbuf) != OGS_OK) {
+        if (ogs_gtp_parse_msg(&gtp_message, recvbuf) != OGS_OK) {
             ogs_error("ogs_gtp_parse_msg() failed");
             ogs_pkbuf_free(recvbuf);
             break;
         }
 
-        if (message.h.teid_presence && message.h.teid != 0) {
-            sess = sgwc_sess_find_by_teid(message.h.teid);
+        if (gtp_message.h.teid_presence && gtp_message.h.teid != 0) {
+            sess = sgwc_sess_find_by_teid(gtp_message.h.teid);
         }
 
         if (sess) {
@@ -249,45 +267,45 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
             ogs_assert(gnode);
         }
 
-        rv = ogs_gtp_xact_receive(gnode, &message.h, &xact);
+        rv = ogs_gtp_xact_receive(gnode, &gtp_message.h, &gtp_xact);
         if (rv != OGS_OK) {
             ogs_pkbuf_free(recvbuf);
             break;
         }
 
-        switch(message.h.type) {
+        switch(gtp_message.h.type) {
         case OGS_GTP_ECHO_REQUEST_TYPE:
-            sgwc_handle_echo_request(xact, &message.echo_request);
+            sgwc_handle_echo_request(gtp_xact, &gtp_message.echo_request);
             break;
         case OGS_GTP_ECHO_RESPONSE_TYPE:
-            sgwc_handle_echo_response(xact, &message.echo_response);
+            sgwc_handle_echo_response(gtp_xact, &gtp_message.echo_response);
             break;
         case OGS_GTP_CREATE_SESSION_RESPONSE_TYPE:
-            sgwc_s5c_handle_create_session_response(xact, sess,
-                    &message);
+            sgwc_s5c_handle_create_session_response(gtp_xact, sess,
+                    &gtp_message);
             break;
         case OGS_GTP_DELETE_SESSION_RESPONSE_TYPE:
-            sgwc_s5c_handle_delete_session_response(xact, sess,
-                    &message);
+            sgwc_s5c_handle_delete_session_response(gtp_xact, sess,
+                    &gtp_message);
             break;
         case OGS_GTP_CREATE_BEARER_REQUEST_TYPE:
-            sgwc_s5c_handle_create_bearer_request(xact, sess,
-                    &message);
+            sgwc_s5c_handle_create_bearer_request(gtp_xact, sess,
+                    &gtp_message);
             break;
         case OGS_GTP_UPDATE_BEARER_REQUEST_TYPE:
-            sgwc_s5c_handle_update_bearer_request(xact, sess,
-                    &message);
+            sgwc_s5c_handle_update_bearer_request(gtp_xact, sess,
+                    &gtp_message);
             break;
         case OGS_GTP_DELETE_BEARER_REQUEST_TYPE:
-            sgwc_s5c_handle_delete_bearer_request(xact, sess,
-                    &message);
+            sgwc_s5c_handle_delete_bearer_request(gtp_xact, sess,
+                    &gtp_message);
             break;
         case OGS_GTP_BEARER_RESOURCE_FAILURE_INDICATION_TYPE:
-            sgwc_s5c_handle_bearer_resource_failure_indication(xact, sess,
-                    &message);
+            sgwc_s5c_handle_bearer_resource_failure_indication(gtp_xact, sess,
+                    &gtp_message);
             break;
         default:
-            ogs_warn("Not implmeneted(type:%d)", message.h.type);
+            ogs_warn("Not implmeneted(type:%d)", gtp_message.h.type);
             break;
         }
         ogs_pkbuf_free(recvbuf);

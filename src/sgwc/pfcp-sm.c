@@ -210,7 +210,8 @@ void sgwc_pfcp_state_associated(ogs_fsm_t *s, sgwc_event_t *e)
             }
 
             sgwc_sxa_handle_session_establishment_response(
-                sess, xact, &message->pfcp_session_establishment_response);
+                sess, xact, e->gtp_message,
+                &message->pfcp_session_establishment_response);
             break;
 
 #if 0

@@ -297,7 +297,7 @@ void sgwc_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node)
 }
 
 void sgwc_pfcp_send_session_establishment_request(
-        sgwc_sess_t *sess, void *gtp_xact)
+        sgwc_sess_t *sess, ogs_gtp_xact_t *gtp_xact, ogs_pkbuf_t *gtpbuf)
 {
     int rv;
     ogs_pkbuf_t *sxabuf = NULL;
@@ -317,13 +317,16 @@ void sgwc_pfcp_send_session_establishment_request(
             sess->pfcp_node, &h, sxabuf, sess_timeout, sess);
     ogs_expect_or_return(xact);
     xact->assoc_xact = gtp_xact;
+    if (gtpbuf)
+        xact->gtpbuf = ogs_pkbuf_copy(gtpbuf);
 
     rv = ogs_pfcp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);
 }
 
 void sgwc_pfcp_send_session_modification_request(
-        sgwc_bearer_t *bearer, void *gtp_xact, uint64_t flags)
+        sgwc_bearer_t *bearer, ogs_gtp_xact_t *gtp_xact,
+        ogs_pkbuf_t *gtpbuf, uint64_t flags)
 {
     int rv;
     ogs_pkbuf_t *sxabuf = NULL;
@@ -352,7 +355,8 @@ void sgwc_pfcp_send_session_modification_request(
     ogs_expect(rv == OGS_OK);
 }
 
-void sgwc_pfcp_send_session_deletion_request(sgwc_sess_t *sess, void *gtp_xact)
+void sgwc_pfcp_send_session_deletion_request(
+        sgwc_sess_t *sess, ogs_gtp_xact_t *gtp_xact, ogs_pkbuf_t *gtpbuf)
 {
     int rv;
     ogs_pkbuf_t *sxabuf = NULL;
