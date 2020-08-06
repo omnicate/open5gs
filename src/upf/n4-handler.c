@@ -169,38 +169,16 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
     /* APN(Network Instance) and UE IP Address
      * has already been processed in upf_sess_add() */
 
-    if (pdr->src_if == OGS_PFCP_INTERFACE_CORE) {  /* Downlink */
-
-        /* Nothing */
-
-    } else if (pdr->src_if == OGS_PFCP_INTERFACE_ACCESS) { /* Uplink */
-        if (message->pdi.local_f_teid.presence == 0) {
-            ogs_error("No F-TEID in PDI");
-            *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
-            *offending_ie_value = OGS_PFCP_F_TEID_TYPE;
-            return NULL;
-        }
-
-        if (message->outer_header_removal.presence == 0) {
-            ogs_error("No Outer Header Removal in PDI");
-            *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
-            *offending_ie_value = OGS_PFCP_OUTER_HEADER_REMOVAL_TYPE;
-            return NULL;
-        }
-
+    if (message->pdi.local_f_teid.presence) {
         pdr->f_teid_len = message->pdi.local_f_teid.len;
         memcpy(&pdr->f_teid, message->pdi.local_f_teid.data, pdr->f_teid_len);
         pdr->f_teid.teid = be32toh(pdr->f_teid.teid);
+    }
 
+    if (message->outer_header_removal.presence) {
         pdr->outer_header_removal_len = message->outer_header_removal.len;
-        memcpy(&pdr->outer_header_removal,
-                message->outer_header_removal.data,
+        memcpy(&pdr->outer_header_removal, message->outer_header_removal.data,
                 pdr->outer_header_removal_len);
-    } else {
-        ogs_error("Invalid Source Interface[%d] in PDR", pdr->src_if);
-        *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_INCORRECT;
-        *offending_ie_value = OGS_PFCP_SOURCE_INTERFACE_TYPE;
-        return NULL;
     }
 
     if (message->far_id.presence) {
@@ -290,22 +268,11 @@ static ogs_pfcp_far_t *handle_create_far(ogs_pfcp_sess_t *sess,
     far->apply_action = message->apply_action.u8;
     far->dst_if = message->forwarding_parameters.destination_interface.u8;
 
-    if (far->dst_if == OGS_PFCP_INTERFACE_ACCESS) { /* Downlink */
-        if (message->forwarding_parameters.outer_header_creation.presence) {
-            setup_gtp_node(far,
-                    &message->forwarding_parameters.outer_header_creation);
-        }
-
-    } else if (far->dst_if == OGS_PFCP_INTERFACE_CORE) {  /* Uplink */
-
-        /* Nothing */
-
-    } else {
-        ogs_error("Invalid Destination Interface[%d] in FAR", far->dst_if);
-        *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_INCORRECT;
-        *offending_ie_value = OGS_PFCP_DESTINATION_INTERFACE_TYPE;
-        return NULL;
+    if (message->forwarding_parameters.outer_header_creation.presence) {
+        setup_gtp_node(far,
+                &message->forwarding_parameters.outer_header_creation);
     }
+
 
     return far;
 }
@@ -340,27 +307,14 @@ static ogs_pfcp_far_t *handle_update_far(ogs_pfcp_sess_t *sess,
     if (message->apply_action.presence)
         far->apply_action = message->apply_action.u8;
 
-    if (message->update_forwarding_parameters.
-            destination_interface.presence == 0)
+    if (message->update_forwarding_parameters.destination_interface.presence) {
         far->dst_if = message->update_forwarding_parameters.
             destination_interface.u8;
+    }
 
-    if (far->dst_if == OGS_PFCP_INTERFACE_ACCESS) { /* Downlink */
-        if (message->update_forwarding_parameters.
-                outer_header_creation.presence) {
-            setup_gtp_node(far,
-                &message->update_forwarding_parameters.outer_header_creation);
-        }
-
-    } else if (far->dst_if == OGS_PFCP_INTERFACE_CORE) {  /* Uplink */
-
-        /* Nothing */
-
-    } else {
-        ogs_error("Invalid Destination Interface[%d] in FAR", far->dst_if);
-        *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_INCORRECT;
-        *offending_ie_value = OGS_PFCP_DESTINATION_INTERFACE_TYPE;
-        return NULL;
+    if (message->update_forwarding_parameters.outer_header_creation.presence) {
+        setup_gtp_node(far,
+            &message->update_forwarding_parameters.outer_header_creation);
     }
 
     return far;
@@ -567,10 +521,8 @@ void upf_n4_handle_session_establishment_request(
         pdr = created_pdr[i];
         ogs_assert(pdr);
 
-        if (pdr->src_if == OGS_PFCP_INTERFACE_ACCESS) { /* Uplink */
-            if (pdr->f_teid_len)
-                ogs_pfcp_pdr_hash_set(pdr);
-        }
+        if (pdr->f_teid_len)
+            ogs_pfcp_pdr_hash_set(pdr);
     }
 
     /* Send Buffered Packet to gNB/SGW */
