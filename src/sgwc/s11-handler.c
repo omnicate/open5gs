@@ -43,18 +43,11 @@ void sgwc_s11_handle_create_session_request(
         sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
         ogs_pkbuf_t *gtpbuf, ogs_gtp_create_session_request_t *req)
 {
-    int rv;
     uint8_t cause_value = 0;
     uint16_t decoded;
-    ogs_pkbuf_t *pkbuf = NULL;
     ogs_gtp_f_teid_t *mme_s11_teid = NULL;
-    ogs_gtp_f_teid_t *pgw_s5c_teid = NULL;
-    int len = 0;
-    ogs_gtp_node_t *pgw = NULL;
-    ogs_gtp_f_teid_t sgw_s5c_teid, sgwc_s5u_teid;
     ogs_gtp_uli_t uli;
 
-    ogs_gtp_xact_t *s5c_xact = NULL;
     sgwc_sess_t *sess = NULL;
     sgwc_bearer_t *bearer = NULL;
 

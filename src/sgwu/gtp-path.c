@@ -23,6 +23,7 @@ static ogs_pkbuf_pool_t *packet_pool = NULL;
 
 static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
 {
+#if 0
     char buf[OGS_ADDRSTRLEN];
     int rv;
     ssize_t size;
@@ -83,7 +84,6 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
             ogs_debug("[SGW] RECV End Marker from [%s] : TEID[0x%x]",
                     OGS_ADDR(&from, buf), teid);
 
-#if 0
         tunnel = sgwu_tunnel_find_by_teid(teid);
         if (!tunnel) {
             if (gtp_h->type == OGS_GTPU_MSGTYPE_GPDU)
@@ -203,10 +203,10 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
                 }
             }
         }
-#endif
     }
 
     ogs_pkbuf_free(pkbuf);
+#endif
     return;
 }
 

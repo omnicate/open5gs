@@ -371,8 +371,10 @@ int sgwu_context_parse_config(void)
 sgwu_sess_t *sgwu_sess_add(ogs_pfcp_f_seid_t *cp_f_seid,
         const char *apn, uint8_t pdn_type, ogs_pfcp_pdr_id_t default_pdr_id)
 {
+#if 0
     char buf1[OGS_ADDRSTRLEN];
     char buf2[OGS_ADDRSTRLEN];
+#endif
     sgwu_sess_t *sess = NULL;
 
     ogs_assert(cp_f_seid);
@@ -413,10 +415,6 @@ sgwu_sess_t *sgwu_sess_add(ogs_pfcp_f_seid_t *cp_f_seid,
             ogs_list_count(&self.sess_list));
 
     return sess;
-
-cleanup:
-    ogs_pool_free(&sgwu_sess_pool, sess);
-    return NULL;
 }
 
 int sgwu_sess_remove(sgwu_sess_t *sess)
@@ -490,12 +488,16 @@ sgwu_sess_t *sgwu_sess_add_by_message(ogs_pfcp_message_t *message)
 
     ogs_pfcp_f_seid_t *f_seid = NULL;
     char apn[OGS_MAX_APN_LEN];
+#if 0
     bool default_pdr_found = false;
-    ogs_pfcp_pdr_id_t default_pdr_id;
+#endif
+    ogs_pfcp_pdr_id_t default_pdr_id = 0;
 
     ogs_pfcp_session_establishment_request_t *req =
         &message->pfcp_session_establishment_request;;
+#if 0
     int i;
+#endif
 
     f_seid = req->cp_f_seid.data;
     if (req->cp_f_seid.presence == 0 || f_seid == NULL) {
