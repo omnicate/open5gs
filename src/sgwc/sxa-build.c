@@ -477,7 +477,7 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
     req = &pfcp_message.pfcp_session_modification_request;
     memset(&pfcp_message, 0, sizeof(ogs_pfcp_message_t));
 
-    if (modify_flags & OGS_PFCP_5GC_MODIFY_REMOVE) {
+    if (modify_flags & OGS_PFCP_MODIFY_REMOVE) {
         /* Remove PDR */
         i = 0;
         ogs_list_for_each(&bearer->pfcp.pdr_list, pdr) {
@@ -511,7 +511,7 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
             i++;
         }
     } else {
-        if (modify_flags & OGS_PFCP_5GC_MODIFY_CREATE) {
+        if (modify_flags & OGS_PFCP_MODIFY_CREATE) {
             pdrbuf_init();
 
             /* Create PDR */
@@ -535,7 +535,7 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
                 i++;
             }
         }
-        if (modify_flags & OGS_PFCP_5GC_MODIFY_QOS_UPDATE) {
+        if (modify_flags & OGS_PFCP_MODIFY_QOS_UPDATE) {
             /* Update QER */
             i = 0;
             ogs_list_for_each(&bearer->pfcp.qer_list, qer) {
@@ -548,7 +548,7 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
     pfcp_message.h.type = type;
     pkbuf = ogs_pfcp_build_msg(&pfcp_message);
 
-    if (modify_flags & OGS_PFCP_5GC_MODIFY_CREATE) {
+    if (modify_flags & OGS_PFCP_MODIFY_CREATE) {
         pdrbuf_clear();
     }
 

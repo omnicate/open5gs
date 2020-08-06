@@ -212,7 +212,7 @@ void sgwc_sxa_handle_session_modification_response(
 
     ogs_pfcp_xact_commit(xact);
 
-    if (flags & OGS_PFCP_5GC_MODIFY_REMOVE)
+    if (flags & OGS_PFCP_MODIFY_REMOVE)
         sgwc_bearer_remove(bearer);
 }
 

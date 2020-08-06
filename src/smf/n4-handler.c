@@ -266,11 +266,11 @@ void smf_5gc_n4_handle_session_modification_response(
 
     ogs_assert(sess);
 
-    if (flags & OGS_PFCP_5GC_MODIFY_ACTIVATE) {
+    if (flags & OGS_PFCP_MODIFY_ACTIVATE) {
         /* ACTIVATED Is NOT Inlcuded in RESPONSE */
         smf_sbi_send_sm_context_updated_data(sess, session, 0);
 
-    } else if (flags & OGS_PFCP_5GC_MODIFY_DEACTIVATE) {
+    } else if (flags & OGS_PFCP_MODIFY_DEACTIVATE) {
         /* Only ACTIVING & DEACTIVATED is Included */
         smf_sbi_send_sm_context_updated_data(
                 sess, session, OpenAPI_up_cnx_state_DEACTIVATED);
@@ -326,7 +326,7 @@ void smf_5gc_n4_handle_session_deletion_response(
 
     ogs_assert(sess);
 
-    if (trigger == OGS_PFCP_5GC_DELETE_TRIGGER_UE_REQUESTED) {
+    if (trigger == OGS_PFCP_DELETE_TRIGGER_UE_REQUESTED) {
 
         smf_sbi_send_sm_context_updated_data_in_session_deletion(sess, session);
 

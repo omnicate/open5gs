@@ -474,7 +474,7 @@ ogs_pkbuf_t *smf_5gc_n4_build_session_modification_request(
     req = &pfcp_message.pfcp_session_modification_request;
     memset(&pfcp_message, 0, sizeof(ogs_pfcp_message_t));
 
-    if (modify_flags & OGS_PFCP_5GC_MODIFY_DEACTIVATE) {
+    if (modify_flags & OGS_PFCP_MODIFY_DEACTIVATE) {
         /* Update FAR - Only DL */
         i = 0;
         ogs_list_for_each(&sess->bearer_list, bearer) {
@@ -513,7 +513,7 @@ ogs_pkbuf_t *smf_5gc_n4_build_qos_flow_modification_request(
     req = &pfcp_message.pfcp_session_modification_request;
     memset(&pfcp_message, 0, sizeof(ogs_pfcp_message_t));
 
-    if (modify_flags & OGS_PFCP_5GC_MODIFY_REMOVE) {
+    if (modify_flags & OGS_PFCP_MODIFY_REMOVE) {
         /* Remove PDR */
         i = 0;
         ogs_list_for_each(&qos_flow->pfcp.pdr_list, pdr) {
@@ -547,7 +547,7 @@ ogs_pkbuf_t *smf_5gc_n4_build_qos_flow_modification_request(
             i++;
         }
     } else {
-        if (modify_flags & OGS_PFCP_5GC_MODIFY_CREATE) {
+        if (modify_flags & OGS_PFCP_MODIFY_CREATE) {
             pdrbuf_init();
 
             /* Create PDR */
@@ -571,7 +571,7 @@ ogs_pkbuf_t *smf_5gc_n4_build_qos_flow_modification_request(
                 i++;
             }
         }
-        if (modify_flags & OGS_PFCP_5GC_MODIFY_QOS_UPDATE) {
+        if (modify_flags & OGS_PFCP_MODIFY_QOS_UPDATE) {
             /* Update QER */
             i = 0;
             ogs_list_for_each(&qos_flow->pfcp.qer_list, qer) {
@@ -579,7 +579,7 @@ ogs_pkbuf_t *smf_5gc_n4_build_qos_flow_modification_request(
                 i++;
             }
         }
-        if (modify_flags & OGS_PFCP_5GC_MODIFY_ACTIVATE) {
+        if (modify_flags & OGS_PFCP_MODIFY_ACTIVATE) {
             /* Update FAR - Only DL */
             i = 0;
             ogs_list_for_each(&qos_flow->pfcp.far_list, far) {
@@ -592,7 +592,7 @@ ogs_pkbuf_t *smf_5gc_n4_build_qos_flow_modification_request(
     pfcp_message.h.type = type;
     pkbuf = ogs_pfcp_build_msg(&pfcp_message);
 
-    if (modify_flags & OGS_PFCP_5GC_MODIFY_CREATE) {
+    if (modify_flags & OGS_PFCP_MODIFY_CREATE) {
         pdrbuf_clear();
     }
 
