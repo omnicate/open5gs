@@ -186,58 +186,6 @@ void sgwc_s5c_handle_create_session_response(
 
     sgwc_pfcp_send_session_modification_request(bearer, s11_xact, gtpbuf,
             OGS_PFCP_MODIFY_UL_ONLY | OGS_PFCP_MODIFY_ACTIVATE);
-#if 0
-    /* Send Control Plane(UL) : SGW-S11 */
-    memset(&sgw_s11_teid, 0, sizeof(ogs_gtp_f_teid_t));
-    sgw_s11_teid.interface_type = OGS_GTP_F_TEID_S11_S4_SGW_GTP_C;
-    sgw_s11_teid.teid = htobe32(sgwc_ue->sgw_s11_teid);
-    rv = ogs_gtp_sockaddr_to_f_teid(
-            sgwc_self()->gtpc_addr, sgwc_self()->gtpc_addr6,
-            &sgw_s11_teid, &len);
-    ogs_assert(rv == OGS_OK);
-    rsp->sender_f_teid_for_control_plane.presence = 1;
-    rsp->sender_f_teid_for_control_plane.data = &sgw_s11_teid;
-    rsp->sender_f_teid_for_control_plane.len = len;
-
-    /* Send Data Plane(UL) : SGW-S1U */
-    memset(&sgw_s1u_teid, 0, sizeof(ogs_gtp_f_teid_t));
-    sgw_s1u_teid.interface_type = dl_tunnel->interface_type;
-    sgw_s1u_teid.teid = htobe32(dl_tunnel->local_teid);
-    if (sgwc_self()->gtpu_addr) {
-        addr = ogs_hash_get(sgwc_self()->adv_gtpu_hash,
-                        &sgwc_self()->gtpu_addr->sin.sin_addr,
-                        sizeof(sgwc_self()->gtpu_addr->sin.sin_addr));
-    }
-    if (sgwc_self()->gtpu_addr6) {
-        addr6 = ogs_hash_get(sgwc_self()->adv_gtpu_hash6,
-                        &sgwc_self()->gtpu_addr6->sin6.sin6_addr,
-                        sizeof(sgwc_self()->gtpu_addr6->sin6.sin6_addr));
-    }
-    // Swap the SGW-S1U IP to IP to be advertised to UE
-    if (addr || addr6) {
-        rv = ogs_gtp_sockaddr_to_f_teid(addr, addr6, &sgw_s1u_teid, &len);
-        ogs_assert(rv == OGS_OK);
-    } else {
-        rv = ogs_gtp_sockaddr_to_f_teid(
-        sgwc_self()->gtpu_addr, sgwc_self()->gtpu_addr6, &sgw_s1u_teid, &len);
-        ogs_assert(rv == OGS_OK);
-    }
-    rsp->bearer_contexts_created.s1_u_enodeb_f_teid.presence = 1;
-    rsp->bearer_contexts_created.s1_u_enodeb_f_teid.data = &sgw_s1u_teid;
-    rsp->bearer_contexts_created.s1_u_enodeb_f_teid.len = len;
-
-    message->h.type = OGS_GTP_CREATE_SESSION_RESPONSE_TYPE;
-    message->h.teid = sgwc_ue->mme_s11_teid;
-
-    pkbuf = ogs_gtp_build_msg(message);
-    ogs_expect_or_return(pkbuf);
-
-    rv = ogs_gtp_xact_update_tx(s11_xact, &message->h, pkbuf);
-    ogs_expect_or_return(rv == OGS_OK);
-
-    rv = ogs_gtp_xact_commit(s11_xact);
-    ogs_expect(rv == OGS_OK);
-#endif
 }
 
 void sgwc_s5c_handle_delete_session_response(ogs_gtp_xact_t *s5c_xact,

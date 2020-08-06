@@ -268,7 +268,7 @@ void sgwc_sxa_handle_session_establishment_response(
     /* Data Plane(DL) : SGW-S5U */
     memset(&sgw_s5u_teid, 0, sizeof(ogs_gtp_f_teid_t));
     sgw_s5u_teid.teid = htobe32(dl_tunnel->local_teid);
-    sgw_s5u_teid.interface_type = OGS_GTP_F_TEID_S5_S8_SGW_GTP_U;
+    sgw_s5u_teid.interface_type = dl_tunnel->interface_type;
     rv = ogs_gtp_sockaddr_to_f_teid(
         dl_tunnel->local_addr, dl_tunnel->local_addr6, &sgw_s5u_teid, &len);
     ogs_assert(rv == OGS_OK);
@@ -357,7 +357,7 @@ void sgwc_sxa_handle_session_modification_response(
 
         /* Send Data Plane(UL) : SGW-S1U */
         memset(&sgw_s1u_teid, 0, sizeof(ogs_gtp_f_teid_t));
-        sgw_s1u_teid.interface_type = OGS_GTP_F_TEID_S1_U_SGW_GTP_U;
+        sgw_s1u_teid.interface_type = ul_tunnel->interface_type;
         sgw_s1u_teid.teid = htobe32(ul_tunnel->local_teid);
         rv = ogs_gtp_sockaddr_to_f_teid(
             ul_tunnel->local_addr, ul_tunnel->local_addr6, &sgw_s1u_teid, &len);

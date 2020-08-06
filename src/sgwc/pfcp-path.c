@@ -342,8 +342,7 @@ void sgwc_pfcp_send_session_modification_request(
     h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
     h.seid = sess->sgwu_sxa_seid;
 
-    sxabuf = sgwc_sxa_build_session_modification_request(
-            h.type, bearer, flags);
+    sxabuf = sgwc_sxa_build_session_modification_request(h.type, bearer, flags);
     ogs_expect_or_return(sxabuf);
 
     xact = ogs_pfcp_xact_local_create(

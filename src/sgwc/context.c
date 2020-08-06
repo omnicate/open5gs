@@ -586,12 +586,12 @@ sgwc_bearer_t* sgwc_bearer_add(sgwc_sess_t *sess)
     bearer->sgwc_ue = sgwc_ue;
     bearer->sess = sess;
 
-    tunnel = sgwc_tunnel_add(bearer,
-            OGS_PFCP_INTERFACE_CORE, OGS_PFCP_INTERFACE_ACCESS);
+    /* Downlink */
+    tunnel = sgwc_tunnel_add(bearer, OGS_GTP_F_TEID_S5_S8_SGW_GTP_U);
     ogs_assert(tunnel);
 
-    tunnel = sgwc_tunnel_add(bearer,
-            OGS_PFCP_INTERFACE_ACCESS, OGS_PFCP_INTERFACE_CORE);
+    /* Uplink */
+    tunnel = sgwc_tunnel_add(bearer, OGS_GTP_F_TEID_S1_U_SGW_GTP_U);
     ogs_assert(tunnel);
 
     ogs_list_add(&sess->bearer_list, bearer);
@@ -679,7 +679,7 @@ sgwc_bearer_t *sgwc_bearer_next(sgwc_bearer_t *bearer)
 }
 
 sgwc_tunnel_t *sgwc_tunnel_add(
-        sgwc_bearer_t *bearer, uint8_t src_if, uint8_t dst_if)
+        sgwc_bearer_t *bearer, uint8_t interface_type)
 {
     sgwc_sess_t *sess = NULL;
     sgwc_tunnel_t *tunnel = NULL;
@@ -688,16 +688,40 @@ sgwc_tunnel_t *sgwc_tunnel_add(
     ogs_pfcp_pdr_t *pdr = NULL;
     ogs_pfcp_far_t *far = NULL;
 
+    uint8_t src_if, dst_if;
+
     ogs_assert(bearer);
     sess = bearer->sess;
     ogs_assert(sess);
+
+    switch (interface_type) {
+    /* Downlink */
+    case OGS_GTP_F_TEID_S5_S8_SGW_GTP_U:
+        src_if = OGS_PFCP_INTERFACE_CORE;
+        dst_if = OGS_PFCP_INTERFACE_ACCESS;
+        break;
+
+    /* Uplink */
+    case OGS_GTP_F_TEID_S1_U_SGW_GTP_U:
+        src_if = OGS_PFCP_INTERFACE_ACCESS;
+        dst_if = OGS_PFCP_INTERFACE_CORE;
+        break;
+
+    /* Indirect */
+    case OGS_GTP_F_TEID_SGW_GTP_U_FOR_DL_DATA_FORWARDING:
+    case OGS_GTP_F_TEID_SGW_GTP_U_FOR_UL_DATA_FORWARDING:
+        src_if = OGS_PFCP_INTERFACE_ACCESS;
+        dst_if = OGS_PFCP_INTERFACE_ACCESS;
+        break;
+    default:
+        ogs_fatal("Invalid interface type = %d", interface_type);
+    }
 
     ogs_pool_alloc(&sgwc_tunnel_pool, &tunnel);
     ogs_assert(tunnel);
     memset(tunnel, 0, sizeof *tunnel);
 
-    tunnel->src_if = src_if;
-    tunnel->dst_if = dst_if;
+    tunnel->interface_type = interface_type;
     tunnel->index = ogs_pool_index(&sgwc_tunnel_pool, tunnel);
     ogs_assert(tunnel->index > 0 && tunnel->index <= ogs_config()->pool.tunnel);
 
@@ -794,16 +818,14 @@ sgwc_tunnel_t *sgwc_tunnel_find_by_teid(uint32_t teid)
 }
 
 sgwc_tunnel_t *sgwc_tunnel_find_by_interface_type(
-        sgwc_bearer_t *bearer, uint8_t src_if, uint8_t dst_if)
+        sgwc_bearer_t *bearer, uint8_t interface_type)
 {
     sgwc_tunnel_t *tunnel = NULL;
 
     ogs_assert(bearer);
 
-    ogs_list_for_each(&bearer->tunnel_list, tunnel) {
-        if (tunnel->src_if == src_if && tunnel->dst_if == dst_if)
-            return tunnel;
-    }
+    ogs_list_for_each(&bearer->tunnel_list, tunnel)
+        if (tunnel->interface_type == interface_type) return tunnel;
 
     return NULL;
 }
@@ -812,13 +834,13 @@ sgwc_tunnel_t *sgwc_dl_tunnel_in_bearer(sgwc_bearer_t *bearer)
 {
     ogs_assert(bearer);
     return sgwc_tunnel_find_by_interface_type(bearer,
-            OGS_PFCP_INTERFACE_CORE, OGS_PFCP_INTERFACE_ACCESS);
+            OGS_GTP_F_TEID_S5_S8_SGW_GTP_U);
 }
 sgwc_tunnel_t *sgwc_ul_tunnel_in_bearer(sgwc_bearer_t *bearer)
 {
     ogs_assert(bearer);
     return sgwc_tunnel_find_by_interface_type(bearer,
-            OGS_PFCP_INTERFACE_ACCESS, OGS_PFCP_INTERFACE_CORE);
+            OGS_GTP_F_TEID_S1_U_SGW_GTP_U);
 }
 
 sgwc_tunnel_t *sgwc_tunnel_first(sgwc_bearer_t *bearer)
