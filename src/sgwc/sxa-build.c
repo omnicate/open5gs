@@ -573,6 +573,83 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
     return pkbuf;
 }
 
+ogs_pkbuf_t *sgwc_sxa_build_tunnel_modification_request(
+        uint8_t type, sgwc_tunnel_t *tunnel, uint64_t modify_flags)
+{
+    ogs_pfcp_message_t pfcp_message;
+    ogs_pfcp_session_modification_request_t *req = NULL;
+    ogs_pkbuf_t *pkbuf = NULL;
+    int i;
+
+    ogs_debug("Session Modification Request");
+    ogs_assert(tunnel);
+    ogs_assert(modify_flags);
+
+    req = &pfcp_message.pfcp_session_modification_request;
+    memset(&pfcp_message, 0, sizeof(ogs_pfcp_message_t));
+
+    if (modify_flags & OGS_PFCP_MODIFY_REMOVE) {
+        /* Remove PDR */
+        i = 0;
+
+        if (tunnel->pdr) {
+            ogs_pfcp_tlv_remove_pdr_t *message = &req->remove_pdr[i];
+
+            message->presence = 1;
+            message->pdr_id.presence = 1;
+            message->pdr_id.u16 = tunnel->pdr->id;
+            i++;
+        }
+
+        /* Remove FAR */
+        i = 0;
+        if (tunnel->far) {
+            ogs_pfcp_tlv_remove_far_t *message = &req->remove_far[i];
+
+            message->presence = 1;
+            message->far_id.presence = 1;
+            message->far_id.u32 = tunnel->far->id;
+            i++;
+        }
+
+    } else {
+        if (modify_flags & OGS_PFCP_MODIFY_CREATE) {
+            pdrbuf_init();
+
+            /* Create PDR */
+            i = 0;
+            if (tunnel->pdr) {
+                build_create_pdr(&req->create_pdr[i], i, tunnel->pdr);
+                i++;
+            }
+
+            /* Create FAR */
+            i = 0;
+            if (tunnel->far) {
+                build_create_far(&req->create_far[i], i, tunnel->far);
+                i++;
+            }
+        }
+        if (modify_flags & OGS_PFCP_MODIFY_ACTIVATE) {
+            /* Update FAR */
+            i = 0;
+            if (tunnel->far) {
+                build_update_far_activate(&req->update_far[i], i, tunnel->far);
+                i++;
+            }
+        }
+    }
+
+    pfcp_message.h.type = type;
+    pkbuf = ogs_pfcp_build_msg(&pfcp_message);
+
+    if (modify_flags & OGS_PFCP_MODIFY_CREATE) {
+        pdrbuf_clear();
+    }
+
+    return pkbuf;
+}
+
 ogs_pkbuf_t *sgwc_sxa_build_session_deletion_request(
         uint8_t type, sgwc_sess_t *sess)
 {

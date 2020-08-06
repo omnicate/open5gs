@@ -160,6 +160,9 @@ typedef struct sgwc_tunnel_s {
 
     uint8_t         interface_type;
 
+    ogs_pfcp_pdr_t  *pdr;
+    ogs_pfcp_far_t  *far;
+
     uint32_t        local_teid;
     ogs_sockaddr_t  *local_addr;
     ogs_sockaddr_t  *local_addr6;

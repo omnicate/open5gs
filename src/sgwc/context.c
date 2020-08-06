@@ -779,6 +779,9 @@ sgwc_tunnel_t *sgwc_tunnel_add(
             &pdr->f_teid, &pdr->f_teid_len);
     pdr->f_teid.teid = tunnel->local_teid;
 
+    tunnel->pdr = pdr;
+    tunnel->far = far;
+
     tunnel->bearer = bearer;
 
     ogs_list_add(&bearer->tunnel_list, tunnel);

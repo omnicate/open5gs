@@ -47,7 +47,7 @@ void sgwc_s5c_handle_create_session_response(
     uint8_t cause_value;
     ogs_gtp_xact_t *s11_xact = NULL;
     sgwc_bearer_t *bearer = NULL;
-    sgwc_tunnel_t *dl_tunnel = NULL, *ul_tunnel = NULL;
+    sgwc_tunnel_t *ul_tunnel = NULL;
     ogs_pfcp_far_t *far = NULL;
     sgwc_ue_t *sgwc_ue = NULL;
 
@@ -120,8 +120,6 @@ void sgwc_s5c_handle_create_session_response(
         bearer = sgwc_bearer_find_by_sess_ebi(sess,
                     rsp->bearer_contexts_created.eps_bearer_id.u8);
         ogs_assert(bearer);
-        dl_tunnel = sgwc_dl_tunnel_in_bearer(bearer);
-        ogs_assert(dl_tunnel);
         ul_tunnel = sgwc_ul_tunnel_in_bearer(bearer);
         ogs_assert(ul_tunnel);
 
@@ -184,7 +182,7 @@ void sgwc_s5c_handle_create_session_response(
     ogs_debug("    SGW_S5U_TEID[%d] PGW_S5U_TEID[%d]",
         ul_tunnel->local_teid, ul_tunnel->remote_teid);
 
-    sgwc_pfcp_send_session_modification_request(bearer, s11_xact, gtpbuf,
+    sgwc_pfcp_send_tunnel_modification_request(ul_tunnel, s11_xact, gtpbuf,
             OGS_PFCP_MODIFY_UL_ONLY | OGS_PFCP_MODIFY_ACTIVATE);
 }
 
