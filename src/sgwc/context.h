@@ -159,6 +159,8 @@ typedef struct sgwc_tunnel_s {
     uint32_t        index;          /**< An index of this node */
 
     uint8_t         interface_type;
+    uint8_t         src_if;
+    uint8_t         dst_if;
 
     uint32_t        local_teid;
     ogs_sockaddr_t  *local_addr;
@@ -222,9 +224,9 @@ int sgwc_tunnel_remove(sgwc_tunnel_t *tunnel);
 void sgwc_tunnel_remove_all(sgwc_bearer_t *bearer);
 sgwc_tunnel_t *sgwc_tunnel_find_by_teid(uint32_t teid);
 sgwc_tunnel_t *sgwc_tunnel_find_by_interface_type(
-        sgwc_bearer_t *bearer, uint8_t interface_type);
-sgwc_tunnel_t *sgwc_s1u_tunnel_in_bearer(sgwc_bearer_t *bearer);
-sgwc_tunnel_t *sgwc_s5u_tunnel_in_bearer(sgwc_bearer_t *bearer);
+        sgwc_bearer_t *bearer, uint8_t src_if, uint8_t dst_if);
+sgwc_tunnel_t *sgwc_dl_tunnel_in_bearer(sgwc_bearer_t *bearer);
+sgwc_tunnel_t *sgwc_ul_tunnel_in_bearer(sgwc_bearer_t *bearer);
 sgwc_tunnel_t *sgwc_tunnel_first(sgwc_bearer_t *bearer);
 sgwc_tunnel_t *sgwc_tunnel_next(sgwc_tunnel_t *tunnel);
 

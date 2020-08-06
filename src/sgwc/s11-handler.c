@@ -182,7 +182,7 @@ void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,
     uint16_t decoded;
     ogs_gtp_node_t *enb = NULL;
     sgwc_bearer_t *bearer = NULL;
-    sgwc_tunnel_t *s1u_tunnel = NULL;
+    sgwc_tunnel_t *ul_tunnel = NULL;
     ogs_gtp_modify_bearer_response_t *rsp = NULL;
     ogs_pkbuf_t *pkbuf = NULL;
     ogs_gtp_message_t message;
@@ -238,18 +238,18 @@ void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,
     rsp->cause.data = &cause;
     rsp->cause.len = sizeof(cause);
 
-    s1u_tunnel = sgwc_s1u_tunnel_in_bearer(bearer);
-    ogs_assert(s1u_tunnel);
+    ul_tunnel = sgwc_ul_tunnel_in_bearer(bearer);
+    ogs_assert(ul_tunnel);
 
     /* Data Plane(DL) : eNB-S1U */
     enb_s1u_teid =
         req->bearer_contexts_to_be_modified.s1_u_enodeb_f_teid.data;
-    s1u_tunnel->remote_teid = be32toh(enb_s1u_teid->teid);
+    ul_tunnel->remote_teid = be32toh(enb_s1u_teid->teid);
 
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
         sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
     ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d]",
-        s1u_tunnel->remote_teid, s1u_tunnel->local_teid);
+        ul_tunnel->remote_teid, ul_tunnel->local_teid);
 
     enb = ogs_gtp_node_find_by_f_teid(
             &sgwc_self()->enb_s1u_list, enb_s1u_teid);
@@ -312,17 +312,17 @@ void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,
                 sgwc_ue->e_cgi.cell_id);
     }
 
-    if (s1u_tunnel->gnode && s1u_tunnel->gnode != enb) {
-        ogs_assert(s1u_tunnel->gnode->sock);
+    if (ul_tunnel->gnode && ul_tunnel->gnode != enb) {
+        ogs_assert(ul_tunnel->gnode->sock);
 
         ogs_debug("[SGW] SEND End Marker to ENB[%s]: TEID[0x%x]",
-            OGS_ADDR(&s1u_tunnel->gnode->addr, buf),
-            s1u_tunnel->remote_teid);
-        sgwc_gtp_send_end_marker(s1u_tunnel);
+            OGS_ADDR(&ul_tunnel->gnode->addr, buf),
+            ul_tunnel->remote_teid);
+        sgwc_gtp_send_end_marker(ul_tunnel);
     }
 
     /* Setup GTP Node */
-    OGS_SETUP_GTP_NODE(s1u_tunnel, enb);
+    OGS_SETUP_GTP_NODE(ul_tunnel, enb);
 
     /* Reset UE state */
     SGW_RESET_UE_STATE(sgwc_ue, SGW_S1U_INACTIVE);
@@ -409,7 +409,7 @@ void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact,
     ogs_gtp_xact_t *s5c_xact = NULL;
     sgwc_sess_t *sess = NULL;
     sgwc_bearer_t *bearer = NULL;
-    sgwc_tunnel_t *s1u_tunnel = NULL, *s5u_tunnel = NULL;
+    sgwc_tunnel_t *ul_tunnel = NULL, *dl_tunnel = NULL;
     ogs_gtp_create_bearer_response_t *req = NULL;
 
     ogs_gtp_f_teid_t *sgwc_s1u_teid = NULL, *enb_s1u_teid = NULL;
@@ -493,12 +493,12 @@ void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact,
     req->bearer_contexts.s4_u_sgsn_f_teid.presence = 0;
 
     /* Find the Tunnel by SGW-S1U-TEID */
-    s1u_tunnel = sgwc_tunnel_find_by_teid(be32toh(sgwc_s1u_teid->teid));
-    ogs_assert(s1u_tunnel);
-    bearer = s1u_tunnel->bearer;
+    ul_tunnel = sgwc_tunnel_find_by_teid(be32toh(sgwc_s1u_teid->teid));
+    ogs_assert(ul_tunnel);
+    bearer = ul_tunnel->bearer;
     ogs_assert(bearer);
-    s5u_tunnel = sgwc_s5u_tunnel_in_bearer(bearer);
-    ogs_assert(s5u_tunnel);
+    dl_tunnel = sgwc_dl_tunnel_in_bearer(bearer);
+    ogs_assert(dl_tunnel);
     sess = bearer->sess;
     ogs_assert(sess);
 
@@ -507,16 +507,16 @@ void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact,
 
     /* Data Plane(DL) : eNB-S1U */
     enb_s1u_teid = req->bearer_contexts.s1_u_enodeb_f_teid.data;
-    s1u_tunnel->remote_teid = be32toh(enb_s1u_teid->teid);
+    ul_tunnel->remote_teid = be32toh(enb_s1u_teid->teid);
 
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
         sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
         sess->sgw_s5c_teid, sess->pgw_s5c_teid);
     ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d]",
-        s1u_tunnel->remote_teid, s1u_tunnel->local_teid);
+        ul_tunnel->remote_teid, ul_tunnel->local_teid);
     ogs_debug("    SGW_S5U_TEID[%d] PGW_S5U_TEID[%d]",
-        s5u_tunnel->local_teid, s5u_tunnel->remote_teid);
+        dl_tunnel->local_teid, dl_tunnel->remote_teid);
 
     enb = ogs_gtp_node_find_by_f_teid(&sgwc_self()->enb_s1u_list, enb_s1u_teid);
     if (!enb) {
@@ -532,7 +532,7 @@ void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact,
         ogs_assert(rv == OGS_OK);
     }
     /* Setup GTP Node */
-    OGS_SETUP_GTP_NODE(s1u_tunnel, enb);
+    OGS_SETUP_GTP_NODE(ul_tunnel, enb);
 
     /* Remove S1U-F-TEID */
     req->bearer_contexts.s1_u_enodeb_f_teid.presence = 0;
@@ -551,7 +551,7 @@ void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact,
     /* Data Plane(DL) : SGW-S5U */
     memset(&sgwc_s5u_teid, 0, sizeof(ogs_gtp_f_teid_t));
     sgwc_s5u_teid.interface_type = OGS_GTP_F_TEID_S5_S8_SGW_GTP_U;
-    sgwc_s5u_teid.teid = htonl(s5u_tunnel->local_teid);
+    sgwc_s5u_teid.teid = htonl(dl_tunnel->local_teid);
     rv = ogs_gtp_sockaddr_to_f_teid(
         sgwc_self()->gtpu_addr,  sgwc_self()->gtpu_addr6, &sgwc_s5u_teid, &len);
     ogs_assert(rv == OGS_OK);
@@ -560,10 +560,10 @@ void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact,
     req->bearer_contexts.s5_s8_u_sgw_f_teid.len = len;
 
     /* Data Plane(DL) : PGW-S5U */
-    ogs_assert(s5u_tunnel->gnode);
+    ogs_assert(dl_tunnel->gnode);
     pgw_s5u_teid.interface_type = OGS_GTP_F_TEID_S5_S8_PGW_GTP_U;
-    pgw_s5u_teid.teid = htonl(s5u_tunnel->remote_teid);
-    rv = ogs_gtp_ip_to_f_teid(&s5u_tunnel->gnode->ip, &pgw_s5u_teid, &len);
+    pgw_s5u_teid.teid = htonl(dl_tunnel->remote_teid);
+    rv = ogs_gtp_ip_to_f_teid(&dl_tunnel->gnode->ip, &pgw_s5u_teid, &len);
     req->bearer_contexts.s5_s8_u_pgw_f_teid.presence = 1;
     req->bearer_contexts.s5_s8_u_pgw_f_teid.data = &pgw_s5u_teid;
     req->bearer_contexts.s5_s8_u_pgw_f_teid.len = len;
@@ -792,7 +792,7 @@ void sgwc_s11_handle_release_access_bearers_request(ogs_gtp_xact_t *s11_xact,
     ogs_pkbuf_t *pkbuf = NULL;
     ogs_gtp_message_t message;
     sgwc_bearer_t *bearer = NULL, *next_bearer = NULL;
-    sgwc_tunnel_t *s1u_tunnel = NULL;
+    sgwc_tunnel_t *ul_tunnel = NULL;
     sgwc_sess_t *sess = NULL;
     
     ogs_gtp_cause_t cause;
@@ -838,10 +838,10 @@ void sgwc_s11_handle_release_access_bearers_request(ogs_gtp_xact_t *s11_xact,
         while (bearer) {
             next_bearer = ogs_list_next(bearer);
 
-            s1u_tunnel = sgwc_s1u_tunnel_in_bearer(bearer);
-            ogs_assert(s1u_tunnel);
+            ul_tunnel = sgwc_ul_tunnel_in_bearer(bearer);
+            ogs_assert(ul_tunnel);
 
-            s1u_tunnel->remote_teid = 0;
+            ul_tunnel->remote_teid = 0;
 
             bearer = next_bearer;
         }
