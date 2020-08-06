@@ -666,6 +666,8 @@ f.write("""    default:
         break;
     }
 
+    ogs_assert(ogs_pkbuf_push(pkbuf, size));
+
     return rv;
 }
 
