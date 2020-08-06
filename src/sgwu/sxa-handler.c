@@ -138,7 +138,6 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
 
     pdr->src_if = message->pdi.source_interface.u8;
 
-#if 0
     for (i = 0; i < OGS_MAX_NUM_OF_RULE; i++) {
         ogs_pfcp_sdf_filter_t sdf_filter_in_message;
         if (message->pdi.sdf_filter[i].presence == 0)
@@ -148,7 +147,7 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
                 &sdf_filter_in_message, &message->pdi.sdf_filter[i]);
         ogs_assert(message->pdi.sdf_filter[i].len == len);
         if (sdf_filter_in_message.fd) {
-            sgwu_sdf_filter_t *sdf_filter = NULL;
+            ogs_pfcp_rule_t *rule = NULL;
             char *flow_description = NULL;
 
             flow_description = ogs_malloc(
@@ -157,17 +156,14 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
                     sdf_filter_in_message.flow_description,
                     sdf_filter_in_message.flow_description_len+1);
 
-            sdf_filter = sgwu_sdf_filter_add(pdr);
-            ogs_assert(sdf_filter);
-            rv = ogs_ipfw_compile_rule(&sdf_filter->rule, flow_description);
+            rule = ogs_pfcp_rule_add(pdr);
+            ogs_assert(rule);
+            rv = ogs_ipfw_compile_rule(&rule->ipfw, flow_description);
             ogs_assert(rv == OGS_OK);
-            sdf_filter->pdr = pdr;
 
             ogs_free(flow_description);
         }
     }
-#endif
-
 
     /* APN(Network Instance) and UE IP Address
      * has already been processed in sgwu_sess_add() */
