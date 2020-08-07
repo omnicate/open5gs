@@ -640,10 +640,8 @@ void upf_n4_handle_session_modification_request(
         pdr = created_pdr[i];
         ogs_assert(pdr);
 
-        if (pdr->src_if == OGS_PFCP_INTERFACE_ACCESS) { /* Uplink */
-            if (pdr->f_teid_len)
-                ogs_pfcp_pdr_hash_set(pdr);
-        }
+        if (pdr->f_teid_len)
+            ogs_pfcp_pdr_hash_set(pdr);
     }
 
     /* Send Buffered Packet to gNB/SGW */

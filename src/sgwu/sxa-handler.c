@@ -526,7 +526,7 @@ void sgwu_sxa_handle_session_establishment_request(
     if (cause_value != OGS_PFCP_CAUSE_REQUEST_ACCEPTED)
         goto cleanup;
 
-    /* Setup UPF-N3-TEID & QFI Hash */
+    /* Setup TEID Hash */
     for (i = 0; i < num_of_created_pdr; i++) {
         pdr = created_pdr[i];
         ogs_assert(pdr);
@@ -647,15 +647,13 @@ void sgwu_sxa_handle_session_modification_request(
     if (cause_value != OGS_PFCP_CAUSE_REQUEST_ACCEPTED)
         goto cleanup;
 
-    /* Setup UPF-N3-TEID & QFI Hash */
+    /* Setup TEID Hash */
     for (i = 0; i < num_of_created_pdr; i++) {
         pdr = created_pdr[i];
         ogs_assert(pdr);
 
-        if (pdr->src_if == OGS_PFCP_INTERFACE_ACCESS) { /* Uplink */
-            if (pdr->f_teid_len)
-                ogs_pfcp_pdr_hash_set(pdr);
-        }
+        if (pdr->f_teid_len)
+            ogs_pfcp_pdr_hash_set(pdr);
     }
 
     /* Send Buffered Packet to gNB/SGW */
