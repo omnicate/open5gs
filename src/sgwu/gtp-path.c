@@ -133,7 +133,7 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
         }
     }
 
-    /* Remove GTP header and send packets to TUN interface */
+    /* Remove GTP header and send packets to peer NF */
     len = ogs_gtpu_header_len(pkbuf);
     if (len < 0) {
         ogs_error("[DROP] Cannot decode GTPU packet");
