@@ -166,23 +166,32 @@ void sgwc_s11_handle_create_session_request(
     sgwc_pfcp_send_session_establishment_request(sess, s11_xact, gtpbuf);
 }
 
-void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,
-    sgwc_ue_t *sgwc_ue, ogs_gtp_modify_bearer_request_t *req)
+void sgwc_s11_handle_modify_bearer_request(
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_modify_bearer_request_t *req)
 {
     int rv;
+#if 0
     char buf[OGS_ADDRSTRLEN];
 
     uint16_t decoded;
     ogs_gtp_node_t *enb = NULL;
+#endif
     sgwc_bearer_t *bearer = NULL;
     sgwc_tunnel_t *dl_tunnel = NULL;
-    ogs_gtp_modify_bearer_response_t *rsp = NULL;
-    ogs_pkbuf_t *pkbuf = NULL;
+    ogs_pfcp_far_t *far = NULL;
+#if 0
     ogs_gtp_message_t message;
+#endif
     
     ogs_gtp_cause_t cause;
     ogs_gtp_f_teid_t *enb_s1u_teid = NULL;
+#if 0
     ogs_gtp_uli_t uli;
+
+    ogs_gtp_modify_bearer_response_t *rsp = NULL;
+    ogs_pkbuf_t *pkbuf = NULL;
+#endif
 
     ogs_assert(s11_xact);
     ogs_assert(req);
@@ -224,26 +233,46 @@ void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,
         return;
     }
 
+#if 0
     rsp = &message.modify_bearer_response;
     memset(&message, 0, sizeof(ogs_gtp_message_t));
 
     rsp->cause.presence = 1;
     rsp->cause.data = &cause;
     rsp->cause.len = sizeof(cause);
+#endif
 
     dl_tunnel = sgwc_dl_tunnel_in_bearer(bearer);
     ogs_assert(dl_tunnel);
 
     /* Data Plane(DL) : eNB-S1U */
-    enb_s1u_teid =
-        req->bearer_contexts_to_be_modified.s1_u_enodeb_f_teid.data;
+    enb_s1u_teid = req->bearer_contexts_to_be_modified.s1_u_enodeb_f_teid.data;
     dl_tunnel->remote_teid = be32toh(enb_s1u_teid->teid);
+
+    rv = ogs_gtp_f_teid_to_ip(enb_s1u_teid, &dl_tunnel->remote_ip);
+    if (rv != OGS_OK) {
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+                OGS_GTP_MODIFY_BEARER_RESPONSE_TYPE,
+                OGS_GTP_CAUSE_MANDATORY_IE_MISSING);
+        return;
+    }
+
+    far = dl_tunnel->far;
+    ogs_assert(far);
+
+    ogs_pfcp_ip_to_outer_header_creation(&dl_tunnel->remote_ip,
+        &far->outer_header_creation, &far->outer_header_creation_len);
+    far->outer_header_creation.teid = dl_tunnel->remote_teid;
 
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
         sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
     ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d]",
         dl_tunnel->remote_teid, dl_tunnel->local_teid);
 
+    sgwc_pfcp_send_tunnel_modification_request(
+            dl_tunnel, s11_xact, gtpbuf, OGS_PFCP_MODIFY_ACTIVATE);
+#if 0
     enb = ogs_gtp_node_find_by_f_teid(
             &sgwc_self()->enb_s1u_list, enb_s1u_teid);
     if (!enb) {
@@ -331,6 +360,7 @@ void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact,
 
     rv = ogs_gtp_xact_commit(s11_xact);
     ogs_expect(rv == OGS_OK);
+#endif
 }
 
 void sgwc_s11_handle_delete_session_request(ogs_gtp_xact_t *s11_xact,

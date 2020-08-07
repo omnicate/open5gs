@@ -45,10 +45,10 @@ static void test1_func(abts_case *tc, void *data)
         "d9";
     const char *_initial_context_setup_request = 
         "00090080bf000006 0000000200010008 000200180042000a 183d090000603d09"
-        "0000001800710000 34006c4500093d0f 807f000002000000 015d276fad10bd02"
+        "0000001800710000 34006c4500093d0f 807f000007000000 025d2722ab599e02"
         "074201490c031340 1000320033003400 3500315201c10109 0c0773746172656e"
         "7403636f6d05010a 2d00025e06fefee2 e20303270f80000d 0408080808000d04"
-        "08080404500bf613 4010801e64e800c4 3f59496402010800 6b000518000c0000"
+        "08080404500bf613 4010801e64e400ae b859496402010800 6b000518000c0000"
         "0049002046c789cb a93e9b97758335c0 97e6c386c872e4b8 2434a48037c30601"
         "590edd8e";
     const char *_emm_information = 
@@ -223,8 +223,6 @@ static void test1_func(abts_case *tc, void *data)
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
-    ogs_msleep(300);
-#if 0
     /* Receive Initial Context Setup Request + 
      * Attach Accept + 
      * Activate Default Bearer Context Request */
@@ -243,11 +241,9 @@ static void test1_func(abts_case *tc, void *data)
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
-    ogs_msleep(50);
-
     /* Send Initial Context Setup Response */
     rv = tests1ap_build_initial_context_setup_response(&sendbuf,
-            27263233, 24, 5, 1, "127.0.0.5");
+            1, 24, 5, 1, "127.0.0.5");
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
@@ -258,8 +254,7 @@ static void test1_func(abts_case *tc, void *data)
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
-    ogs_msleep(50);
-
+#if 0
     /* Receive EMM information */
     recvbuf = testenb_s1ap_read(s1ap);
     ABTS_PTR_NOTNULL(tc, recvbuf);

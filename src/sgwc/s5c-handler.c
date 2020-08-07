@@ -45,14 +45,16 @@ void sgwc_s5c_handle_create_session_response(
 {
     int rv;
     uint8_t cause_value;
-    ogs_gtp_xact_t *s11_xact = NULL;
+
+    sgwc_ue_t *sgwc_ue = NULL;
     sgwc_bearer_t *bearer = NULL;
     sgwc_tunnel_t *ul_tunnel = NULL;
     ogs_pfcp_far_t *far = NULL;
-    sgwc_ue_t *sgwc_ue = NULL;
 
     ogs_gtp_f_teid_t *pgw_s5c_teid = NULL;
     ogs_gtp_f_teid_t *pgw_s5u_teid = NULL;
+
+    ogs_gtp_xact_t *s11_xact = NULL;
 
     ogs_assert(s5c_xact);
     s11_xact = s5c_xact->assoc_xact;
@@ -162,13 +164,12 @@ void sgwc_s5c_handle_create_session_response(
         return;
     }
 
-    ogs_list_for_each(&bearer->pfcp.far_list, far) {
-        if (far->dst_if == OGS_PFCP_INTERFACE_CORE) {
-            ogs_pfcp_ip_to_outer_header_creation(&ul_tunnel->remote_ip,
-                &far->outer_header_creation, &far->outer_header_creation_len);
-            far->outer_header_creation.teid = ul_tunnel->remote_teid;
-        }
-    }
+    far = ul_tunnel->far;
+    ogs_assert(far);
+
+    ogs_pfcp_ip_to_outer_header_creation(&ul_tunnel->remote_ip,
+        &far->outer_header_creation, &far->outer_header_creation_len);
+    far->outer_header_creation.teid = ul_tunnel->remote_teid;
 
     /* Receive Control Plane(UL) : PGW-S5C */
     pgw_s5c_teid = rsp->pgw_s5_s8__s2a_s2b_f_teid_for_pmip_based_interface_or_for_gtp_based_control_plane_interface.data;

@@ -29,8 +29,9 @@ extern "C" {
 void sgwc_s11_handle_create_session_request(
         sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
         ogs_pkbuf_t *gtpbuf, ogs_gtp_create_session_request_t *req);
-void sgwc_s11_handle_modify_bearer_request(ogs_gtp_xact_t *s11_xact, 
-        sgwc_ue_t *sgwc_ue, ogs_gtp_modify_bearer_request_t *req);
+void sgwc_s11_handle_modify_bearer_request(
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_modify_bearer_request_t *req);
 void sgwc_s11_handle_delete_session_request(ogs_gtp_xact_t *s11_xact, 
         sgwc_ue_t *sgwc_ue, ogs_gtp_message_t *message);
 void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact, 
