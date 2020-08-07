@@ -195,6 +195,24 @@ void sgwu_gtp_close(void)
     ogs_pkbuf_pool_destroy(packet_pool);
 }
 
+void sgwu_gtp_send_buffered_packet(ogs_pfcp_pdr_t *pdr)
+{
+    ogs_pfcp_far_t *far = NULL;
+    int i;
+
+    ogs_assert(pdr);
+    far = pdr->far;
+
+    if (far && far->gnode) {
+        if (far->apply_action & OGS_PFCP_APPLY_ACTION_FORW) {
+            for (i = 0; i < far->num_of_buffered_packet; i++) {
+                sgwu_gtp_send_to_nf(pdr, far->buffered_packet[i]);
+            }
+            far->num_of_buffered_packet = 0;
+        }
+    }
+}
+
 static void sgwu_gtp_send_to_nf(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *sendbuf)
 {
     char buf[OGS_ADDRSTRLEN];

@@ -535,14 +535,12 @@ void sgwu_sxa_handle_session_establishment_request(
             ogs_pfcp_pdr_hash_set(pdr);
     }
 
-    /* Send Buffered Packet to gNB/SGW */
-#if 0
+    /* Send Buffered Packet to gNB */
     ogs_list_for_each(&sess->pfcp.pdr_list, pdr) {
         if (pdr->src_if == OGS_PFCP_INTERFACE_CORE) { /* Downlink */
             sgwu_gtp_send_buffered_packet(pdr);
         }
     }
-#endif
 
     sgwu_pfcp_send_session_establishment_response(
             xact, sess, created_pdr, num_of_created_pdr);
@@ -656,14 +654,12 @@ void sgwu_sxa_handle_session_modification_request(
             ogs_pfcp_pdr_hash_set(pdr);
     }
 
-    /* Send Buffered Packet to gNB/SGW */
-#if 0
+    /* Send Buffered Packet to gNB */
     ogs_list_for_each(&sess->pfcp.pdr_list, pdr) {
         if (pdr->src_if == OGS_PFCP_INTERFACE_CORE) { /* Downlink */
             sgwu_gtp_send_buffered_packet(pdr);
         }
     }
-#endif
 
     sgwu_pfcp_send_session_modification_response(
             xact, sess, created_pdr, num_of_created_pdr);
