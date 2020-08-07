@@ -254,7 +254,6 @@ static void test1_func(abts_case *tc, void *data)
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
-#if 0
     /* Receive EMM information */
     recvbuf = testenb_s1ap_read(s1ap);
     ABTS_PTR_NOTNULL(tc, recvbuf);
@@ -263,6 +262,7 @@ static void test1_func(abts_case *tc, void *data)
     ABTS_TRUE(tc, memcmp(recvbuf->data+29, tmp+29, 20) == 0);
     ogs_pkbuf_free(recvbuf);
 
+#if 0
     /* Send GTP-U ICMP Packet */
     rv = testgtpu_build_ping(&sendbuf, 1, "10.45.0.2", "10.45.0.1");
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
