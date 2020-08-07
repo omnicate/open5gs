@@ -19,196 +19,16 @@
 
 #include "gtp-path.h"
 
+#define SGWU_GTP_HANDLED     1
+
 static ogs_pkbuf_pool_t *packet_pool = NULL;
+
+static void sgwu_gtp_send_to_nf(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *sendbuf);
+static int sgwu_gtp_handle_pdr(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *recvbuf);
 
 static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
 {
-#if 0
-    char buf[OGS_ADDRSTRLEN];
-    int rv;
-    ssize_t size;
-    ogs_pkbuf_t *pkbuf = NULL;
-    ogs_sockaddr_t from;
-    ogs_gtp_header_t *gtp_h = NULL;
-    sgwu_bearer_t *bearer = NULL;
-#if 0
-    sgwu_tunnel_t *tunnel = NULL;
-#endif
-    uint32_t teid;
-    int i;
-
-    ogs_assert(fd != INVALID_SOCKET);
-    ogs_assert(packet_pool);
-
-    pkbuf = ogs_pkbuf_alloc(packet_pool, OGS_MAX_SDU_LEN);
-    ogs_pkbuf_put(pkbuf, OGS_MAX_SDU_LEN);
-
-    size = ogs_recvfrom(fd, pkbuf->data, pkbuf->len, 0, &from);
-    if (size <= 0) {
-        ogs_log_message(OGS_LOG_ERROR, ogs_socket_errno,
-                "ogs_recvfrom() failed");
-        ogs_pkbuf_free(pkbuf);
-        return;
-    }
-
-    ogs_pkbuf_trim(pkbuf, size);
-
-    gtp_h = (ogs_gtp_header_t *)pkbuf->data;
-    if (gtp_h->type == OGS_GTPU_MSGTYPE_ECHO_REQ) {
-        ogs_pkbuf_t *echo_rsp;
-
-        ogs_debug("[SGW] RECV Echo Request from [%s]",
-                OGS_ADDR(&from, buf));
-        echo_rsp = ogs_gtp_handle_echo_req(pkbuf);
-        if (echo_rsp) {
-            ssize_t sent;
-
-            /* Echo reply */
-            ogs_debug("[SGW] SEND Echo Response to [%s]",
-                    OGS_ADDR(&from, buf));
-
-            sent = ogs_sendto(fd, echo_rsp->data, echo_rsp->len, 0, &from);
-            if (sent < 0 || sent != echo_rsp->len) {
-                ogs_log_message(OGS_LOG_ERROR, ogs_socket_errno,
-                        "ogs_sendto() failed");
-            }
-            ogs_pkbuf_free(echo_rsp);
-        }
-    } else if (gtp_h->type == OGS_GTPU_MSGTYPE_GPDU || 
-                gtp_h->type == OGS_GTPU_MSGTYPE_END_MARKER) {
-        teid = ntohl(gtp_h->teid);
-        if (gtp_h->type == OGS_GTPU_MSGTYPE_GPDU)
-            ogs_debug("[SGW] RECV GPU-U from [%s] : TEID[0x%x]",
-                    OGS_ADDR(&from, buf), teid);
-        else if (gtp_h->type == OGS_GTPU_MSGTYPE_END_MARKER)
-            ogs_debug("[SGW] RECV End Marker from [%s] : TEID[0x%x]",
-                    OGS_ADDR(&from, buf), teid);
-
-        tunnel = sgwu_tunnel_find_by_teid(teid);
-        if (!tunnel) {
-            if (gtp_h->type == OGS_GTPU_MSGTYPE_GPDU)
-                ogs_warn("[SGW] RECV GPU-U from [%s] : No TEID[0x%x]",
-                        OGS_ADDR(&from, buf), teid);
-            else if (gtp_h->type == OGS_GTPU_MSGTYPE_END_MARKER)
-                ogs_warn("[SGW] RECV End Marker from [%s] : No TEID[0x%x]",
-                        OGS_ADDR(&from, buf), teid);
-            ogs_pkbuf_free(pkbuf);
-            return;
-        }
-        bearer = tunnel->bearer;
-        ogs_assert(bearer);
-
-        /* Convert TEID */
-        if (tunnel->interface_type == OGS_GTP_F_TEID_S1_U_SGW_GTP_U) {
-            sgwu_tunnel_t *s5u_tunnel = NULL;
-
-            s5u_tunnel = sgwu_s5u_tunnel_in_bearer(bearer);
-            ogs_assert(s5u_tunnel);
-            ogs_assert(s5u_tunnel->gnode);
-            ogs_assert(s5u_tunnel->gnode->sock);
-            ogs_debug("[SGW] SEND GPU-U to PGW[%s]: TEID[0x%x]",
-                OGS_ADDR(&s5u_tunnel->gnode->addr, buf),
-                s5u_tunnel->remote_teid);
-
-            gtp_h->teid = htonl(s5u_tunnel->remote_teid);
-            ogs_gtp_sendto(s5u_tunnel->gnode, pkbuf);
-        } else if (tunnel->interface_type ==
-                    OGS_GTP_F_TEID_SGW_GTP_U_FOR_DL_DATA_FORWARDING ||
-                tunnel->interface_type ==
-                    OGS_GTP_F_TEID_SGW_GTP_U_FOR_UL_DATA_FORWARDING) {
-            sgwu_tunnel_t *indirect_tunnel = NULL;
-
-            indirect_tunnel = sgwu_tunnel_find_by_interface_type(bearer,
-                    tunnel->interface_type);
-            ogs_assert(indirect_tunnel);
-            ogs_assert(indirect_tunnel->gnode);
-            ogs_assert(indirect_tunnel->gnode->sock);
-            ogs_debug("[SGW] SEND GPU-U to Indirect Tunnel[%s]: TEID[0x%x]",
-                OGS_ADDR(&indirect_tunnel->gnode->addr, buf),
-                indirect_tunnel->remote_teid);
-
-            gtp_h->teid = htonl(indirect_tunnel->remote_teid);
-            ogs_gtp_sendto(indirect_tunnel->gnode, pkbuf);
-        } else if (tunnel->interface_type == OGS_GTP_F_TEID_S5_S8_SGW_GTP_U) {
-            sgwu_tunnel_t *s1u_tunnel = NULL;
-
-            s1u_tunnel = sgwu_s1u_tunnel_in_bearer(bearer);
-            ogs_assert(s1u_tunnel);
-
-            if (s1u_tunnel->remote_teid) {
-                ogs_assert(s1u_tunnel->gnode);
-                ogs_assert(s1u_tunnel->gnode->sock);
-                ogs_debug("[SGW] SEND GPU-U to ENB[%s]: TEID[0x%x]",
-                    OGS_ADDR(&s1u_tunnel->gnode->addr, buf),
-                    s1u_tunnel->remote_teid);
-
-                /* If there is buffered packet, send it first */
-                for (i = 0; i < bearer->num_buffered_pkt; i++) {
-                    ogs_gtp_header_t *gtp_h = NULL;
-
-                    gtp_h = (ogs_gtp_header_t *)bearer->buffered_pkts[i]->data;
-                    gtp_h->teid = htonl(s1u_tunnel->remote_teid);
-
-                    ogs_gtp_sendto(s1u_tunnel->gnode, bearer->buffered_pkts[i]);
-                    ogs_pkbuf_free(bearer->buffered_pkts[i]);
-                }
-                bearer->num_buffered_pkt = 0;
-
-                gtp_h->teid = htonl(s1u_tunnel->remote_teid);
-                ogs_gtp_sendto(s1u_tunnel->gnode, pkbuf);
-            } else {
-                /* S1U path is deactivated.
-                 * Send downlink_data_notification to MME.
-                 *
-                 */
-                sgwu_ue_t *sgwu_ue = NULL;
-
-                ogs_assert(bearer->sess);
-                ogs_assert(bearer->sess->sgwu_ue);
-
-                sgwu_ue = bearer->sess->sgwu_ue;
-
-                ogs_debug("[SGW] S1U PATH deactivated : STATE[0x%x]",
-                        SGW_GET_UE_STATE(sgwu_ue));
-                if ((SGW_GET_UE_STATE(sgwu_ue) & SGW_S1U_INACTIVE)) {
-                    ogs_debug("    SGW-S1U Inactive");
-                    if (!(SGW_GET_UE_STATE(sgwu_ue) & SGW_DL_NOTI_SENT)) {
-                        sgwu_event_t *e;
-
-                        ogs_debug("    EVENT DL Data Notification");
-                        e = sgwu_event_new(SGWU_EVT_LO_DLDATA_NOTI);
-                        ogs_assert(e);
-                        e->bearer = bearer;
-                        rv = ogs_queue_push(sgwu_self()->queue, e);
-                        if (rv != OGS_OK) {
-                            ogs_error("ogs_queue_push() failed:%d", (int)rv);
-                            sgwu_event_free(e);
-                        }
-
-                        SGW_SET_UE_STATE(sgwu_ue, SGW_DL_NOTI_SENT);
-                    }
-
-                    /* Buffer the packet */
-                    if (bearer->num_buffered_pkt < MAX_NUM_OF_PACKET_BUFFER) {
-                        bearer->buffered_pkts[bearer->num_buffered_pkt++] = 
-                            pkbuf;
-                        return;
-                    }
-                } else {
-                    /* UE is S1U_ACTIVE state but there is no s1u teid */
-                    ogs_debug("[SGW] UE is ACITVE but there is no matched "
-                            "ENB_S1U_TEID[%d]", teid);
-
-                    /* Just drop it */
-                }
-            }
-        }
-    }
-
-    ogs_pkbuf_free(pkbuf);
-    return;
-#endif
-    int rv, len;
+    int len;
     ssize_t size;
     char buf[OGS_ADDRSTRLEN];
 
@@ -221,11 +41,6 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
     uint32_t teid;
     uint8_t qfi;
     ogs_pfcp_pdr_t *pdr = NULL;
-    sgwu_sess_t *sess = NULL;
-#if 0
-    ogs_pfcp_subnet_t *subnet = NULL;
-    ogs_pfcp_dev_t *dev = NULL;
-#endif
 
     ogs_assert(fd != INVALID_SOCKET);
 
@@ -332,42 +147,12 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
 
     pdr = ogs_pfcp_pdr_find_by_teid_and_qfi(teid, qfi);
     if (!pdr) {
-        ogs_warn("[DROP] Cannot find PDR : UPF-N3-TEID[0x%x] QFI[%d]",
+        ogs_warn("[DROP] Cannot find PDR : TEID[0x%x] QFI[%d]",
                 teid, qfi);
         goto cleanup;
     }
-    ogs_assert(pdr->sess);
-    ogs_fatal("odr = %d", pdr->id);
-#if 0
-    sess = SGWU_SESS(pdr->sess);
-    ogs_assert(sess);
 
-    if (ip_h->ip_v == 4 && sess->ipv4)
-        subnet = sess->ipv4->subnet;
-    else if (ip_h->ip_v == 6 && sess->ipv6)
-        subnet = sess->ipv6->subnet;
-
-    if (!subnet) {
-        ogs_error("[DROP] Cannot find subnet V:%d, IPv4:%p, IPv6:%p",
-                ip_h->ip_v, sess->ipv4, sess->ipv6);
-        ogs_log_hexdump(OGS_LOG_ERROR, pkbuf->data, pkbuf->len);
-        goto cleanup;
-    }
-
-    /* Check IPv6 */
-    if (ogs_config()->parameter.no_slaac == 0 && ip_h->ip_v == 6) {
-        rv = upf_gtp_handle_slaac(sess, pkbuf);
-        if (rv == UPF_GTP_HANDLED) {
-            goto cleanup;
-        }
-        ogs_assert(rv == OGS_OK);
-    }
-
-    dev = subnet->dev;
-    ogs_assert(dev);
-    if (ogs_write(dev->fd, pkbuf->data, pkbuf->len) <= 0)
-        ogs_error("ogs_write() failed");
-#endif
+    sgwu_gtp_handle_pdr(pdr, pkbuf);
 
 cleanup:
     ogs_pkbuf_free(pkbuf);
@@ -409,6 +194,131 @@ void sgwu_gtp_close(void)
 
     ogs_pkbuf_pool_destroy(packet_pool);
 }
+
+static void sgwu_gtp_send_to_nf(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *sendbuf)
+{
+    char buf[OGS_ADDRSTRLEN];
+    int rv;
+    ogs_gtp_header_t *gtp_h = NULL;
+    ogs_gtp_extension_header_t *ext_h = NULL;
+    ogs_gtp_node_t *gnode = NULL;
+
+    ogs_pfcp_far_t *far = NULL;
+    ogs_pfcp_qer_t *qer = NULL;
+
+    ogs_assert(pdr);
+
+    far = pdr->far;
+    if (!far) {
+        ogs_error("No FAR");
+        return;
+    }
+
+#if 0
+    if (far->dst_if != OGS_PFCP_INTERFACE_ACCESS) {
+        ogs_error("FAR is NOT Downlink");
+        return;
+    }
+#endif
+
+    gnode = far->gnode;
+    ogs_assert(gnode);
+    ogs_assert(gnode->sock);
+    ogs_assert(sendbuf);
+
+    qer = pdr->qer;
+
+    /* Add GTP-U header */
+    if (qer && qer->qfi) {
+        ogs_assert(ogs_pkbuf_push(sendbuf, OGS_GTPV1U_5GC_HEADER_LEN));
+        gtp_h = (ogs_gtp_header_t *)sendbuf->data;
+        /* Bits    8  7  6  5  4  3  2  1
+         *        +--+--+--+--+--+--+--+--+
+         *        |version |PT| 1| E| S|PN|
+         *        +--+--+--+--+--+--+--+--+
+         *         0  0  1   1  0  1  0  0
+         */
+        gtp_h->flags = 0x34;
+        gtp_h->type = OGS_GTPU_MSGTYPE_GPDU;
+        gtp_h->length = htobe16(sendbuf->len - OGS_GTPV1U_HEADER_LEN);
+        gtp_h->teid = htobe32(far->outer_header_creation.teid);
+
+        ext_h = (ogs_gtp_extension_header_t *)(
+                sendbuf->data + OGS_GTPV1U_HEADER_LEN);
+        ext_h->type = OGS_GTP_EXTENSION_HEADER_TYPE_PDU_SESSION_CONTAINER;
+        ext_h->len = 1;
+        ext_h->pdu_type =
+            OGS_GTP_EXTENSION_HEADER_PDU_TYPE_DL_PDU_SESSION_INFORMATION;
+        ext_h->qos_flow_identifier = qer->qfi;
+        ext_h->next_type =
+            OGS_GTP_EXTENSION_HEADER_TYPE_NO_MORE_EXTENSION_HEADERS;
+    } else {
+        ogs_assert(ogs_pkbuf_push(sendbuf, OGS_GTPV1U_HEADER_LEN));
+        gtp_h = (ogs_gtp_header_t *)sendbuf->data;
+        /* Bits    8  7  6  5  4  3  2  1
+         *        +--+--+--+--+--+--+--+--+
+         *        |version |PT| 1| E| S|PN|
+         *        +--+--+--+--+--+--+--+--+
+         *         0  0  1   1  0  0  0  0
+         */
+        gtp_h->flags = 0x30;
+        gtp_h->type = OGS_GTPU_MSGTYPE_GPDU;
+        gtp_h->length = htobe16(sendbuf->len - OGS_GTPV1U_HEADER_LEN);
+        gtp_h->teid = htobe32(far->outer_header_creation.teid);
+    }
+
+    /* Send to gNB */
+    ogs_debug("SEND GPU-U to Peer[%s] : TEID[0x%x]",
+        OGS_ADDR(&gnode->addr, buf), far->outer_header_creation.teid);
+    rv = ogs_gtp_sendto(gnode, sendbuf);
+    if (rv != OGS_OK)
+        ogs_error("ogs_gtp_sendto() failed");
+
+    ogs_pkbuf_free(sendbuf);
+}
+
+static int sgwu_gtp_handle_pdr(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *recvbuf)
+{
+    ogs_pfcp_far_t *far = NULL;
+    ogs_pkbuf_t *sendbuf = NULL;
+
+    ogs_assert(recvbuf);
+    ogs_assert(pdr);
+
+#if 0
+    if (pdr->src_if != OGS_PFCP_INTERFACE_CORE) {
+        ogs_error("PDR is NOT Downlink");
+        return OGS_ERROR;
+    }
+#endif
+
+    far = pdr->far;
+    ogs_assert(far);
+
+    sendbuf = ogs_pkbuf_copy(recvbuf);
+    ogs_assert(sendbuf);
+    if (!far->gnode) {
+        /* Default apply action : buffering */
+        if (far->num_of_buffered_packet < MAX_NUM_OF_PACKET_BUFFER) {
+            far->buffered_packet[far->num_of_buffered_packet++] = sendbuf;
+            return SGWU_GTP_HANDLED;
+        }
+    } else {
+        if (far->apply_action & OGS_PFCP_APPLY_ACTION_FORW) {
+            sgwu_gtp_send_to_nf(pdr, sendbuf);
+        } else if (far->apply_action & OGS_PFCP_APPLY_ACTION_BUFF) {
+            if (far->num_of_buffered_packet < MAX_NUM_OF_PACKET_BUFFER) {
+                far->buffered_packet[far->num_of_buffered_packet++] = sendbuf;
+                return SGWU_GTP_HANDLED;
+            }
+        }
+        return SGWU_GTP_HANDLED;
+    }
+
+    ogs_pkbuf_free(sendbuf);
+    return OGS_OK;
+}
+
 
 #if 0
 void sgwu_gtp_send_end_marker(sgwu_tunnel_t *s1u_tunnel)
