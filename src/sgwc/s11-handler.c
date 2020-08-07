@@ -171,27 +171,13 @@ void sgwc_s11_handle_modify_bearer_request(
         ogs_pkbuf_t *gtpbuf, ogs_gtp_modify_bearer_request_t *req)
 {
     int rv;
-#if 0
-    char buf[OGS_ADDRSTRLEN];
 
-    uint16_t decoded;
-    ogs_gtp_node_t *enb = NULL;
-#endif
     sgwc_bearer_t *bearer = NULL;
     sgwc_tunnel_t *dl_tunnel = NULL;
     ogs_pfcp_far_t *far = NULL;
-#if 0
-    ogs_gtp_message_t message;
-#endif
     
     ogs_gtp_cause_t cause;
     ogs_gtp_f_teid_t *enb_s1u_teid = NULL;
-#if 0
-    ogs_gtp_uli_t uli;
-
-    ogs_gtp_modify_bearer_response_t *rsp = NULL;
-    ogs_pkbuf_t *pkbuf = NULL;
-#endif
 
     ogs_assert(s11_xact);
     ogs_assert(req);
@@ -233,15 +219,6 @@ void sgwc_s11_handle_modify_bearer_request(
         return;
     }
 
-#if 0
-    rsp = &message.modify_bearer_response;
-    memset(&message, 0, sizeof(ogs_gtp_message_t));
-
-    rsp->cause.presence = 1;
-    rsp->cause.data = &cause;
-    rsp->cause.len = sizeof(cause);
-#endif
-
     dl_tunnel = sgwc_dl_tunnel_in_bearer(bearer);
     ogs_assert(dl_tunnel);
 
@@ -270,97 +247,8 @@ void sgwc_s11_handle_modify_bearer_request(
     ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d]",
         dl_tunnel->remote_teid, dl_tunnel->local_teid);
 
-    sgwc_pfcp_send_tunnel_modification_request(
-            dl_tunnel, s11_xact, gtpbuf, OGS_PFCP_MODIFY_ACTIVATE);
-#if 0
-    enb = ogs_gtp_node_find_by_f_teid(
-            &sgwc_self()->enb_s1u_list, enb_s1u_teid);
-    if (!enb) {
-        enb = ogs_gtp_node_add_by_f_teid(
-            &sgwc_self()->enb_s1u_list, enb_s1u_teid, sgwc_self()->gtpu_port,
-            ogs_config()->parameter.no_ipv4,
-            ogs_config()->parameter.no_ipv6,
-            ogs_config()->parameter.prefer_ipv4);
-        ogs_assert(enb);
-
-        rv = ogs_gtp_connect(
-                sgwc_self()->gtpu_sock, sgwc_self()->gtpu_sock6, enb);
-        ogs_assert(rv == OGS_OK);
-    }
-
-    /* Copy Bearer-Contexts-Modified from Modify-Bearer-Request
-     *
-     * TS 29.274 Table 7.2.7-2
-     * NOTE 1: The SGW shall not change its F-TEID for a given interface
-     * during the Handover, Service Request, E-UTRAN Initial Attach,
-     * UE Requested PDN connectivity and PDP Context Activation procedures.
-     * The SGW F-TEID shall be same for S1-U, S4-U and S12. During Handover
-     * and Service Request the target eNodeB/RNC/SGSN may use a different
-     * IP type than the one used by the source eNodeB/RNC/SGSN.
-     * In order to support such a scenario, the SGW F-TEID should contain
-     * both an IPv4 address and an IPv6 address
-     * (see also subclause 8.22 "F-TEID").
-     */
-    rsp->bearer_contexts_modified.presence = 1;
-    rsp->bearer_contexts_modified.eps_bearer_id.presence = 1;
-    rsp->bearer_contexts_modified.eps_bearer_id.u8 =
-        req->bearer_contexts_to_be_modified.eps_bearer_id.u8;
-    rsp->bearer_contexts_modified.s1_u_enodeb_f_teid.presence = 1;
-    rsp->bearer_contexts_modified.s1_u_enodeb_f_teid.data =
-        req->bearer_contexts_to_be_modified.s1_u_enodeb_f_teid.data;
-    rsp->bearer_contexts_modified.s1_u_enodeb_f_teid.len =
-        req->bearer_contexts_to_be_modified.s1_u_enodeb_f_teid.len;
-
-    rsp->bearer_contexts_modified.cause.presence = 1;
-    rsp->bearer_contexts_modified.cause.len = sizeof(cause);
-    rsp->bearer_contexts_modified.cause.data = &cause;
-
-    /* if GTP Node changes, End Marker is sent out or not */
-    if (req->user_location_information.presence == 1) {
-        /* Set User Location Information */
-        decoded = ogs_gtp_parse_uli(&uli, &req->user_location_information);
-        ogs_assert(req->user_location_information.len == decoded);
-        memcpy(&sgwc_ue->e_tai.plmn_id, &uli.tai.plmn_id,
-                sizeof(uli.tai.plmn_id));
-        sgwc_ue->e_tai.tac = uli.tai.tac;
-        memcpy(&sgwc_ue->e_cgi.plmn_id, &uli.e_cgi.plmn_id,
-                sizeof(uli.e_cgi.plmn_id));
-        sgwc_ue->e_cgi.cell_id = uli.e_cgi.cell_id;
-        ogs_debug("    TAI[PLMN_ID:%06x,TAC:%d]",
-                ogs_plmn_id_hexdump(&sgwc_ue->e_tai.plmn_id),
-                sgwc_ue->e_tai.tac);
-        ogs_debug("    E_CGI[PLMN_ID:%06x,CELL_ID:%d]",
-                ogs_plmn_id_hexdump(&sgwc_ue->e_cgi.plmn_id),
-                sgwc_ue->e_cgi.cell_id);
-    }
-
-    if (dl_tunnel->gnode && dl_tunnel->gnode != enb) {
-        ogs_assert(dl_tunnel->gnode->sock);
-
-        ogs_debug("[SGW] SEND End Marker to ENB[%s]: TEID[0x%x]",
-            OGS_ADDR(&dl_tunnel->gnode->addr, buf),
-            dl_tunnel->remote_teid);
-        sgwc_gtp_send_end_marker(dl_tunnel);
-    }
-
-    /* Setup GTP Node */
-    OGS_SETUP_GTP_NODE(dl_tunnel, enb);
-
-    /* Reset UE state */
-    SGW_RESET_UE_STATE(sgwc_ue, SGW_S1U_INACTIVE);
-
-    message.h.type = OGS_GTP_MODIFY_BEARER_RESPONSE_TYPE;
-    message.h.teid = sgwc_ue->mme_s11_teid;
-
-    pkbuf = ogs_gtp_build_msg(&message);
-    ogs_expect_or_return(pkbuf);
-
-    rv = ogs_gtp_xact_update_tx(s11_xact, &message.h, pkbuf);
-    ogs_expect_or_return(rv == OGS_OK);
-
-    rv = ogs_gtp_xact_commit(s11_xact);
-    ogs_expect(rv == OGS_OK);
-#endif
+    sgwc_pfcp_send_tunnel_modification_request(dl_tunnel, s11_xact, gtpbuf,
+            OGS_PFCP_MODIFY_DL_ONLY| OGS_PFCP_MODIFY_ACTIVATE);
 }
 
 void sgwc_s11_handle_delete_session_request(ogs_gtp_xact_t *s11_xact,
