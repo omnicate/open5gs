@@ -273,29 +273,6 @@ void sgwc_pfcp_send_association_setup_response(ogs_pfcp_xact_t *xact,
     ogs_expect(rv == OGS_OK);
 }
 
-void sgwc_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node)
-{
-    int rv;
-    ogs_pkbuf_t *sxabuf = NULL;
-    ogs_pfcp_header_t h;
-    ogs_pfcp_xact_t *xact = NULL;
-
-    ogs_assert(node);
-
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_HEARTBEAT_REQUEST_TYPE;
-    h.seid = 0;
-
-    sxabuf = ogs_pfcp_n4_build_heartbeat_request(h.type);
-    ogs_expect_or_return(sxabuf);
-
-    xact = ogs_pfcp_xact_local_create(node, &h, sxabuf, timeout, node);
-    ogs_expect_or_return(xact);
-
-    rv = ogs_pfcp_xact_commit(xact);
-    ogs_expect(rv == OGS_OK);
-}
-
 void sgwc_pfcp_send_session_establishment_request(
         sgwc_sess_t *sess, ogs_gtp_xact_t *gtp_xact, ogs_pkbuf_t *gtpbuf)
 {

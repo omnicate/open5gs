@@ -32,7 +32,6 @@ void sgwu_pfcp_close(void);
 void sgwu_pfcp_send_association_setup_request(ogs_pfcp_node_t *node);
 void sgwu_pfcp_send_association_setup_response(ogs_pfcp_xact_t *xact,
         uint8_t cause);
-void sgwu_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node);
 
 void sgwu_pfcp_send_session_establishment_response(
         ogs_pfcp_xact_t *xact, sgwu_sess_t *sess,

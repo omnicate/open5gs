@@ -22,6 +22,34 @@
 #include "pfcp-path.h"
 #include "n4-build.h"
 
+static void timeout(ogs_pfcp_xact_t *xact, void *data)
+{
+    int rv;
+
+    upf_event_t *e = NULL;
+    uint8_t type;
+
+    ogs_assert(xact);
+    type = xact->seq[0].type;
+
+    switch (type) {
+    case OGS_PFCP_HEARTBEAT_REQUEST_TYPE:
+        ogs_assert(data);
+
+        e = upf_event_new(UPF_EVT_N4_NO_HEARTBEAT);
+        e->pfcp_node = data;
+
+        rv = ogs_queue_push(upf_self()->queue, e);
+        if (rv != OGS_OK) {
+            ogs_warn("ogs_queue_push() failed:%d", (int)rv);
+            upf_event_free(e);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 static void pfcp_node_fsm_init(ogs_pfcp_node_t *node, bool try_to_assoicate)
 {
     upf_event_t e;
@@ -173,34 +201,6 @@ void upf_pfcp_close(void)
     ogs_socknode_remove_all(&ogs_pfcp_self()->pfcp_list6);
 }
 
-static void timeout(ogs_pfcp_xact_t *xact, void *data)
-{
-    int rv;
-
-    upf_event_t *e = NULL;
-    uint8_t type;
-
-    ogs_assert(xact);
-    type = xact->seq[0].type;
-
-    switch (type) {
-    case OGS_PFCP_HEARTBEAT_REQUEST_TYPE:
-        ogs_assert(data);
-
-        e = upf_event_new(UPF_EVT_N4_NO_HEARTBEAT);
-        e->pfcp_node = data;
-
-        rv = ogs_queue_push(upf_self()->queue, e);
-        if (rv != OGS_OK) {
-            ogs_warn("ogs_queue_push() failed:%d", (int)rv);
-            upf_event_free(e);
-        }
-        break;
-    default:
-        break;
-    }
-}
-
 void upf_pfcp_send_association_setup_request(ogs_pfcp_node_t *node)
 {
     int rv;
@@ -242,29 +242,6 @@ void upf_pfcp_send_association_setup_response(ogs_pfcp_xact_t *xact,
 
     rv = ogs_pfcp_xact_update_tx(xact, &h, n4buf);
     ogs_expect_or_return(rv == OGS_OK);
-
-    rv = ogs_pfcp_xact_commit(xact);
-    ogs_expect(rv == OGS_OK);
-}
-
-void upf_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node)
-{
-    int rv;
-    ogs_pkbuf_t *n4buf = NULL;
-    ogs_pfcp_header_t h;
-    ogs_pfcp_xact_t *xact = NULL;
-
-    ogs_assert(node);
-
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_HEARTBEAT_REQUEST_TYPE;
-    h.seid = 0;
-
-    n4buf = ogs_pfcp_n4_build_heartbeat_request(h.type);
-    ogs_expect_or_return(n4buf);
-
-    xact = ogs_pfcp_xact_local_create(node, &h, n4buf, timeout, node);
-    ogs_expect_or_return(xact);
 
     rv = ogs_pfcp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);

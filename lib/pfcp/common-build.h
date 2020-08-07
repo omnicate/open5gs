@@ -24,8 +24,8 @@
 extern "C" {
 #endif
 
-ogs_pkbuf_t *ogs_pfcp_n4_build_heartbeat_request(uint8_t type);
-ogs_pkbuf_t *ogs_pfcp_n4_build_heartbeat_response(uint8_t type);
+ogs_pkbuf_t *ogs_pfcp_build_heartbeat_request(uint8_t type);
+ogs_pkbuf_t *ogs_pfcp_build_heartbeat_response(uint8_t type);
 
 #ifdef __cplusplus
 }

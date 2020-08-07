@@ -39,6 +39,8 @@ int ogs_pfcp_sendto(ogs_pfcp_node_t *node, ogs_pkbuf_t *pkbuf);
 
 ogs_pkbuf_t *ogs_pfcp_handle_echo_req(ogs_pkbuf_t *pkt);
 
+void ogs_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node,
+        void (*cb)(ogs_pfcp_xact_t *xact, void *data));
 void ogs_pfcp_send_heartbeat_response(ogs_pfcp_xact_t *xact);
 
 void ogs_pfcp_send_error_message(

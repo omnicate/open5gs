@@ -19,7 +19,7 @@
 
 #include "ogs-pfcp.h"
 
-ogs_pkbuf_t *ogs_pfcp_n4_build_heartbeat_request(uint8_t type)
+ogs_pkbuf_t *ogs_pfcp_build_heartbeat_request(uint8_t type)
 {
     ogs_pfcp_message_t pfcp_message;
     ogs_pfcp_heartbeat_request_t *req = NULL;
@@ -36,7 +36,7 @@ ogs_pkbuf_t *ogs_pfcp_n4_build_heartbeat_request(uint8_t type)
     return ogs_pfcp_build_msg(&pfcp_message);
 }
 
-ogs_pkbuf_t *ogs_pfcp_n4_build_heartbeat_response(uint8_t type)
+ogs_pkbuf_t *ogs_pfcp_build_heartbeat_response(uint8_t type)
 {
     ogs_pfcp_message_t pfcp_message;
     ogs_pfcp_heartbeat_response_t *rsp = NULL;

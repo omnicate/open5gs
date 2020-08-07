@@ -17,11 +17,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "context.h"
-#include "timer.h"
-
+#include "sbi-path.h"
 #include "pfcp-path.h"
+
 #include "n4-handler.h"
+
+static void node_timeout(ogs_pfcp_xact_t *xact, void *data);
+static void sess_5gc_timeout(ogs_pfcp_xact_t *xact, void *data);
+static void sess_epc_timeout(ogs_pfcp_xact_t *xact, void *data);
 
 void smf_pfcp_state_initial(ogs_fsm_t *s, smf_event_t *e)
 {
@@ -261,7 +264,7 @@ void smf_pfcp_state_associated(ogs_fsm_t *s, smf_event_t *e)
             node = e->pfcp_node;
             ogs_assert(node);
 
-            smf_pfcp_send_heartbeat_request(node);
+            ogs_pfcp_send_heartbeat_request(node, node_timeout);
             break;
         default:
             ogs_error("Unknown timer[%s:%d]",
@@ -294,6 +297,103 @@ void smf_pfcp_state_exception(ogs_fsm_t *s, smf_event_t *e)
         break;
     default:
         ogs_error("Unknown event %s", smf_event_get_name(e));
+        break;
+    }
+}
+
+static void node_timeout(ogs_pfcp_xact_t *xact, void *data)
+{
+    int rv;
+
+    smf_event_t *e = NULL;
+    uint8_t type;
+
+    ogs_assert(xact);
+    type = xact->seq[0].type;
+
+    switch (type) {
+    case OGS_PFCP_HEARTBEAT_REQUEST_TYPE:
+        ogs_assert(data);
+
+        e = smf_event_new(SMF_EVT_N4_NO_HEARTBEAT);
+        e->pfcp_node = data;
+
+        rv = ogs_queue_push(smf_self()->queue, e);
+        if (rv != OGS_OK) {
+            ogs_warn("ogs_queue_push() failed:%d", (int)rv);
+            smf_event_free(e);
+        }
+        break;
+    case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
+        break;
+    default:
+        ogs_error("Not implemented [type:%d]", type);
+        break;
+    }
+}
+
+static void sess_5gc_timeout(ogs_pfcp_xact_t *xact, void *data)
+{
+    smf_ue_t *smf_ue = NULL;
+    smf_sess_t *sess = NULL;
+    ogs_sbi_session_t *session = NULL;
+    uint8_t type;
+    char *strerror = NULL;
+
+    ogs_assert(xact);
+    ogs_assert(data);
+
+    sess = data;
+    ogs_assert(sess);
+    session = xact->assoc_session;
+    ogs_assert(session);
+    smf_ue = sess->smf_ue;
+    ogs_assert(smf_ue);
+
+    type = xact->seq[0].type;
+    switch (type) {
+    case OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE:
+        ogs_error("No PFCP session establishment response");
+        break;
+    case OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE:
+        strerror = ogs_msprintf("[%s:%d] No PFCP session modification response",
+                smf_ue->supi, sess->psi);
+        smf_sbi_send_sm_context_update_error(session,
+                OGS_SBI_HTTP_STATUS_GATEWAY_TIMEOUT,
+                strerror, NULL, NULL, NULL);
+        break;
+    case OGS_PFCP_SESSION_DELETION_REQUEST_TYPE:
+        strerror = ogs_msprintf("[%s:%d] No PFCP session deletion response",
+                smf_ue->supi, sess->psi);
+        ogs_sbi_server_send_error(session,
+                OGS_SBI_HTTP_STATUS_GATEWAY_TIMEOUT, NULL, strerror, NULL);
+        ogs_free(strerror);
+        break;
+    default:
+        ogs_error("Not implemented [type:%d]", type);
+        break;
+    }
+}
+
+static void sess_epc_timeout(ogs_pfcp_xact_t *xact, void *data)
+{
+    uint8_t type;
+
+    ogs_assert(xact);
+    type = xact->seq[0].type;
+
+    switch (type) {
+    case OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE:
+        ogs_error("No PFCP session establishment response");
+        break;
+    case OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE:
+        ogs_error("No PFCP session modification response");
+        break;
+    case OGS_PFCP_SESSION_DELETION_REQUEST_TYPE:
+        ogs_error("No PFCP session deletion response");
+        break;
+    default:
+        ogs_error("Not implemented [type:%d]", type);
         break;
     }
 }

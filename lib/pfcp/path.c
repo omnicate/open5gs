@@ -118,10 +118,34 @@ int ogs_pfcp_sendto(ogs_pfcp_node_t *node, ogs_pkbuf_t *pkbuf)
     return OGS_OK;
 }
 
+void ogs_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node,
+        void (*cb)(ogs_pfcp_xact_t *xact, void *data))
+{
+    int rv;
+    ogs_pkbuf_t *pkbuf = NULL;
+    ogs_pfcp_header_t h;
+    ogs_pfcp_xact_t *xact = NULL;
+
+    ogs_assert(node);
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_HEARTBEAT_REQUEST_TYPE;
+    h.seid = 0;
+
+    pkbuf = ogs_pfcp_build_heartbeat_request(h.type);
+    ogs_expect_or_return(pkbuf);
+
+    xact = ogs_pfcp_xact_local_create(node, &h, pkbuf, cb, node);
+    ogs_expect_or_return(xact);
+
+    rv = ogs_pfcp_xact_commit(xact);
+    ogs_expect(rv == OGS_OK);
+}
+
 void ogs_pfcp_send_heartbeat_response(ogs_pfcp_xact_t *xact)
 {
     int rv;
-    ogs_pkbuf_t *n4buf = NULL;
+    ogs_pkbuf_t *pkbuf = NULL;
     ogs_pfcp_header_t h;
 
     ogs_assert(xact);
@@ -130,10 +154,10 @@ void ogs_pfcp_send_heartbeat_response(ogs_pfcp_xact_t *xact)
     h.type = OGS_PFCP_HEARTBEAT_RESPONSE_TYPE;
     h.seid = 0;
 
-    n4buf = ogs_pfcp_n4_build_heartbeat_response(h.type);
-    ogs_expect_or_return(n4buf);
+    pkbuf = ogs_pfcp_build_heartbeat_response(h.type);
+    ogs_expect_or_return(pkbuf);
 
-    rv = ogs_pfcp_xact_update_tx(xact, &h, n4buf);
+    rv = ogs_pfcp_xact_update_tx(xact, &h, pkbuf);
     ogs_expect_or_return(rv == OGS_OK);
 
     rv = ogs_pfcp_xact_commit(xact);

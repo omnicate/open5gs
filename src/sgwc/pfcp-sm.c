@@ -20,6 +20,9 @@
 #include "pfcp-path.h"
 #include "sxa-handler.h"
 
+static void node_timeout(ogs_pfcp_xact_t *xact, void *data);
+static void sess_timeout(ogs_pfcp_xact_t *xact, void *data);
+
 void sgwc_pfcp_state_initial(ogs_fsm_t *s, sgwc_event_t *e)
 {
     int rv;
@@ -249,7 +252,7 @@ void sgwc_pfcp_state_associated(ogs_fsm_t *s, sgwc_event_t *e)
             node = e->pfcp_node;
             ogs_assert(node);
 
-            sgwc_pfcp_send_heartbeat_request(node);
+            ogs_pfcp_send_heartbeat_request(node, node_timeout);
             break;
         default:
             ogs_error("Unknown timer[%s:%d]",
@@ -282,6 +285,60 @@ void sgwc_pfcp_state_exception(ogs_fsm_t *s, sgwc_event_t *e)
         break;
     default:
         ogs_error("Unknown event %s", sgwc_event_get_name(e));
+        break;
+    }
+}
+
+static void node_timeout(ogs_pfcp_xact_t *xact, void *data)
+{
+    int rv;
+
+    sgwc_event_t *e = NULL;
+    uint8_t type;
+
+    ogs_assert(xact);
+    type = xact->seq[0].type;
+
+    switch (type) {
+    case OGS_PFCP_HEARTBEAT_REQUEST_TYPE:
+        ogs_assert(data);
+
+        e = sgwc_event_new(SGWC_EVT_SXA_NO_HEARTBEAT);
+        e->pfcp_node = data;
+
+        rv = ogs_queue_push(sgwc_self()->queue, e);
+        if (rv != OGS_OK) {
+            ogs_warn("ogs_queue_push() failed:%d", (int)rv);
+            sgwc_event_free(e);
+        }
+        break;
+    case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
+        break;
+    default:
+        ogs_error("Not implemented [type:%d]", type);
+        break;
+    }
+}
+
+static void sess_timeout(ogs_pfcp_xact_t *xact, void *data)
+{
+    uint8_t type;
+
+    ogs_assert(xact);
+    type = xact->seq[0].type;
+
+    switch (type) {
+    case OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE:
+        ogs_error("No PFCP session establishment response");
+        break;
+    case OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE:
+        ogs_error("No PFCP session modification response");
+        break;
+    case OGS_PFCP_SESSION_DELETION_REQUEST_TYPE:
+        ogs_error("No PFCP session deletion response");
+        break;
+    default:
+        ogs_error("Not implemented [type:%d]", type);
         break;
     }
 }
