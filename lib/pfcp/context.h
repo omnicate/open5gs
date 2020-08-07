@@ -45,6 +45,8 @@ typedef struct ogs_pfcp_context_s {
     ogs_sockaddr_t  *pfcp_addr6;    /* PFCP IPv6 Address */
 
     uint32_t        pfcp_started;   /* UTC time when the PFCP entity started */
+    uint8_t         cp_function_features; /* CP Function Features */
+    uint16_t        up_function_features; /* UP Function Features */
 
     ogs_list_t      peer_list;      /* PFCP Node List */
     ogs_pfcp_node_t *node;          /* Iterator for Peer round-robin */

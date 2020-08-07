@@ -45,7 +45,7 @@ ogs_pkbuf_t *smf_n4_build_association_setup_request(uint8_t type)
     req->recovery_time_stamp.u32 = ogs_pfcp_self()->pfcp_started;
 
     req->cp_function_features.presence = 1;
-    req->cp_function_features.u8 = smf_self()->function_features;
+    req->cp_function_features.u8 = ogs_pfcp_self()->cp_function_features;
 
     pfcp_message.h.type = type;
     return ogs_pfcp_build_msg(&pfcp_message);
@@ -80,7 +80,7 @@ ogs_pkbuf_t *smf_n4_build_association_setup_response(uint8_t type,
     rsp->recovery_time_stamp.u32 = ogs_pfcp_self()->pfcp_started;
 
     rsp->cp_function_features.presence = 1;
-    rsp->cp_function_features.u8 = smf_self()->function_features;
+    rsp->cp_function_features.u8 = ogs_pfcp_self()->cp_function_features;
 
     pfcp_message.h.type = type;
     return ogs_pfcp_build_msg(&pfcp_message);

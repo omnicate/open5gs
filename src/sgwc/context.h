@@ -49,8 +49,6 @@ typedef struct sgwc_context_s {
     ogs_sockaddr_t  *gtpc_addr;     /* SGW GTPC IPv4 Address */
     ogs_sockaddr_t  *gtpc_addr6;    /* SGW GTPC IPv6 Address */
 
-    uint8_t         function_features; /* CP Function Features */
-
     ogs_list_t      gtpu_list;      /* SGW GTPU IPv4 Server List */
     ogs_list_t      gtpu_list6;     /* SGW GTPU IPv6 Server List */
     ogs_list_t      adv_gtpu_list;  /* Advertised SGW GTPU IPv4 Server List */

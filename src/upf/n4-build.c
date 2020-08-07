@@ -50,7 +50,8 @@ ogs_pkbuf_t *upf_n4_build_association_setup_request(uint8_t type)
     req->recovery_time_stamp.u32 = ogs_pfcp_self()->pfcp_started;
 
     req->up_function_features.presence = 1;
-    req->up_function_features.u16 = htobe16(upf_self()->function_features);
+    req->up_function_features.u16 =
+        htobe16(ogs_pfcp_self()->up_function_features);
 
     i = 0;
     ogs_list_for_each(&upf_self()->gtpu_resource_list, resource) {
@@ -104,7 +105,8 @@ ogs_pkbuf_t *upf_n4_build_association_setup_response(uint8_t type,
     rsp->recovery_time_stamp.u32 = ogs_pfcp_self()->pfcp_started;
 
     rsp->up_function_features.presence = 1;
-    rsp->up_function_features.u16 = htobe16(upf_self()->function_features);
+    rsp->up_function_features.u16 =
+        htobe16(ogs_pfcp_self()->up_function_features);
 
     i = 0;
     ogs_list_for_each(&upf_self()->gtpu_resource_list, resource) {

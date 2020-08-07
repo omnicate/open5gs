@@ -63,8 +63,6 @@ typedef struct smf_context_s {
     ogs_sockaddr_t  *gtpc_addr;     /* SMF GTPC IPv4 Address */
     ogs_sockaddr_t  *gtpc_addr6;    /* SMF GTPC IPv6 Address */
 
-    uint8_t         function_features; /* CP Function Features */
-
     ogs_queue_t     *queue;         /* Queue for processing SMF control */
     ogs_timer_mgr_t *timer_mgr;     /* Timer Manager */
     ogs_pollset_t   *pollset;       /* Poll Set for I/O Multiplexing */
