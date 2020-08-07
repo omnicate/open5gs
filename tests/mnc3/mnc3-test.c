@@ -56,6 +56,7 @@ static void test1_func(abts_case *tc, void *data)
         "430f10004f007000 65006e0035004700 5347028040325204 69490100";
 
     test_ue_t test_ue;
+    test_sess_t test_sess;
 
     const char *_k_string = "465b5ce8b199b49faa5f0a2ee238a6bc";
     uint8_t k[OGS_KEY_LEN];
@@ -116,7 +117,15 @@ static void test1_func(abts_case *tc, void *data)
 
     /* Setup Test UE & Session Context */
     memset(&test_ue, 0, sizeof(test_ue));
+    memset(&test_sess, 0, sizeof(test_sess));
+    test_sess.test_ue = &test_ue;
+    test_ue.sess = &test_sess;
+
     test_ue.imsi = (char *)"310014987654004";
+
+    test_sess.gnb_n3_ip.ipv4 = true;
+    test_sess.gnb_n3_ip.addr = inet_addr("127.0.0.5");
+    test_sess.gnb_n3_teid = 0;
 
     /* eNB connects to MME */
     s1ap = testenb_s1ap_client("127.0.0.1");
@@ -262,13 +271,19 @@ static void test1_func(abts_case *tc, void *data)
     ABTS_TRUE(tc, memcmp(recvbuf->data+29, tmp+29, 20) == 0);
     ogs_pkbuf_free(recvbuf);
 
-#if 0
     /* Send GTP-U ICMP Packet */
-    rv = testgtpu_build_ping(&sendbuf, 1, "10.45.0.2", "10.45.0.1");
+    test_sess.upf_n3_ip.ipv4 = true;
+    test_sess.upf_n3_ip.addr = inet_addr("127.0.0.7");
+    test_sess.upf_n3_teid = 2;
+    test_sess.ue_ip.addr = inet_addr("10.45.0.2");
+
+    rv = test_gtpu_build_ping(&sendbuf, &test_sess, "10.45.0.1");
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
-    rv = testenb_gtpu_send(gtpu, sendbuf);
+    rv = testgnb_gtpu_sendto(gtpu, &test_sess, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
+    ogs_msleep(300);
+#if 0
     /* Receive GTP-U ICMP Packet */
     recvbuf = testenb_gtpu_read(gtpu);
     ABTS_PTR_NOTNULL(tc, recvbuf);
