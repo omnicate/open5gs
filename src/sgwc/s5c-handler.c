@@ -190,20 +190,24 @@ void sgwc_s5c_handle_create_session_response(
             OGS_PFCP_MODIFY_UL_ONLY| OGS_PFCP_MODIFY_ACTIVATE);
 }
 
-void sgwc_s5c_handle_delete_session_response(ogs_gtp_xact_t *s5c_xact,
-    sgwc_sess_t *sess, ogs_gtp_message_t *message)
+void sgwc_s5c_handle_delete_session_response(
+        sgwc_sess_t *sess, ogs_gtp_xact_t *s5c_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
     int rv;
     uint8_t cause_value;
+
+    sgwc_ue_t *sgwc_ue = NULL;
+
     ogs_gtp_xact_t *s11_xact = NULL;
     ogs_gtp_delete_session_response_t *rsp = NULL;
-    ogs_pkbuf_t *pkbuf = NULL;
-    sgwc_ue_t *sgwc_ue = NULL;
 
     ogs_assert(s5c_xact);
     s11_xact = s5c_xact->assoc_xact;
     ogs_assert(s11_xact);
     ogs_assert(message);
+    rsp = &message->delete_session_response;
+    ogs_assert(rsp);
 
     ogs_debug("Delete Session Response");
 
@@ -215,8 +219,6 @@ void sgwc_s5c_handle_delete_session_response(ogs_gtp_xact_t *s5c_xact,
 
     rv = ogs_gtp_xact_commit(s5c_xact);
     ogs_expect(rv == OGS_OK);
-
-    rsp = &message->delete_session_response;
 
     if (rsp->cause.presence) {
         ogs_gtp_cause_t *cause = rsp->cause.data;
@@ -244,19 +246,7 @@ void sgwc_s5c_handle_delete_session_response(ogs_gtp_xact_t *s5c_xact,
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
         sess->sgw_s5c_teid, sess->pgw_s5c_teid);
 
-    sgwc_sess_remove(sess);
-
-    message->h.type = OGS_GTP_DELETE_SESSION_RESPONSE_TYPE;
-    message->h.teid = sgwc_ue->mme_s11_teid;
-
-    pkbuf = ogs_gtp_build_msg(message);
-    ogs_expect_or_return(pkbuf);
-
-    rv = ogs_gtp_xact_update_tx(s11_xact, &message->h, pkbuf);
-    ogs_expect_or_return(rv == OGS_OK);
-
-    rv = ogs_gtp_xact_commit(s11_xact);
-    ogs_expect(rv == OGS_OK);
+    sgwc_pfcp_send_session_deletion_request(sess, s11_xact, gtpbuf);
 }
 
 void sgwc_s5c_handle_create_bearer_request(ogs_gtp_xact_t *s5c_xact, 
