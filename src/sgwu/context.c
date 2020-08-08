@@ -46,8 +46,6 @@ void sgwu_context_init(void)
     ogs_pool_init(&sgwu_sess_pool, ogs_config()->pool.sess);
 
     self.sess_hash = ogs_hash_make();
-    self.ipv4_hash = ogs_hash_make();
-    self.ipv6_hash = ogs_hash_make();
 
     context_initialized = 1;
 }
@@ -60,10 +58,6 @@ void sgwu_context_final(void)
 
     ogs_assert(self.sess_hash);
     ogs_hash_destroy(self.sess_hash);
-    ogs_assert(self.ipv4_hash);
-    ogs_hash_destroy(self.ipv4_hash);
-    ogs_assert(self.ipv6_hash);
-    ogs_hash_destroy(self.ipv6_hash);
 
     ogs_pool_final(&sgwu_sess_pool);
 
@@ -367,10 +361,6 @@ int sgwu_context_parse_config(void)
 sgwu_sess_t *sgwu_sess_add(ogs_pfcp_f_seid_t *cp_f_seid,
         const char *apn, uint8_t pdn_type, ogs_pfcp_pdr_id_t default_pdr_id)
 {
-#if 0
-    char buf1[OGS_ADDRSTRLEN];
-    char buf2[OGS_ADDRSTRLEN];
-#endif
     sgwu_sess_t *sess = NULL;
 
     ogs_assert(cp_f_seid);
@@ -391,19 +381,8 @@ sgwu_sess_t *sgwu_sess_add(ogs_pfcp_f_seid_t *cp_f_seid,
     /* Set APN */
     ogs_cpystrn(sess->pdn.apn, apn, OGS_MAX_APN_LEN+1);
 
-#if 0
-    /* Set Default PDR */
-    OGS_SETUP_DEFAULT_PDR(&sess->pfcp,
-        ogs_pfcp_pdr_find_or_add(&sess->pfcp, default_pdr_id));
-
-    ogs_info("UE F-SEID[CP:0x%lx,UP:0x%lx] "
-             "APN[%s] PDN-Type[%d] IPv4[%s] IPv6[%s], Default PDR ID[%d]",
-        (long)sess->sgwu_sxa_seid, (long)sess->sgwc_sxa_seid,
-        apn, pdn_type,
-        sess->ipv4 ? OGS_INET_NTOP(&sess->ipv4->addr, buf1) : "",
-        sess->ipv6 ? OGS_INET6_NTOP(&sess->ipv6->addr, buf2) : "",
-        sess->pfcp.default_pdr->id);
-#endif
+    ogs_info("UE F-SEID[CP:0x%lx,UP:0x%lx] APN[%s] PDN-Type[%d]",
+        (long)sess->sgwu_sxa_seid, (long)sess->sgwc_sxa_seid, apn, pdn_type);
 
     ogs_list_add(&self.sess_list, sess);
 
@@ -422,15 +401,6 @@ int sgwu_sess_remove(sgwu_sess_t *sess)
 
     ogs_hash_set(self.sess_hash, &sess->sgwc_sxa_seid,
             sizeof(sess->sgwc_sxa_seid), NULL);
-
-    if (sess->ipv4) {
-        ogs_hash_set(self.ipv4_hash, sess->ipv4->addr, OGS_IPV4_LEN, NULL);
-        ogs_pfcp_ue_ip_free(sess->ipv4);
-    }
-    if (sess->ipv6) {
-        ogs_hash_set(self.ipv6_hash, sess->ipv6->addr, OGS_IPV6_LEN, NULL);
-        ogs_pfcp_ue_ip_free(sess->ipv6);
-    }
 
     ogs_pool_free(&sgwu_sess_pool, sess);
 
@@ -465,35 +435,16 @@ sgwu_sess_t *sgwu_sess_find_by_up_seid(uint64_t seid)
     return sgwu_sess_find(seid);
 }
 
-sgwu_sess_t *sgwu_sess_find_by_ipv4(uint32_t addr)
-{
-    ogs_assert(self.ipv4_hash);
-    return (sgwu_sess_t *)ogs_hash_get(self.ipv4_hash, &addr, OGS_IPV4_LEN);
-}
-
-sgwu_sess_t *sgwu_sess_find_by_ipv6(uint32_t *addr6)
-{
-    ogs_assert(self.ipv6_hash);
-    ogs_assert(addr6);
-    return (sgwu_sess_t *)ogs_hash_get(self.ipv6_hash, addr6, OGS_IPV6_LEN);
-}
-
 sgwu_sess_t *sgwu_sess_add_by_message(ogs_pfcp_message_t *message)
 {
     sgwu_sess_t *sess = NULL;
 
     ogs_pfcp_f_seid_t *f_seid = NULL;
     char apn[OGS_MAX_APN_LEN];
-#if 0
-    bool default_pdr_found = false;
-#endif
     ogs_pfcp_pdr_id_t default_pdr_id = 0;
 
     ogs_pfcp_session_establishment_request_t *req =
         &message->pfcp_session_establishment_request;;
-#if 0
-    int i;
-#endif
 
     f_seid = req->cp_f_seid.data;
     if (req->cp_f_seid.presence == 0 || f_seid == NULL) {
@@ -506,51 +457,6 @@ sgwu_sess_t *sgwu_sess_add_by_message(ogs_pfcp_message_t *message)
         ogs_error("No PDN Type");
         return NULL;
     }
-
-#if 0
-    /* Find the Default PDR :
-     * - PDR ID is existed
-     * - SDF Filter is NOT existed
-     * - APN(Network Instance) is existed
-     * - UE IP Address is existed
-     * - Downlink PDR
-     */
-    memset(apn, 0, sizeof(apn));
-    for (i = 0; i < OGS_MAX_NUM_OF_PDR; i++) {
-        ogs_pfcp_tlv_create_pdr_t *message = &req->create_pdr[i];
-        ogs_assert(message);
-        if (message->presence == 0)
-            continue;
-        if (message->pdr_id.presence == 0)
-            continue;
-        if (message->pdi.presence == 0)
-            continue;
-        if (message->pdi.sdf_filter[0].presence) /* No SDF Filter */
-            continue;
-        if (message->pdi.network_instance.presence == 0)
-            continue;
-        if (message->pdi.ue_ip_address.presence == 0)
-            continue;
-        if (message->pdi.source_interface.presence == 0)
-            continue;
-        if (message->pdi.source_interface.u8 != OGS_PFCP_INTERFACE_CORE)
-            continue;
-
-        default_pdr_id = message->pdr_id.u16;
-        ogs_fqdn_parse(apn,
-            message->pdi.network_instance.data,
-            message->pdi.network_instance.len);
-        addr = message->pdi.ue_ip_address.data;
-
-        default_pdr_found = true;
-        break;
-    }
-
-    if (!default_pdr_found) {
-        ogs_error("Cannot find Default PDR");
-        return NULL;
-    }
-#endif
 
     if (strlen(apn) == 0) {
         ogs_error("No APN in PDR");

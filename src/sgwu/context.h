@@ -48,11 +48,7 @@ typedef struct sgwu_context_s {
     ogs_pollset_t   *pollset;       /* Poll Set for I/O Multiplexing */
 
     ogs_list_t      peer_list;      /* gNB/SMF Node List */
-
     ogs_hash_t      *sess_hash;     /* hash table (F-SEID) */
-    ogs_hash_t      *ipv4_hash;     /* hash table (IPv4 Address) */
-    ogs_hash_t      *ipv6_hash;     /* hash table (IPv6 Address) */
-
     ogs_list_t      sess_list;
 } sgwu_context_t;
 
@@ -62,17 +58,13 @@ typedef struct sgwu_sess_s {
     uint32_t        index;              /**< An index of this node */
 
     ogs_pfcp_sess_t pfcp;
-    ogs_list_t      sdf_filter_list;    /* SDF Filter List */
 
     uint64_t        sgwu_sxa_seid;      /* SGW-U SEID is dervied from INDEX */
     uint64_t        sgwc_sxa_seid;      /* SGW-C SEID is received from Peer */
 
     /* APN Configuration */
     ogs_pdn_t       pdn;
-    ogs_pfcp_ue_ip_t *ipv4;
-    ogs_pfcp_ue_ip_t *ipv6;
 
-    char            *gx_sid;            /* Gx Session ID */
     ogs_pfcp_node_t *pfcp_node;
 } sgwu_sess_t;
 
@@ -91,8 +83,6 @@ void sgwu_sess_remove_all(void);
 sgwu_sess_t *sgwu_sess_find(uint32_t index);
 sgwu_sess_t *sgwu_sess_find_by_cp_seid(uint64_t seid);
 sgwu_sess_t *sgwu_sess_find_by_up_seid(uint64_t seid);
-sgwu_sess_t *sgwu_sess_find_by_ipv4(uint32_t addr);
-sgwu_sess_t *sgwu_sess_find_by_ipv6(uint32_t *addr6);
 
 #ifdef __cplusplus
 }
