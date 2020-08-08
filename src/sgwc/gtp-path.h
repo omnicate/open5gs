@@ -29,8 +29,6 @@ extern "C" {
 int sgwc_gtp_open(void);
 void sgwc_gtp_close(void);
 
-void sgwc_gtp_send_end_marker(sgwc_tunnel_t *s1u_tunnel);
-
 #ifdef __cplusplus
 }
 #endif

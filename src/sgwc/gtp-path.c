@@ -148,39 +148,3 @@ void sgwc_gtp_close(void)
 
     ogs_pkbuf_pool_destroy(packet_pool);
 }
-
-void sgwc_gtp_send_end_marker(sgwc_tunnel_t *s1u_tunnel)
-{
-    char buf[OGS_ADDRSTRLEN];
-    int rv;
-    ogs_pkbuf_t *pkbuf = NULL;
-    ogs_gtp_header_t *h = NULL;
-
-    ogs_assert(s1u_tunnel);
-    ogs_assert(s1u_tunnel->gnode);
-    ogs_assert(s1u_tunnel->gnode->sock);
-
-    ogs_debug("[SGW] SEND End Marker to ENB[%s]: TEID[0x%x]",
-        OGS_ADDR(&s1u_tunnel->gnode->addr, buf),
-        s1u_tunnel->remote_teid);
-
-    pkbuf = ogs_pkbuf_alloc(NULL,
-            100 /* enough for END_MARKER; use smaller buffer */);
-    ogs_pkbuf_put(pkbuf, 100);
-    h = (ogs_gtp_header_t *)pkbuf->data;
-
-    memset(h, 0, OGS_GTPV1U_HEADER_LEN);
-
-    /*
-     * Flags
-     * 0x20 - Version : GTP release 99 version (1)
-     * 0x10 - Protocol Type : GTP (1)
-     */
-    h->flags = 0x30;
-    h->type = OGS_GTPU_MSGTYPE_END_MARKER;
-    h->teid =  htonl(s1u_tunnel->remote_teid);
-    
-    rv = ogs_gtp_sendto(s1u_tunnel->gnode, pkbuf);
-    ogs_expect(rv == OGS_OK);
-    ogs_pkbuf_free(pkbuf);
-}
