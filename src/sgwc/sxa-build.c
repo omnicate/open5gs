@@ -45,8 +45,6 @@ static void build_create_pdr(
 {
     ogs_pfcp_far_t *far = NULL;
     ogs_pfcp_sess_t *pfcp_sess = NULL;
-    sgwc_sess_t *sess = NULL;
-    sgwc_bearer_t *bearer = NULL;
     int j = 0;
     int len = 0;
 
@@ -55,10 +53,6 @@ static void build_create_pdr(
     ogs_assert(pdr);
     pfcp_sess = pdr->sess;
     ogs_assert(pfcp_sess);
-    bearer = SGWC_BEARER(pfcp_sess);
-    ogs_assert(bearer);
-    sess = bearer->sess;
-    ogs_assert(sess);
 
     far = pdr->far;
     ogs_assert(far);
@@ -76,10 +70,12 @@ static void build_create_pdr(
     message->pdi.source_interface.presence = 1;
     message->pdi.source_interface.u8 = pdr->src_if;
 
-    message->pdi.network_instance.presence = 1;
-    message->pdi.network_instance.len = ogs_fqdn_build(
-        pdrbuf[i].dnn, sess->pdn.dnn, strlen(sess->pdn.dnn));
-    message->pdi.network_instance.data = pdrbuf[i].dnn;
+    if (pdr->apn) {
+        message->pdi.network_instance.presence = 1;
+        message->pdi.network_instance.len = ogs_fqdn_build(
+            pdrbuf[i].dnn, pdr->apn, strlen(pdr->apn));
+        message->pdi.network_instance.data = pdrbuf[i].dnn;
+    }
 
     for (j = 0; j < pdr->num_of_flow; j++) {
         ogs_pfcp_sdf_filter_t pfcp_sdf_filter[OGS_MAX_NUM_OF_RULE];

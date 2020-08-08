@@ -730,6 +730,9 @@ sgwc_tunnel_t *sgwc_tunnel_add(
     pdr->id = OGS_NEXT_ID(sess->pdr_id, 1, OGS_MAX_NUM_OF_PDR+1);
     pdr->src_if = src_if;
 
+    if (strlen(sess->pdn.apn))
+        pdr->apn = ogs_strdup(sess->pdn.apn);
+
     pdr->outer_header_removal_len = 1;
     if (sess->pdn.pdn_type == OGS_GTP_PDN_TYPE_IPV4) {
         pdr->outer_header_removal.description =

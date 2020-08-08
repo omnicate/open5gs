@@ -77,10 +77,12 @@ static void build_create_pdr(
     message->pdi.source_interface.presence = 1;
     message->pdi.source_interface.u8 = pdr->src_if;
 
-    message->pdi.network_instance.presence = 1;
-    message->pdi.network_instance.len = ogs_fqdn_build(
-        pdrbuf[i].dnn, sess->pdn.dnn, strlen(sess->pdn.dnn));
-    message->pdi.network_instance.data = pdrbuf[i].dnn;
+    if (pdr->apn) {
+        message->pdi.network_instance.presence = 1;
+        message->pdi.network_instance.len = ogs_fqdn_build(
+            pdrbuf[i].dnn, pdr->apn, strlen(pdr->apn));
+        message->pdi.network_instance.data = pdrbuf[i].dnn;
+    }
 
     for (j = 0; j < pdr->num_of_flow; j++) {
         ogs_pfcp_sdf_filter_t pfcp_sdf_filter[OGS_MAX_NUM_OF_RULE];

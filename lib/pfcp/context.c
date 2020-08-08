@@ -966,6 +966,8 @@ void ogs_pfcp_pdr_remove(ogs_pfcp_pdr_t *pdr)
     if (pdr->hashkey)
         ogs_hash_set(ogs_pfcp_self()->pdr_hash, &pdr->hashkey,
                 sizeof(pdr->hashkey), NULL);
+    if (pdr->dnn)
+        ogs_free(pdr->dnn);
 
     ogs_pool_free(&ogs_pfcp_pdr_pool, pdr);
 }

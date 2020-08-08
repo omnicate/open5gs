@@ -125,6 +125,11 @@ typedef struct ogs_pfcp_pdr_s {
     ogs_pfcp_precedence_t   precedence;
     ogs_pfcp_interface_t    src_if;
 
+    union {
+        char *apn;
+        char *dnn;
+    };
+
     ogs_pfcp_ue_ip_addr_t   ue_ip_addr;
     int                     ue_ip_addr_len;
 
