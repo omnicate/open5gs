@@ -173,37 +173,6 @@ void sgwc_pfcp_close(void)
     ogs_socknode_remove_all(&ogs_pfcp_self()->pfcp_list6);
 }
 
-static void timeout(ogs_pfcp_xact_t *xact, void *data)
-{
-    int rv;
-
-    sgwc_event_t *e = NULL;
-    uint8_t type;
-
-    ogs_assert(xact);
-    type = xact->seq[0].type;
-
-    switch (type) {
-    case OGS_PFCP_HEARTBEAT_REQUEST_TYPE:
-        ogs_assert(data);
-
-        e = sgwc_event_new(SGWC_EVT_SXA_NO_HEARTBEAT);
-        e->pfcp_node = data;
-
-        rv = ogs_queue_push(sgwc_self()->queue, e);
-        if (rv != OGS_OK) {
-            ogs_warn("ogs_queue_push() failed:%d", (int)rv);
-            sgwc_event_free(e);
-        }
-        break;
-    case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
-        break;
-    default:
-        ogs_error("Not implemented [type:%d]", type);
-        break;
-    }
-}
-
 static void sess_timeout(ogs_pfcp_xact_t *xact, void *data)
 {
     uint8_t type;

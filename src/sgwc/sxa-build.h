@@ -26,10 +26,6 @@
 extern "C" {
 #endif
 
-ogs_pkbuf_t *sgwc_sxa_build_association_setup_request(uint8_t type);
-ogs_pkbuf_t *sgwc_sxa_build_association_setup_response(uint8_t type,
-        uint8_t cause);
-
 ogs_pkbuf_t *sgwc_sxa_build_session_establishment_request(
         uint8_t type, sgwc_sess_t *sess);
 ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(

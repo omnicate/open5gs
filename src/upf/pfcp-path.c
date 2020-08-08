@@ -22,34 +22,6 @@
 #include "pfcp-path.h"
 #include "n4-build.h"
 
-static void timeout(ogs_pfcp_xact_t *xact, void *data)
-{
-    int rv;
-
-    upf_event_t *e = NULL;
-    uint8_t type;
-
-    ogs_assert(xact);
-    type = xact->seq[0].type;
-
-    switch (type) {
-    case OGS_PFCP_HEARTBEAT_REQUEST_TYPE:
-        ogs_assert(data);
-
-        e = upf_event_new(UPF_EVT_N4_NO_HEARTBEAT);
-        e->pfcp_node = data;
-
-        rv = ogs_queue_push(upf_self()->queue, e);
-        if (rv != OGS_OK) {
-            ogs_warn("ogs_queue_push() failed:%d", (int)rv);
-            upf_event_free(e);
-        }
-        break;
-    default:
-        break;
-    }
-}
-
 static void pfcp_node_fsm_init(ogs_pfcp_node_t *node, bool try_to_assoicate)
 {
     upf_event_t e;

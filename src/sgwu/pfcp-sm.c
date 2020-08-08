@@ -21,7 +21,6 @@
 #include "sxa-handler.h"
 
 static void node_timeout(ogs_pfcp_xact_t *xact, void *data);
-static void sess_timeout(ogs_pfcp_xact_t *xact, void *data);
 
 void sgwu_pfcp_state_initial(ogs_fsm_t *s, sgwu_event_t *e)
 {
@@ -294,29 +293,6 @@ static void node_timeout(ogs_pfcp_xact_t *xact, void *data)
         }
         break;
     case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
-        break;
-    default:
-        ogs_error("Not implemented [type:%d]", type);
-        break;
-    }
-}
-
-static void sess_timeout(ogs_pfcp_xact_t *xact, void *data)
-{
-    uint8_t type;
-
-    ogs_assert(xact);
-    type = xact->seq[0].type;
-
-    switch (type) {
-    case OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE:
-        ogs_error("No PFCP session establishment response");
-        break;
-    case OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE:
-        ogs_error("No PFCP session modification response");
-        break;
-    case OGS_PFCP_SESSION_DELETION_REQUEST_TYPE:
-        ogs_error("No PFCP session deletion response");
         break;
     default:
         ogs_error("Not implemented [type:%d]", type);
