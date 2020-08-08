@@ -40,8 +40,8 @@ static void timeout(ogs_gtp_xact_t *xact, void *data)
 }
 
 void sgwc_s5c_handle_create_session_response(
-    sgwc_sess_t *sess, ogs_gtp_xact_t *s5c_xact, ogs_pkbuf_t *gtpbuf,
-    ogs_gtp_create_session_response_t *rsp)
+        sgwc_sess_t *sess, ogs_gtp_xact_t *s5c_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
     int rv;
     uint8_t cause_value;
@@ -54,12 +54,15 @@ void sgwc_s5c_handle_create_session_response(
     ogs_gtp_f_teid_t *pgw_s5c_teid = NULL;
     ogs_gtp_f_teid_t *pgw_s5u_teid = NULL;
 
+    ogs_gtp_create_session_response_t *rsp = NULL;
     ogs_gtp_xact_t *s11_xact = NULL;
 
     ogs_assert(s5c_xact);
     s11_xact = s5c_xact->assoc_xact;
     ogs_assert(s11_xact);
     ogs_assert(gtpbuf);
+    ogs_assert(message);
+    rsp = &message->create_session_response;
     ogs_assert(rsp);
 
     ogs_debug("Create Session Response");

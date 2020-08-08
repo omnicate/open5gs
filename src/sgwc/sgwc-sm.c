@@ -279,8 +279,8 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
             sgwc_handle_echo_response(gtp_xact, &gtp_message.echo_response);
             break;
         case OGS_GTP_CREATE_SESSION_RESPONSE_TYPE:
-            sgwc_s5c_handle_create_session_response(sess, gtp_xact, recvbuf,
-                    &gtp_message.create_session_response);
+            sgwc_s5c_handle_create_session_response(
+                    sess, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_DELETE_SESSION_RESPONSE_TYPE:
             sgwc_s5c_handle_delete_session_response(gtp_xact, sess,
