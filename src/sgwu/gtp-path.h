@@ -29,7 +29,6 @@ extern "C" {
 int sgwu_gtp_open(void);
 void sgwu_gtp_close(void);
 
-void sgwu_gtp_send_buffered_packet(ogs_pfcp_pdr_t *pdr);
 #if 0
 void sgwu_gtp_send_end_marker(sgwu_tunnel_t *s1u_tunnel);
 #endif
