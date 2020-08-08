@@ -53,12 +53,16 @@ void ogs_pfcp_up_send_association_setup_request(ogs_pfcp_node_t *node,
 void ogs_pfcp_up_send_association_setup_response(ogs_pfcp_xact_t *xact,
         uint8_t cause);
 
+void ogs_pfcp_send_g_pdu(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *sendbuf);
+#if 0
+void ogs_pfcp_send_end_marker(ogs_pfcp_pdr_t *pdr)
+#endif
+
+void ogs_pfcp_send_buffered_packet(ogs_pfcp_pdr_t *pdr);
+
 void ogs_pfcp_send_error_message(
     ogs_pfcp_xact_t *xact, uint64_t seid, uint8_t type,
     uint8_t cause_value, uint16_t offending_ie_value);
-
-void ogs_pfcp_send_g_pdu(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *sendbuf);
-void ogs_pfcp_send_buffered_packet(ogs_pfcp_pdr_t *pdr);
 
 #ifdef __cplusplus
 }
