@@ -445,6 +445,7 @@ sgwu_sess_t *sgwu_sess_add_by_message(ogs_pfcp_message_t *message)
 
     ogs_pfcp_session_establishment_request_t *req =
         &message->pfcp_session_establishment_request;;
+    int i;
 
     f_seid = req->cp_f_seid.data;
     if (req->cp_f_seid.presence == 0 || f_seid == NULL) {
@@ -456,6 +457,29 @@ sgwu_sess_t *sgwu_sess_add_by_message(ogs_pfcp_message_t *message)
     if (req->pdn_type.presence == 0) {
         ogs_error("No PDN Type");
         return NULL;
+    }
+
+    /* Find APN
+     * - PDR ID is existed
+     * - APN(Network Instance) is existed
+     */
+    memset(apn, 0, sizeof(apn));
+    for (i = 0; i < OGS_MAX_NUM_OF_PDR; i++) {
+        ogs_pfcp_tlv_create_pdr_t *message = &req->create_pdr[i];
+        ogs_assert(message);
+        if (message->presence == 0)
+            continue;
+        if (message->pdr_id.presence == 0)
+            continue;
+        if (message->pdi.presence == 0)
+            continue;
+        if (message->pdi.network_instance.presence == 0)
+            continue;
+
+        ogs_fqdn_parse(apn,
+            message->pdi.network_instance.data,
+            message->pdi.network_instance.len);
+        break;
     }
 
     if (strlen(apn) == 0) {

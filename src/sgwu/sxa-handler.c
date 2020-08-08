@@ -129,8 +129,17 @@ static ogs_pfcp_pdr_t *handle_create_pdr(ogs_pfcp_sess_t *sess,
         }
     }
 
-    /* APN(Network Instance) and UE IP Address
-     * has already been processed in sgwu_sess_add() */
+    if (message->pdi.network_instance.presence) {
+        char dnn[OGS_MAX_DNN_LEN];
+
+        ogs_fqdn_parse(dnn,
+            message->pdi.network_instance.data,
+            message->pdi.network_instance.len);
+
+        if (pdr->dnn)
+            ogs_free(pdr->dnn);
+        pdr->dnn = ogs_strdup(dnn);
+    }
 
     if (message->pdi.local_f_teid.presence) {
         pdr->f_teid_len = message->pdi.local_f_teid.len;
