@@ -48,6 +48,33 @@ void ogs_pfcp_up_handle_association_setup_response(
 #define OGS_PFCP_UP_HANDLED     1
 int ogs_pfcp_up_handle_pdr(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *recvbuf);
 
+ogs_pfcp_pdr_t *ogs_pfcp_handle_create_pdr(ogs_pfcp_sess_t *sess,
+        ogs_pfcp_tlv_create_pdr_t *message,
+        uint8_t *cause_value, uint8_t *offending_ie_value);
+bool ogs_pfcp_handle_remove_pdr(ogs_pfcp_sess_t *sess,
+        ogs_pfcp_tlv_remove_pdr_t *message,
+        uint8_t *cause_value, uint8_t *offending_ie_value);
+
+ogs_pfcp_far_t *ogs_pfcp_handle_create_far(ogs_pfcp_sess_t *sess,
+        ogs_pfcp_tlv_create_far_t *message,
+        uint8_t *cause_value, uint8_t *offending_ie_value);
+ogs_pfcp_far_t *ogs_pfcp_handle_update_far(ogs_pfcp_sess_t *sess,
+        ogs_pfcp_tlv_update_far_t *message,
+        uint8_t *cause_value, uint8_t *offending_ie_value);
+bool ogs_pfcp_handle_remove_far(ogs_pfcp_sess_t *sess,
+        ogs_pfcp_tlv_remove_far_t *message,
+        uint8_t *cause_value, uint8_t *offending_ie_value);
+
+ogs_pfcp_qer_t *ogs_pfcp_handle_create_qer(ogs_pfcp_sess_t *sess,
+        ogs_pfcp_tlv_create_qer_t *message,
+        uint8_t *cause_value, uint8_t *offending_ie_value);
+ogs_pfcp_qer_t *ogs_pfcp_handle_update_qer(ogs_pfcp_sess_t *sess,
+        ogs_pfcp_tlv_update_qer_t *message,
+        uint8_t *cause_value, uint8_t *offending_ie_value);
+bool ogs_pfcp_handle_remove_qer(ogs_pfcp_sess_t *sess,
+        ogs_pfcp_tlv_remove_qer_t *message,
+        uint8_t *cause_value, uint8_t *offending_ie_value);
+
 #ifdef __cplusplus
 }
 #endif
