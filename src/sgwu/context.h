@@ -47,8 +47,7 @@ typedef struct sgwu_context_s {
     ogs_timer_mgr_t *timer_mgr;     /* Timer Manager */
     ogs_pollset_t   *pollset;       /* Poll Set for I/O Multiplexing */
 
-    ogs_list_t      gnb_n3_list;    /* gNB N3 Node List */
-    ogs_list_t      ip_pool_list;
+    ogs_list_t      peer_list;      /* gNB/SMF Node List */
 
     ogs_hash_t      *sess_hash;     /* hash table (F-SEID) */
     ogs_hash_t      *ipv4_hash;     /* hash table (IPv4 Address) */

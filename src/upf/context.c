@@ -41,7 +41,7 @@ void upf_context_init(void)
 
     ogs_list_init(&self.sess_list);
     ogs_list_init(&self.gtpu_list);
-    ogs_list_init(&self.gnb_n3_list);
+    ogs_list_init(&self.peer_list);
 
     ogs_pool_init(&upf_sess_pool, ogs_config()->pool.sess);
 
@@ -67,7 +67,7 @@ void upf_context_final(void)
 
     ogs_pool_final(&upf_sess_pool);
 
-    ogs_gtp_node_remove_all(&self.gnb_n3_list);
+    ogs_gtp_node_remove_all(&self.peer_list);
 
     ogs_gtp_node_final();
 
