@@ -57,6 +57,9 @@ void ogs_pfcp_send_error_message(
     ogs_pfcp_xact_t *xact, uint64_t seid, uint8_t type,
     uint8_t cause_value, uint16_t offending_ie_value);
 
+void ogs_pfcp_send_g_pdu(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *sendbuf);
+void ogs_pfcp_send_buffered_packet(ogs_pfcp_pdr_t *pdr);
+
 #ifdef __cplusplus
 }
 #endif

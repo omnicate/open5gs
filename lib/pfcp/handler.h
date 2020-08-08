@@ -45,6 +45,9 @@ void ogs_pfcp_up_handle_association_setup_response(
         ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
         ogs_pfcp_association_setup_response_t *req);
 
+#define OGS_PFCP_UP_HANDLED     1
+int ogs_pfcp_up_handle_pdr(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *recvbuf);
+
 #ifdef __cplusplus
 }
 #endif

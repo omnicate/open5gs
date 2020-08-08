@@ -109,3 +109,38 @@ void ogs_pfcp_up_handle_association_setup_response(
     ogs_assert(xact);
     ogs_pfcp_xact_commit(xact);
 }
+
+int ogs_pfcp_up_handle_pdr(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *recvbuf)
+{
+    ogs_pfcp_far_t *far = NULL;
+    ogs_pkbuf_t *sendbuf = NULL;
+
+    ogs_assert(recvbuf);
+    ogs_assert(pdr);
+
+    far = pdr->far;
+    ogs_assert(far);
+
+    sendbuf = ogs_pkbuf_copy(recvbuf);
+    ogs_assert(sendbuf);
+    if (!far->gnode) {
+        /* Default apply action : buffering */
+        if (far->num_of_buffered_packet < MAX_NUM_OF_PACKET_BUFFER) {
+            far->buffered_packet[far->num_of_buffered_packet++] = sendbuf;
+            return OGS_PFCP_UP_HANDLED;
+        }
+    } else {
+        if (far->apply_action & OGS_PFCP_APPLY_ACTION_FORW) {
+            ogs_pfcp_send_g_pdu(pdr, sendbuf);
+        } else if (far->apply_action & OGS_PFCP_APPLY_ACTION_BUFF) {
+            if (far->num_of_buffered_packet < MAX_NUM_OF_PACKET_BUFFER) {
+                far->buffered_packet[far->num_of_buffered_packet++] = sendbuf;
+                return OGS_PFCP_UP_HANDLED;
+            }
+        }
+        return OGS_PFCP_UP_HANDLED;
+    }
+
+    ogs_pkbuf_free(sendbuf);
+    return OGS_OK;
+}
