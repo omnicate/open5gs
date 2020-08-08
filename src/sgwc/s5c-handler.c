@@ -62,7 +62,7 @@ void sgwc_s5c_handle_create_session_response(
     ogs_assert(gtpbuf);
     ogs_assert(rsp);
 
-    ogs_debug("[SGW] Create Session Response");
+    ogs_debug("Create Session Response");
 
     if (!sess) {
         ogs_warn("No Context in TEID");
@@ -202,7 +202,7 @@ void sgwc_s5c_handle_delete_session_response(ogs_gtp_xact_t *s5c_xact,
     ogs_assert(s11_xact);
     ogs_assert(message);
 
-    ogs_debug("[SGW] Delete Session Response");
+    ogs_debug("Delete Session Response");
 
     if (!sess) {
         ogs_warn("No Context in TEID");
@@ -277,7 +277,7 @@ void sgwc_s5c_handle_create_bearer_request(ogs_gtp_xact_t *s5c_xact,
     ogs_assert(s5c_xact);
     ogs_assert(message);
 
-    ogs_debug("[SGW] Create Bearer Request");
+    ogs_debug("Create Bearer Request");
 
     cause_value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
     req = &message->create_bearer_request;
@@ -405,7 +405,7 @@ void sgwc_s5c_handle_update_bearer_request(ogs_gtp_xact_t *s5c_xact,
     ogs_assert(s5c_xact);
     ogs_assert(message);
 
-    ogs_debug("[SGW] Update Bearer Request");
+    ogs_debug("Update Bearer Request");
 
     cause_value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
     req = &message->update_bearer_request;
@@ -459,7 +459,7 @@ void sgwc_s5c_handle_update_bearer_request(ogs_gtp_xact_t *s5c_xact,
     rv = ogs_gtp_xact_commit(s11_xact);
     ogs_expect(rv == OGS_OK);
 
-    ogs_debug("[SGW] Update Bearer Request : SGW <-- PGW");
+    ogs_debug("Update Bearer Request : SGW <-- PGW");
 }
 
 void sgwc_s5c_handle_delete_bearer_request(ogs_gtp_xact_t *s5c_xact, 
@@ -475,7 +475,7 @@ void sgwc_s5c_handle_delete_bearer_request(ogs_gtp_xact_t *s5c_xact,
     ogs_assert(s5c_xact);
     ogs_assert(message);
 
-    ogs_debug("[SGW] Delete Bearer Request");
+    ogs_debug("Delete Bearer Request");
 
     cause_value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
     req = &message->delete_bearer_request;
@@ -541,7 +541,7 @@ void sgwc_s5c_handle_bearer_resource_failure_indication(ogs_gtp_xact_t *s5c_xact
     ogs_assert(s11_xact);
     ogs_assert(message);
 
-    ogs_debug("[SGW] Bearer Resource Failure Indication");
+    ogs_debug("Bearer Resource Failure Indication");
 
     ind = &message->bearer_resource_failure_indication;
 

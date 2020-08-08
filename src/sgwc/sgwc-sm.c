@@ -191,16 +191,16 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
                 if (sgwc_ue)
                     OGS_SETUP_GTP_NODE(sgwc_ue, gnode);
             }
-            sgwc_s11_handle_create_session_request(sgwc_ue, gtp_xact, recvbuf,
-                    &gtp_message.create_session_request);
+            sgwc_s11_handle_create_session_request(
+                    sgwc_ue, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_MODIFY_BEARER_REQUEST_TYPE:
-            sgwc_s11_handle_modify_bearer_request(sgwc_ue, gtp_xact, recvbuf,
-                    &gtp_message.modify_bearer_request);
+            sgwc_s11_handle_modify_bearer_request(
+                    sgwc_ue, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_DELETE_SESSION_REQUEST_TYPE:
             sgwc_s11_handle_delete_session_request(
-                    gtp_xact, sgwc_ue, &gtp_message);
+                    sgwc_ue, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_CREATE_BEARER_RESPONSE_TYPE:
             sgwc_s11_handle_create_bearer_response(
