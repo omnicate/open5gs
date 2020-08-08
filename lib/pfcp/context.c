@@ -622,6 +622,8 @@ int ogs_pfcp_context_parse_config(const char *local, const char *remote)
                                 ogs_config()->parameter.no_ipv6,
                                 ogs_config()->parameter.prefer_ipv4);
 
+                        if (addr == NULL) continue;
+
                         node = ogs_pfcp_node_new(addr);
                         ogs_assert(node);
                         ogs_list_add(&self.peer_list, node);

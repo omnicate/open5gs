@@ -105,6 +105,8 @@ upf:
         - 127.0.0.4
         - ::1
     pdn:
+      - addr: 10.45.0.1/16
+      - addr: cafe::1/64
 
 hss:
     freeDiameter:

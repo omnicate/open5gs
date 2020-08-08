@@ -1365,6 +1365,8 @@ int mme_context_parse_config()
                                 ogs_config()->parameter.no_ipv6,
                                 ogs_config()->parameter.prefer_ipv4);
 
+                        if (addr == NULL) continue;
+
                         vlr = mme_vlr_add(addr);
                         ogs_assert(vlr);
 
@@ -1638,6 +1640,8 @@ int mme_context_parse_config()
                                 ogs_config()->parameter.no_ipv4,
                                 ogs_config()->parameter.no_ipv6,
                                 ogs_config()->parameter.prefer_ipv4);
+
+                        if (addr == NULL) continue;
 
                         pgw = mme_pgw_add(addr);
                         ogs_assert(pgw);
