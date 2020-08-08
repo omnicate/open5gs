@@ -17,8 +17,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef OGS_PFCP_COMMON_BUILD_H
-#define OGS_PFCP_COMMON_BUILD_H
+#ifndef OGS_PFCP_BUILD_H
+#define OGS_PFCP_BUILD_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,4 +31,4 @@ ogs_pkbuf_t *ogs_pfcp_build_heartbeat_response(uint8_t type);
 }
 #endif
 
-#endif /* OGS_PFCP_COMMON_BUILD_H */
+#endif /* OGS_PFCP_BUILD_H */
