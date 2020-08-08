@@ -22,6 +22,7 @@ libpfcp_sources = files('''
     types.h
     conv.h
     build.h
+    handler.h
     path.h
     xact.h
     context.h
@@ -30,6 +31,7 @@ libpfcp_sources = files('''
     types.c
     conv.c
     build.c
+    handler.c
     path.c
     xact.c
     context.c

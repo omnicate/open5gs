@@ -150,25 +150,6 @@ void smf_n4_handle_association_setup_response(
     }
 }
 
-void smf_n4_handle_heartbeat_request(
-        ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact, 
-        ogs_pfcp_heartbeat_request_t *req)
-{
-    ogs_assert(xact);
-    ogs_pfcp_send_heartbeat_response(xact);
-}
-
-void smf_n4_handle_heartbeat_response(
-        ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact, 
-        ogs_pfcp_heartbeat_response_t *rsp)
-{
-    ogs_assert(xact);
-    ogs_pfcp_xact_commit(xact);
-
-    ogs_timer_start(node->t_no_heartbeat,
-            ogs_config()->time.message.pfcp.no_heartbeat_duration);
-}
-
 void smf_5gc_n4_handle_session_establishment_response(
         smf_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_establishment_response_t *rsp)

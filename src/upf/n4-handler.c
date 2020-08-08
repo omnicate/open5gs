@@ -39,25 +39,6 @@ void upf_n4_handle_association_setup_response(
     ogs_pfcp_xact_commit(xact);
 }
 
-void upf_n4_handle_heartbeat_request(
-        ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_heartbeat_request_t *req)
-{
-    ogs_assert(xact);
-    ogs_pfcp_send_heartbeat_response(xact);
-}
-
-void upf_n4_handle_heartbeat_response(
-        ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_heartbeat_response_t *rsp)
-{
-    ogs_assert(xact);
-    ogs_pfcp_xact_commit(xact);
-
-    ogs_timer_start(node->t_no_heartbeat,
-            ogs_config()->time.message.pfcp.no_heartbeat_duration);
-}
-
 static void setup_gtp_node(ogs_pfcp_far_t *far,
     ogs_pfcp_tlv_outer_header_creation_t *outer_header_creation)
 {

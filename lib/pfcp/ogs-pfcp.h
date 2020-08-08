@@ -42,6 +42,7 @@
 #include "pfcp/build.h"
 #include "pfcp/path.h"
 #include "pfcp/xact.h"
+#include "pfcp/handler.h"
 
 #ifdef __cplusplus
 extern "C" {

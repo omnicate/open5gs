@@ -189,11 +189,11 @@ void sgwc_pfcp_state_associated(ogs_fsm_t *s, sgwc_event_t *e)
 
         switch (message->h.type) {
         case OGS_PFCP_HEARTBEAT_REQUEST_TYPE:
-            sgwc_sxa_handle_heartbeat_request(node, xact,
+            ogs_pfcp_handle_heartbeat_request(node, xact,
                     &message->pfcp_heartbeat_request);
             break;
         case OGS_PFCP_HEARTBEAT_RESPONSE_TYPE:
-            sgwc_sxa_handle_heartbeat_response(node, xact,
+            ogs_pfcp_handle_heartbeat_response(node, xact,
                     &message->pfcp_heartbeat_response);
             break;
         case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
