@@ -29,10 +29,6 @@ extern "C" {
 int sgwc_pfcp_open(void);
 void sgwc_pfcp_close(void);
 
-void sgwc_pfcp_send_association_setup_request(ogs_pfcp_node_t *node);
-void sgwc_pfcp_send_association_setup_response(ogs_pfcp_xact_t *xact,
-        uint8_t cause);
-
 void sgwc_pfcp_send_session_establishment_request(
         sgwc_sess_t *sess, ogs_gtp_xact_t *gtp_xact, ogs_pkbuf_t *gtpbuf);
 void sgwc_pfcp_send_session_modification_request(

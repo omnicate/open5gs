@@ -88,7 +88,7 @@ void upf_pfcp_state_will_associate(ogs_fsm_t *s, upf_event_t *e)
             ogs_timer_start(node->t_association,
                 ogs_config()->time.message.pfcp.association_interval);
 
-            upf_pfcp_send_association_setup_request(node);
+            ogs_pfcp_up_send_association_setup_request(node, node_timeout);
         }
         break;
 
@@ -111,7 +111,7 @@ void upf_pfcp_state_will_associate(ogs_fsm_t *s, upf_event_t *e)
             ogs_timer_start(node->t_association,
                 ogs_config()->time.message.pfcp.association_interval);
 
-            upf_pfcp_send_association_setup_request(node);
+            ogs_pfcp_up_send_association_setup_request(node, node_timeout);
             break;
         default:
             ogs_error("Unknown timer[%s:%d]",

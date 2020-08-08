@@ -227,52 +227,6 @@ static void sess_timeout(ogs_pfcp_xact_t *xact, void *data)
     }
 }
 
-void sgwc_pfcp_send_association_setup_request(ogs_pfcp_node_t *node)
-{
-    int rv;
-    ogs_pkbuf_t *sxabuf = NULL;
-    ogs_pfcp_header_t h;
-    ogs_pfcp_xact_t *xact = NULL;
-
-    ogs_assert(node);
-
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE;
-    h.seid = 0;
-
-    sxabuf = sgwc_sxa_build_association_setup_request(h.type);
-    ogs_expect_or_return(sxabuf);
-
-    xact = ogs_pfcp_xact_local_create(node, &h, sxabuf, timeout, node);
-    ogs_expect_or_return(xact);
-
-    rv = ogs_pfcp_xact_commit(xact);
-    ogs_expect(rv == OGS_OK);
-}
-
-void sgwc_pfcp_send_association_setup_response(ogs_pfcp_xact_t *xact,
-        uint8_t cause)
-{
-    int rv;
-    ogs_pkbuf_t *sxabuf = NULL;
-    ogs_pfcp_header_t h;
-
-    ogs_assert(xact);
-
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_ASSOCIATION_SETUP_RESPONSE_TYPE;
-    h.seid = 0;
-
-    sxabuf = sgwc_sxa_build_association_setup_response(h.type, cause);
-    ogs_expect_or_return(sxabuf);
-
-    rv = ogs_pfcp_xact_update_tx(xact, &h, sxabuf);
-    ogs_expect_or_return(rv == OGS_OK);
-
-    rv = ogs_pfcp_xact_commit(xact);
-    ogs_expect(rv == OGS_OK);
-}
-
 void sgwc_pfcp_send_session_establishment_request(
         sgwc_sess_t *sess, ogs_gtp_xact_t *gtp_xact, ogs_pkbuf_t *gtpbuf)
 {

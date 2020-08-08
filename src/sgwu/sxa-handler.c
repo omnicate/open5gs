@@ -26,7 +26,7 @@ void sgwu_sxa_handle_association_setup_request(
         ogs_pfcp_association_setup_request_t *req)
 {
     ogs_assert(xact);
-    sgwu_pfcp_send_association_setup_response(
+    ogs_pfcp_up_send_association_setup_response(
             xact, OGS_PFCP_CAUSE_REQUEST_ACCEPTED);
 }
 

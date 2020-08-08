@@ -164,6 +164,101 @@ void ogs_pfcp_send_heartbeat_response(ogs_pfcp_xact_t *xact)
     ogs_expect(rv == OGS_OK);
 }
 
+void ogs_pfcp_cp_send_association_setup_request(ogs_pfcp_node_t *node,
+        void (*cb)(ogs_pfcp_xact_t *xact, void *data))
+{
+    int rv;
+    ogs_pkbuf_t *pkbuf = NULL;
+    ogs_pfcp_header_t h;
+    ogs_pfcp_xact_t *xact = NULL;
+
+    ogs_assert(node);
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE;
+    h.seid = 0;
+
+    pkbuf = ogs_pfcp_cp_build_association_setup_request(h.type);
+    ogs_expect_or_return(pkbuf);
+
+    xact = ogs_pfcp_xact_local_create(node, &h, pkbuf, cb, node);
+    ogs_expect_or_return(xact);
+
+    rv = ogs_pfcp_xact_commit(xact);
+    ogs_expect(rv == OGS_OK);
+}
+
+void ogs_pfcp_cp_send_association_setup_response(ogs_pfcp_xact_t *xact,
+        uint8_t cause)
+{
+    int rv;
+    ogs_pkbuf_t *pkbuf = NULL;
+    ogs_pfcp_header_t h;
+
+    ogs_assert(xact);
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_ASSOCIATION_SETUP_RESPONSE_TYPE;
+    h.seid = 0;
+
+    pkbuf = ogs_pfcp_cp_build_association_setup_response(h.type, cause);
+    ogs_expect_or_return(pkbuf);
+
+    rv = ogs_pfcp_xact_update_tx(xact, &h, pkbuf);
+    ogs_expect_or_return(rv == OGS_OK);
+
+    rv = ogs_pfcp_xact_commit(xact);
+    ogs_expect(rv == OGS_OK);
+}
+
+void ogs_pfcp_up_send_association_setup_request(ogs_pfcp_node_t *node,
+        void (*cb)(ogs_pfcp_xact_t *xact, void *data))
+{
+    int rv;
+    ogs_pkbuf_t *pkbuf = NULL;
+    ogs_pfcp_header_t h;
+    ogs_pfcp_xact_t *xact = NULL;
+
+    ogs_assert(node);
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE;
+    h.seid = 0;
+
+    pkbuf = ogs_pfcp_up_build_association_setup_request(h.type);
+    ogs_expect_or_return(pkbuf);
+
+    xact = ogs_pfcp_xact_local_create(node, &h, pkbuf, cb, node);
+    ogs_expect_or_return(xact);
+
+    rv = ogs_pfcp_xact_commit(xact);
+    ogs_expect(rv == OGS_OK);
+}
+
+void ogs_pfcp_up_send_association_setup_response(ogs_pfcp_xact_t *xact,
+        uint8_t cause)
+{
+    int rv;
+    ogs_pkbuf_t *pkbuf = NULL;
+    ogs_pfcp_header_t h;
+
+    ogs_assert(xact);
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_ASSOCIATION_SETUP_RESPONSE_TYPE;
+    h.seid = 0;
+
+    pkbuf = ogs_pfcp_up_build_association_setup_response(h.type, cause);
+    ogs_expect_or_return(pkbuf);
+
+    rv = ogs_pfcp_xact_update_tx(xact, &h, pkbuf);
+    ogs_expect_or_return(rv == OGS_OK);
+
+    rv = ogs_pfcp_xact_commit(xact);
+    ogs_expect(rv == OGS_OK);
+}
+
+
 void ogs_pfcp_send_error_message(
     ogs_pfcp_xact_t *xact, uint64_t seid, uint8_t type,
     uint8_t cause_value, uint16_t offending_ie_value)

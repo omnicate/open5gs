@@ -27,6 +27,14 @@ extern "C" {
 ogs_pkbuf_t *ogs_pfcp_build_heartbeat_request(uint8_t type);
 ogs_pkbuf_t *ogs_pfcp_build_heartbeat_response(uint8_t type);
 
+ogs_pkbuf_t *ogs_pfcp_cp_build_association_setup_request(uint8_t type);
+ogs_pkbuf_t *ogs_pfcp_cp_build_association_setup_response(uint8_t type,
+        uint8_t cause);
+
+ogs_pkbuf_t *ogs_pfcp_up_build_association_setup_request(uint8_t type);
+ogs_pkbuf_t *ogs_pfcp_up_build_association_setup_response(uint8_t type,
+        uint8_t cause);
+
 #ifdef __cplusplus
 }
 #endif

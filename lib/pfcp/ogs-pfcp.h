@@ -22,6 +22,7 @@
 
 #include "ogs-core.h"
 #include "ipfw/ogs-ipfw.h"
+#include "ogs-app.h"
 
 #define OGS_PFCP_UDP_PORT               8805
 

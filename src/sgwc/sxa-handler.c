@@ -90,7 +90,7 @@ void sgwc_sxa_handle_association_setup_request(
     ogs_assert(node);
     ogs_assert(req);
 
-    sgwc_pfcp_send_association_setup_response(
+    ogs_pfcp_cp_send_association_setup_response(
             xact, OGS_PFCP_CAUSE_REQUEST_ACCEPTED);
 
     ogs_pfcp_gtpu_resource_remove_all(&node->gtpu_resource_list);
