@@ -42,7 +42,6 @@ typedef struct sgwu_context_s {
     ogs_list_t      gtpu_list;      /* SGWU GTPU Server List */
     ogs_sock_t      *gtpu_sock;     /* SGWU GTPU IPv4 Socket */
     ogs_sock_t      *gtpu_sock6;    /* SGWU GTPU IPv6 Socket */
-    ogs_list_t      gtpu_resource_list; /* UP IP Resource List */
 
     ogs_queue_t     *queue;         /* Queue for processing SGWU control */
     ogs_timer_mgr_t *timer_mgr;     /* Timer Manager */

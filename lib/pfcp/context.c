@@ -68,6 +68,7 @@ void ogs_pfcp_context_init(int num_of_gtpu_resource)
     ogs_pool_init(&ogs_pfcp_gtpu_resource_pool, num_of_gtpu_resource);
 
     ogs_list_init(&self.peer_list);
+    ogs_list_init(&self.gtpu_resource_list);
 
     ogs_pool_init(&ogs_pfcp_sess_pool, ogs_config()->pool.sess);
 
@@ -115,7 +116,8 @@ void ogs_pfcp_context_final(void)
     ogs_pool_final(&ogs_pfcp_qer_pool);
     ogs_pool_final(&ogs_pfcp_bar_pool);
 
-    ogs_pfcp_node_remove_all(&ogs_pfcp_self()->peer_list);
+    ogs_pfcp_node_remove_all(&self.peer_list);
+    ogs_pfcp_gtpu_resource_remove_all(&self.gtpu_resource_list);
 
     ogs_pool_final(&ogs_pfcp_node_pool);
     ogs_pool_final(&ogs_pfcp_gtpu_resource_pool);

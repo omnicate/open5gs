@@ -54,7 +54,7 @@ ogs_pkbuf_t *upf_n4_build_association_setup_request(uint8_t type)
         htobe16(ogs_pfcp_self()->up_function_features);
 
     i = 0;
-    ogs_list_for_each(&upf_self()->gtpu_resource_list, resource) {
+    ogs_list_for_each(&ogs_pfcp_self()->gtpu_resource_list, resource) {
         ogs_assert(i < OGS_MAX_NUM_OF_GTPU_RESOURCE);
         ogs_pfcp_tlv_user_plane_ip_resource_information_t *message =
             &req->user_plane_ip_resource_information[i];
@@ -109,7 +109,7 @@ ogs_pkbuf_t *upf_n4_build_association_setup_response(uint8_t type,
         htobe16(ogs_pfcp_self()->up_function_features);
 
     i = 0;
-    ogs_list_for_each(&upf_self()->gtpu_resource_list, resource) {
+    ogs_list_for_each(&ogs_pfcp_self()->gtpu_resource_list, resource) {
         ogs_assert(i < OGS_MAX_NUM_OF_GTPU_RESOURCE);
         ogs_pfcp_tlv_user_plane_ip_resource_information_t *message =
             &rsp->user_plane_ip_resource_information[i];

@@ -40,10 +40,7 @@ void upf_context_init(void)
     ogs_gtp_node_init(512);
 
     ogs_list_init(&self.sess_list);
-
     ogs_list_init(&self.gtpu_list);
-    ogs_list_init(&self.gtpu_resource_list);
-
     ogs_list_init(&self.gnb_n3_list);
 
     ogs_pool_init(&upf_sess_pool, ogs_config()->pool.sess);
@@ -73,7 +70,6 @@ void upf_context_final(void)
     ogs_gtp_node_remove_all(&self.gnb_n3_list);
 
     ogs_gtp_node_final();
-    ogs_pfcp_gtpu_resource_remove_all(&self.gtpu_resource_list);
 
     context_initialized = 0;
 }
@@ -166,7 +162,7 @@ int upf_context_parse_config(void)
                             ogs_assert(gtpu_key);
 
                             if (ogs_list_count(
-                                &self.gtpu_resource_list) >=
+                                    &ogs_pfcp_self()->gtpu_resource_list) >=
                                 OGS_MAX_NUM_OF_GTPU_RESOURCE) {
                                 ogs_warn("[Overflow]: Number of User Plane "
                                     "IP Resource <= %d",
@@ -311,7 +307,7 @@ int upf_context_parse_config(void)
                             }
 
                             ogs_pfcp_gtpu_resource_add(
-                                &self.gtpu_resource_list, &info);
+                                &ogs_pfcp_self()->gtpu_resource_list, &info);
                         }
 
                         ogs_list_for_each_safe(&list, next_iter, iter)
@@ -351,7 +347,7 @@ int upf_context_parse_config(void)
                                     &info);
 
                             ogs_pfcp_gtpu_resource_add(
-                                &self.gtpu_resource_list, &info);
+                                &ogs_pfcp_self()->gtpu_resource_list, &info);
                         }
 
                         ogs_list_for_each_safe(&list, next_iter, iter)
