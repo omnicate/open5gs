@@ -80,61 +80,6 @@ static void timeout(ogs_gtp_xact_t *xact, void *data)
             sgwc_ue->imsi_bcd, type);
 }
 
-void sgwc_sxa_handle_association_setup_request(
-        ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact, 
-        ogs_pfcp_association_setup_request_t *req)
-{
-    int i;
-
-    ogs_assert(xact);
-    ogs_assert(node);
-    ogs_assert(req);
-
-    ogs_pfcp_cp_send_association_setup_response(
-            xact, OGS_PFCP_CAUSE_REQUEST_ACCEPTED);
-
-    ogs_pfcp_gtpu_resource_remove_all(&node->gtpu_resource_list);
-
-    for (i = 0; i < OGS_MAX_NUM_OF_GTPU_RESOURCE; i++) {
-        ogs_pfcp_tlv_user_plane_ip_resource_information_t *message =
-            &req->user_plane_ip_resource_information[i];
-        ogs_pfcp_user_plane_ip_resource_info_t info;
-
-        if (message->presence == 0)
-            break;
-
-        ogs_pfcp_parse_user_plane_ip_resource_info(&info, message);
-        ogs_pfcp_gtpu_resource_add(&node->gtpu_resource_list, &info);
-    }
-}
-
-void sgwc_sxa_handle_association_setup_response(
-        ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact, 
-        ogs_pfcp_association_setup_response_t *rsp)
-{
-    int i;
-
-    ogs_assert(xact);
-    ogs_pfcp_xact_commit(xact);
-
-    ogs_assert(node);
-    ogs_assert(rsp);
-
-    ogs_pfcp_gtpu_resource_remove_all(&node->gtpu_resource_list);
-
-    for (i = 0; i < OGS_MAX_NUM_OF_GTPU_RESOURCE; i++) {
-        ogs_pfcp_tlv_user_plane_ip_resource_information_t *message =
-            &rsp->user_plane_ip_resource_information[i];
-        ogs_pfcp_user_plane_ip_resource_info_t info;
-
-        if (message->presence == 0)
-            break;
-
-        ogs_pfcp_parse_user_plane_ip_resource_info(&info, message);
-        ogs_pfcp_gtpu_resource_add(&node->gtpu_resource_list, &info);
-    }
-}
-
 void sgwc_sxa_handle_session_establishment_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *pfcp_xact,
         ogs_gtp_message_t *gtp_message,

@@ -122,12 +122,12 @@ void sgwu_pfcp_state_will_associate(ogs_fsm_t *s, sgwu_event_t *e)
 
         switch (message->h.type) {
         case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
-            sgwu_sxa_handle_association_setup_request(node, xact,
+            ogs_pfcp_up_handle_association_setup_request(node, xact,
                     &message->pfcp_association_setup_request);
             OGS_FSM_TRAN(s, sgwu_pfcp_state_associated);
             break;
         case OGS_PFCP_ASSOCIATION_SETUP_RESPONSE_TYPE:
-            sgwu_sxa_handle_association_setup_response(node, xact,
+            ogs_pfcp_up_handle_association_setup_response(node, xact,
                     &message->pfcp_association_setup_response);
             OGS_FSM_TRAN(s, sgwu_pfcp_state_associated);
             break;
@@ -194,12 +194,12 @@ void sgwu_pfcp_state_associated(ogs_fsm_t *s, sgwu_event_t *e)
             break;
         case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
             ogs_warn("PFCP[REQ] has already been associated");
-            sgwu_sxa_handle_association_setup_request(node, xact,
+            ogs_pfcp_up_handle_association_setup_request(node, xact,
                     &message->pfcp_association_setup_request);
             break;
         case OGS_PFCP_ASSOCIATION_SETUP_RESPONSE_TYPE:
             ogs_warn("PFCP[RSP] has already been associated");
-            sgwu_sxa_handle_association_setup_response(node, xact,
+            ogs_pfcp_up_handle_association_setup_response(node, xact,
                     &message->pfcp_association_setup_response);
             break;
         case OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE:

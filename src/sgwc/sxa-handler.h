@@ -26,13 +26,6 @@
 extern "C" {
 #endif
 
-void sgwc_sxa_handle_association_setup_request(
-        ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_association_setup_request_t *req);
-void sgwc_sxa_handle_association_setup_response(
-        ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_association_setup_response_t *req);
-
 void sgwc_sxa_handle_session_establishment_response(
         sgwc_sess_t *sess, ogs_pfcp_xact_t *pfcp_xact,
         ogs_gtp_message_t *gtp_message,

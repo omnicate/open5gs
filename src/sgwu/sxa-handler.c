@@ -21,23 +21,6 @@
 #include "gtp-path.h"
 #include "sxa-handler.h"
 
-void sgwu_sxa_handle_association_setup_request(
-        ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_association_setup_request_t *req)
-{
-    ogs_assert(xact);
-    ogs_pfcp_up_send_association_setup_response(
-            xact, OGS_PFCP_CAUSE_REQUEST_ACCEPTED);
-}
-
-void sgwu_sxa_handle_association_setup_response(
-        ogs_pfcp_node_t *node, ogs_pfcp_xact_t *xact,
-        ogs_pfcp_association_setup_response_t *rsp)
-{
-    ogs_assert(xact);
-    ogs_pfcp_xact_commit(xact);
-}
-
 static void setup_gtp_node(ogs_pfcp_far_t *far,
     ogs_pfcp_tlv_outer_header_creation_t *outer_header_creation)
 {
