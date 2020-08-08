@@ -35,6 +35,25 @@ ogs_pkbuf_t *ogs_pfcp_up_build_association_setup_request(uint8_t type);
 ogs_pkbuf_t *ogs_pfcp_up_build_association_setup_response(uint8_t type,
         uint8_t cause);
 
+void ogs_pfcp_pdrbuf_init(void);
+void ogs_pfcp_pdrbuf_clear(void);
+
+void ogs_pfcp_build_create_pdr(
+    ogs_pfcp_tlv_create_pdr_t *message, int i, ogs_pfcp_pdr_t *pdr);
+void ogs_pfcp_build_create_far(
+    ogs_pfcp_tlv_create_far_t *message, int i, ogs_pfcp_far_t *far);
+void ogs_pfcp_build_create_urr(
+    ogs_pfcp_tlv_create_urr_t *message, int i, ogs_pfcp_urr_t *urr);
+void ogs_pfcp_build_create_qer(
+    ogs_pfcp_tlv_create_qer_t *message, int i, ogs_pfcp_qer_t *qer);
+
+void ogs_pfcp_build_update_qer(
+    ogs_pfcp_tlv_update_qer_t *message, int i, ogs_pfcp_qer_t *qer);
+void ogs_pfcp_build_update_dl_far_deactivate(
+    ogs_pfcp_tlv_update_far_t *message, int i, ogs_pfcp_far_t *far);
+void ogs_pfcp_build_update_far_activate(
+    ogs_pfcp_tlv_update_far_t *message, int i, ogs_pfcp_far_t *far);
+
 #ifdef __cplusplus
 }
 #endif
