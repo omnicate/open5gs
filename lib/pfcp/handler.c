@@ -145,42 +145,6 @@ int ogs_pfcp_up_handle_pdr(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *recvbuf)
     return OGS_OK;
 }
 
-#if 0
-static void setup_gtp_node(ogs_pfcp_far_t *far,
-    ogs_pfcp_tlv_outer_header_creation_t *outer_header_creation)
-{
-    int rv;
-    ogs_ip_t ip;
-    ogs_gtp_node_t *gnode = NULL;
-
-    ogs_assert(far);
-    ogs_assert(outer_header_creation);
-    ogs_assert(outer_header_creation->presence);
-
-    memcpy(&far->outer_header_creation,
-            outer_header_creation->data, outer_header_creation->len);
-    far->outer_header_creation.teid = be32toh(far->outer_header_creation.teid);
-
-    rv = ogs_pfcp_outer_header_creation_to_ip(&far->outer_header_creation, &ip);
-    ogs_assert(rv == OGS_OK);
-
-    gnode = ogs_gtp_node_find_by_ip(&sgwu_self()->peer_list, &ip);
-    if (!gnode) {
-        gnode = ogs_gtp_node_add_by_ip(
-            &sgwu_self()->peer_list, &ip, sgwu_self()->gtpu_port,
-            ogs_config()->parameter.no_ipv4,
-            ogs_config()->parameter.no_ipv6,
-            ogs_config()->parameter.prefer_ipv4);
-        ogs_assert(gnode);
-
-        rv = ogs_gtp_connect(
-                sgwu_self()->gtpu_sock, sgwu_self()->gtpu_sock6, gnode);
-        ogs_assert(rv == OGS_OK);
-    }
-    OGS_SETUP_GTP_NODE(far, gnode);
-}
-#endif
-
 ogs_pfcp_pdr_t *ogs_pfcp_handle_create_pdr(ogs_pfcp_sess_t *sess,
         ogs_pfcp_tlv_create_pdr_t *message,
         uint8_t *cause_value, uint8_t *offending_ie_value)
@@ -379,10 +343,16 @@ ogs_pfcp_far_t *ogs_pfcp_handle_create_far(ogs_pfcp_sess_t *sess,
     far->dst_if = message->forwarding_parameters.destination_interface.u8;
 
     if (message->forwarding_parameters.outer_header_creation.presence) {
-#if 0
-        setup_gtp_node(far,
-                &message->forwarding_parameters.outer_header_creation);
-#endif
+        ogs_pfcp_tlv_outer_header_creation_t *outer_header_creation =
+            &message->forwarding_parameters.outer_header_creation;
+
+        ogs_assert(outer_header_creation->data);
+        ogs_assert(outer_header_creation->len);
+
+        memcpy(&far->outer_header_creation,
+                outer_header_creation->data, outer_header_creation->len);
+        far->outer_header_creation.teid =
+                be32toh(far->outer_header_creation.teid);
     }
 
     return far;
@@ -424,10 +394,16 @@ ogs_pfcp_far_t *ogs_pfcp_handle_update_far(ogs_pfcp_sess_t *sess,
     }
 
     if (message->update_forwarding_parameters.outer_header_creation.presence) {
-#if 0
-        setup_gtp_node(far,
-            &message->update_forwarding_parameters.outer_header_creation);
-#endif
+        ogs_pfcp_tlv_outer_header_creation_t *outer_header_creation =
+            &message->update_forwarding_parameters.outer_header_creation;
+
+        ogs_assert(outer_header_creation->data);
+        ogs_assert(outer_header_creation->len);
+
+        memcpy(&far->outer_header_creation,
+                outer_header_creation->data, outer_header_creation->len);
+        far->outer_header_creation.teid =
+                be32toh(far->outer_header_creation.teid);
     }
 
     return far;
