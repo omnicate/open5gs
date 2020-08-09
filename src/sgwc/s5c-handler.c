@@ -310,15 +310,17 @@ void sgwc_s5c_handle_create_bearer_request(
     ul_tunnel = sgwc_ul_tunnel_in_bearer(bearer);
     ogs_assert(ul_tunnel);
 
-    ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
-        sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
-    ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
-        sess->sgw_s5c_teid, sess->pgw_s5c_teid);
-
     /* Receive Data Plane(UL) : PGW-S5U */
     pgw_s5u_teid = req->bearer_contexts.s5_s8_u_sgw_f_teid.data;
     ogs_assert(pgw_s5u_teid);
     ul_tunnel->remote_teid = be32toh(pgw_s5u_teid->teid);
+
+    ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
+        sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
+    ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
+        sess->sgw_s5c_teid, sess->pgw_s5c_teid);
+    ogs_debug("    SGW_S5U_TEID[%d] PGW_S5U_TEID[%d]",
+        ul_tunnel->local_teid, ul_tunnel->remote_teid);
 
     rv = ogs_gtp_f_teid_to_ip(pgw_s5u_teid, &ul_tunnel->remote_ip);
     if (rv != OGS_OK) {

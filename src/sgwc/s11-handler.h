@@ -35,8 +35,9 @@ void sgwc_s11_handle_modify_bearer_request(
 void sgwc_s11_handle_delete_session_request(
         sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
         ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message);
-void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact, 
-        sgwc_ue_t *sgwc_ue, ogs_gtp_message_t *message);
+void sgwc_s11_handle_create_bearer_response(
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message);
 void sgwc_s11_handle_update_bearer_response(ogs_gtp_xact_t *s11_xact, 
         sgwc_ue_t *sgwc_ue, ogs_gtp_message_t *message);
 void sgwc_s11_handle_delete_bearer_response(ogs_gtp_xact_t *s11_xact, 
