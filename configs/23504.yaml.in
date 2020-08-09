@@ -94,14 +94,14 @@ smf:
       realm: localdomain
       listen_on: 127.0.0.3
       load_extension:
-        - module: /home/acetcom/Documents/git/open5gs/build/subprojects/freeDiameter/extensions/dbg_msg_dumps.fdx
+        - module: @freediameter_extensions_builddir@/dbg_msg_dumps.fdx
           conf: 0x8888
-        - module: /home/acetcom/Documents/git/open5gs/build/subprojects/freeDiameter/extensions/dict_rfc5777.fdx
-        - module: /home/acetcom/Documents/git/open5gs/build/subprojects/freeDiameter/extensions/dict_mip6i.fdx
-        - module: /home/acetcom/Documents/git/open5gs/build/subprojects/freeDiameter/extensions/dict_nasreq.fdx
-        - module: /home/acetcom/Documents/git/open5gs/build/subprojects/freeDiameter/extensions/dict_nas_mipv6.fdx
-        - module: /home/acetcom/Documents/git/open5gs/build/subprojects/freeDiameter/extensions/dict_dcca.fdx
-        - module: /home/acetcom/Documents/git/open5gs/build/subprojects/freeDiameter/extensions/dict_dcca_3gpp.fdx
+        - module: @freediameter_extensions_builddir@/dict_rfc5777.fdx
+        - module: @freediameter_extensions_builddir@/dict_mip6i.fdx
+        - module: @freediameter_extensions_builddir@/dict_nasreq.fdx
+        - module: @freediameter_extensions_builddir@/dict_nas_mipv6.fdx
+        - module: @freediameter_extensions_builddir@/dict_dcca.fdx
+        - module: @freediameter_extensions_builddir@/dict_dcca_3gpp.fdx
       connect:
         - identity: pcrf.localdomain
           addr: 127.0.0.5
