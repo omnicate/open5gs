@@ -109,18 +109,18 @@ static void cups_test1(abts_case *tc, void *data)
     test_ue.imsi = (char *)"001010123456819";
 
     test_sess.gnb_n3_ip.ipv4 = true;
-    test_sess.gnb_n3_ip.addr = inet_addr("127.0.0.5");
+    test_sess.gnb_n3_ip.addr = inet_addr(TEST_GNB_IPV4);
     test_sess.gnb_n3_teid = 0;
 
     test_sess.upf_n3_ip.ipv4 = true;
-    test_sess.upf_n3_ip.addr = inet_addr("127.0.0.7");
+    test_sess.upf_n3_ip.addr = inet_addr(TEST_SGWU_IPV4);
 
     /* eNB connects to MME */
-    s1ap = testenb_s1ap_client("127.0.0.1");
+    s1ap = testenb_s1ap_client(TEST_MME_IPV4);
     ABTS_PTR_NOTNULL(tc, s1ap);
 
     /* eNB connects to SGW */
-    gtpu = testenb_gtpu_server("127.0.0.5");
+    gtpu = testenb_gtpu_server(TEST_ENB_IPV4);
     ABTS_PTR_NOTNULL(tc, gtpu);
 
     /* Send S1-Setup Reqeust */
@@ -268,7 +268,8 @@ static void cups_test1(abts_case *tc, void *data)
     ogs_pkbuf_free(recvbuf);
 
     /* Send E-RAB Setup Response */
-    rv = tests1ap_build_e_rab_setup_response(&sendbuf, 1, 1, 6, 2, "127.0.0.5");
+    rv = tests1ap_build_e_rab_setup_response(
+            &sendbuf, 1, 1, 6, 2, TEST_ENB_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
@@ -306,7 +307,8 @@ static void cups_test1(abts_case *tc, void *data)
     ogs_pkbuf_free(recvbuf);
 
     /* Send E-RAB Setup Response */
-    rv = tests1ap_build_e_rab_setup_response(&sendbuf, 1, 1, 7, 3, "127.0.0.5");
+    rv = tests1ap_build_e_rab_setup_response(&sendbuf,
+            1, 1, 7, 3, TEST_ENB_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
@@ -466,7 +468,7 @@ static void cups_test1(abts_case *tc, void *data)
     ogs_msleep(300);
 
     /********** Remove Subscriber in Database */
-    doc = BCON_NEW("imsi", BCON_UTF8("001010123456819"));
+    doc = BCON_NEW("imsi", BCON_UTF8(test_ue.imsi));
     ABTS_PTR_NOTNULL(tc, doc);
     ABTS_TRUE(tc, mongoc_collection_remove(collection,
             MONGOC_REMOVE_SINGLE_REMOVE, doc, NULL, &error))

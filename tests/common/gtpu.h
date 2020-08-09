@@ -24,10 +24,6 @@
 extern "C" {
 #endif
 
-#define TEST_PING_IPV4          "10.45.0.1"
-#define TEST_SGWU_IPV4          "127.0.0.7"
-#define TEST_UPF_IPV4           "127.0.0.4"
-
 #define testgnb_gtpu_server(x) test_gtpu_server(x, OGS_GTPV1_U_UDP_PORT)
 #define testgnb_gtpu_read(x) test_gtpu_read(x)
 #define testgnb_gtpu_close(x) test_gtpu_close(x)

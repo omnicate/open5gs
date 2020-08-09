@@ -124,20 +124,18 @@ static void test1_func(abts_case *tc, void *data)
     test_ue.imsi = (char *)"310014987654004";
 
     test_sess.gnb_n3_ip.ipv4 = true;
-    test_sess.gnb_n3_ip.addr = inet_addr("127.0.0.5");
+    test_sess.gnb_n3_ip.addr = inet_addr(TEST_GNB_IPV4);
     test_sess.gnb_n3_teid = 0;
 
     test_sess.upf_n3_ip.ipv4 = true;
-    test_sess.upf_n3_ip.addr = inet_addr("127.0.0.7");
-    test_sess.upf_n3_teid = 2;
-    test_sess.ue_ip.addr = inet_addr("10.45.0.2");
+    test_sess.upf_n3_ip.addr = inet_addr(TEST_SGWU_IPV4);
 
     /* eNB connects to MME */
-    s1ap = testenb_s1ap_client("127.0.0.1");
+    s1ap = testenb_s1ap_client(TEST_MME_IPV4);
     ABTS_PTR_NOTNULL(tc, s1ap);
 
     /* eNB connects to SGW */
-    gtpu = testenb_gtpu_server("127.0.0.5");
+    gtpu = testenb_gtpu_server(TEST_ENB_IPV4);
     ABTS_PTR_NOTNULL(tc, gtpu);
 
     /* Send S1-Setup Reqeust */
@@ -253,7 +251,7 @@ static void test1_func(abts_case *tc, void *data)
 
     /* Send Initial Context Setup Response */
     rv = tests1ap_build_initial_context_setup_response(&sendbuf,
-            1, 24, 5, 1, "127.0.0.5");
+            1, 24, 5, 1, TEST_ENB_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
@@ -273,9 +271,12 @@ static void test1_func(abts_case *tc, void *data)
     ogs_pkbuf_free(recvbuf);
 
     /* Send GTP-U ICMP Packet */
-    rv = test_gtpu_build_ping(&sendbuf, &test_sess, "10.45.0.1");
+    test_sess.upf_n3_teid = 2;
+    test_sess.ue_ip.addr = inet_addr("10.45.0.2");
+
+    rv = test_gtpu_build_ping(&sendbuf, &test_sess, TEST_PING_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
-    rv = testgnb_gtpu_sendto(gtpu, &test_sess, sendbuf);
+    rv = testgnb_gtpu_sendto(gtpu, sendbuf, TEST_SGWU_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
     /* Receive GTP-U ICMP Packet */
