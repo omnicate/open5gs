@@ -112,7 +112,7 @@ ogs_pkbuf_t *sgwc_sxa_build_session_establishment_request(
     return pkbuf;
 }
 
-ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
+ogs_pkbuf_t *sgwc_sxa_build_bearer_modification_request(
         uint8_t type, sgwc_bearer_t *bearer, uint64_t modify_flags)
 {
     ogs_pfcp_message_t pfcp_message;
@@ -189,14 +189,6 @@ ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
             i = 0;
             ogs_list_for_each(&bearer->pfcp.qer_list, qer) {
                 ogs_pfcp_build_create_qer(&req->create_qer[i], i, qer);
-                i++;
-            }
-        }
-        if (modify_flags & OGS_PFCP_MODIFY_QOS_UPDATE) {
-            /* Update QER */
-            i = 0;
-            ogs_list_for_each(&bearer->pfcp.qer_list, qer) {
-                ogs_pfcp_build_update_qer(&req->update_qer[i], i, qer);
                 i++;
             }
         }

@@ -95,6 +95,7 @@ void sgwc_sxa_handle_session_establishment_response(
     ogs_gtp_xact_t *s11_xact = NULL, *s5c_xact = NULL;
     ogs_gtp_node_t *pgw = NULL;
 
+    sgwc_ue_t *sgwc_ue = NULL;
     sgwc_bearer_t *bearer = NULL;
     sgwc_tunnel_t *dl_tunnel = NULL;
 
@@ -136,7 +137,9 @@ void sgwc_sxa_handle_session_establishment_response(
     }
 
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(s11_xact, sess ? sess->sgw_s5c_teid : 0,
+        if (sess) sgwc_ue = sess->sgwc_ue;
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
                 OGS_GTP_CREATE_SESSION_RESPONSE_TYPE, cause_value);
         return;
     }
@@ -225,6 +228,7 @@ void sgwc_sxa_handle_session_modification_response(
         ogs_pfcp_session_modification_response_t *pfcp_rsp)
 {
     int rv, len = 0;
+    uint8_t cause_value = 0;
     uint64_t flags;
     uint16_t decoded;
 
@@ -247,6 +251,66 @@ void sgwc_sxa_handle_session_modification_response(
     flags = pfcp_xact->modify_flags;
     ogs_assert(flags);
 
+    cause_value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
+
+    if (!sess) {
+        ogs_warn("No Context");
+        cause_value = OGS_GTP_CAUSE_CONTEXT_NOT_FOUND;
+    }
+
+    if (pfcp_rsp->cause.presence) {
+        if (pfcp_rsp->cause.u8 != OGS_PFCP_CAUSE_REQUEST_ACCEPTED) {
+            ogs_warn("PFCP Cause [%d] : Not Accepted", pfcp_rsp->cause.u8);
+            cause_value = gtp_cause_from_pfcp(pfcp_rsp->cause.u8);
+        }
+    } else {
+        ogs_error("No Cause");
+        cause_value = OGS_GTP_CAUSE_MANDATORY_IE_MISSING;
+    }
+
+    if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
+        if (sess) sgwc_ue = sess->sgwc_ue;
+        if (flags & OGS_PFCP_MODIFY_CREATE) {
+            s5c_xact = pfcp_xact->assoc_xact;
+            ogs_assert(s5c_xact);
+
+            ogs_gtp_send_error_message(
+                    s5c_xact, sess ? sess->pgw_s5c_teid : 0,
+                    OGS_GTP_CREATE_BEARER_RESPONSE_TYPE, cause_value);
+
+        } else if (flags & OGS_PFCP_MODIFY_REMOVE) {
+            s5c_xact = pfcp_xact->assoc_xact;
+            ogs_assert(s5c_xact);
+
+            ogs_gtp_send_error_message(
+                    s5c_xact, sess ? sess->pgw_s5c_teid : 0,
+                    OGS_GTP_DELETE_BEARER_RESPONSE_TYPE, cause_value);
+
+        } else if (flags & OGS_PFCP_MODIFY_ACTIVATE) {
+            if (flags & OGS_PFCP_MODIFY_UL_ONLY) {
+                s11_xact = pfcp_xact->assoc_xact;
+                ogs_assert(s11_xact);
+
+                ogs_gtp_send_error_message(
+                        s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+                        OGS_GTP_CREATE_SESSION_RESPONSE_TYPE, cause_value);
+
+            } else if (flags & OGS_PFCP_MODIFY_DL_ONLY) {
+                s11_xact = pfcp_xact->assoc_xact;
+                ogs_assert(s11_xact);
+
+                ogs_gtp_send_error_message(
+                        s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+                        OGS_GTP_MODIFY_BEARER_RESPONSE_TYPE, cause_value);
+            } else {
+                ogs_fatal("Invalid modify_flags[0x%llx]", (long long)flags);
+                ogs_assert_if_reached();
+            }
+        }
+
+        return;
+    }
+
     bearer = pfcp_xact->data;
     ogs_assert(bearer);
     sgwc_ue = bearer->sgwc_ue;
@@ -255,12 +319,12 @@ void sgwc_sxa_handle_session_modification_response(
     ogs_pfcp_xact_commit(pfcp_xact);
 
     if (flags & OGS_PFCP_MODIFY_CREATE) {
+        s5c_xact = pfcp_xact->assoc_xact;
+        ogs_assert(s5c_xact);
+
         if (flags & OGS_PFCP_MODIFY_UL_ONLY) {
             ogs_gtp_create_bearer_request_t *gtp_req = NULL;
             ogs_gtp_f_teid_t sgw_s1u_teid;
-
-            s5c_xact = pfcp_xact->assoc_xact;
-            ogs_assert(s5c_xact);
 
             gtp_req = &recv_message->create_bearer_request;
             ogs_assert(gtp_req);
@@ -324,9 +388,6 @@ void sgwc_sxa_handle_session_modification_response(
         } else if (flags & OGS_PFCP_MODIFY_DL_ONLY) {
             ogs_gtp_create_bearer_response_t *gtp_rsp = NULL;
             ogs_gtp_f_teid_t sgw_s5u_teid, pgw_s5u_teid;
-
-            s5c_xact = pfcp_xact->assoc_xact;
-            ogs_assert(s5c_xact);
 
             gtp_rsp = &recv_message->create_bearer_response;
             ogs_assert(gtp_rsp);
@@ -394,7 +455,21 @@ void sgwc_sxa_handle_session_modification_response(
         }
 
     } else if (flags & OGS_PFCP_MODIFY_REMOVE) {
-        ogs_fatal("TODO: REMOVE");
+        s5c_xact = pfcp_xact->assoc_xact;
+        ogs_assert(s5c_xact);
+
+        recv_message->h.type = OGS_GTP_DELETE_BEARER_RESPONSE_TYPE;
+        recv_message->h.teid = sess->pgw_s5c_teid;
+
+        pkbuf = ogs_gtp_build_msg(recv_message);
+        ogs_expect_or_return(pkbuf);
+
+        rv = ogs_gtp_xact_update_tx(s5c_xact, &recv_message->h, pkbuf);
+        ogs_expect_or_return(rv == OGS_OK);
+
+        rv = ogs_gtp_xact_commit(s5c_xact);
+        ogs_expect(rv == OGS_OK);
+
         sgwc_bearer_remove(bearer);
 
     } else if (flags & OGS_PFCP_MODIFY_ACTIVATE) {
@@ -587,7 +662,9 @@ void sgwc_sxa_handle_session_deletion_response(
 {
     int rv;
     uint8_t cause_value = 0;
+
     sgwc_ue_t *sgwc_ue = NULL;
+
     ogs_gtp_xact_t *s11_xact = NULL;
     ogs_pkbuf_t *pkbuf = NULL;
 
@@ -617,7 +694,9 @@ void sgwc_sxa_handle_session_deletion_response(
     }
 
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(s11_xact, sess ? sess->sgw_s5c_teid : 0,
+        if (sess) sgwc_ue = sess->sgwc_ue;
+        ogs_gtp_send_error_message(
+                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
                 OGS_GTP_DELETE_SESSION_RESPONSE_TYPE, cause_value);
         return;
     }

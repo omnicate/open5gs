@@ -569,8 +569,8 @@ void sgwc_s11_handle_delete_bearer_response(
 {
     int rv;
     uint8_t cause_value;
-    ogs_pkbuf_t *pkbuf = NULL;
     ogs_gtp_xact_t *s5c_xact = NULL;
+
     sgwc_sess_t *sess = NULL;
     sgwc_bearer_t *bearer = NULL;
     ogs_gtp_delete_bearer_response_t *req = NULL;
@@ -652,19 +652,8 @@ void sgwc_s11_handle_delete_bearer_response(
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
         sess->sgw_s5c_teid, sess->pgw_s5c_teid);
 
-    message->h.type = OGS_GTP_DELETE_BEARER_RESPONSE_TYPE;
-    message->h.teid = sess->pgw_s5c_teid;
-
-    pkbuf = ogs_gtp_build_msg(message);
-    ogs_expect_or_return(pkbuf);
-
-    rv = ogs_gtp_xact_update_tx(s5c_xact, &message->h, pkbuf);
-    ogs_expect_or_return(rv == OGS_OK);
-
-    rv = ogs_gtp_xact_commit(s5c_xact);
-    ogs_expect(rv == OGS_OK);
-
-    sgwc_bearer_remove(bearer);
+    sgwc_pfcp_send_bearer_modification_request(
+            bearer, s5c_xact, gtpbuf, OGS_PFCP_MODIFY_REMOVE);
 }
 
 void sgwc_s11_handle_release_access_bearers_request(

@@ -224,7 +224,7 @@ void sgwc_pfcp_send_session_establishment_request(
     ogs_expect(rv == OGS_OK);
 }
 
-void sgwc_pfcp_send_session_modification_request(
+void sgwc_pfcp_send_bearer_modification_request(
         sgwc_bearer_t *bearer, ogs_gtp_xact_t *gtp_xact,
         ogs_pkbuf_t *gtpbuf, uint64_t flags)
 {
@@ -242,7 +242,7 @@ void sgwc_pfcp_send_session_modification_request(
     h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
     h.seid = sess->sgwu_sxa_seid;
 
-    sxabuf = sgwc_sxa_build_session_modification_request(h.type, bearer, flags);
+    sxabuf = sgwc_sxa_build_bearer_modification_request(h.type, bearer, flags);
     ogs_expect_or_return(sxabuf);
 
     xact = ogs_pfcp_xact_local_create(
