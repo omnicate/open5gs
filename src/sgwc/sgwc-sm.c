@@ -208,11 +208,11 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
             break;
         case OGS_GTP_UPDATE_BEARER_RESPONSE_TYPE:
             sgwc_s11_handle_update_bearer_response(
-                    gtp_xact, sgwc_ue, &gtp_message);
+                    sgwc_ue, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_DELETE_BEARER_RESPONSE_TYPE:
             sgwc_s11_handle_delete_bearer_response(
-                    gtp_xact, sgwc_ue, &gtp_message);
+                    sgwc_ue, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_RELEASE_ACCESS_BEARERS_REQUEST_TYPE:
             sgwc_s11_handle_release_access_bearers_request(gtp_xact, sgwc_ue,
@@ -291,16 +291,16 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
                     sess, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_UPDATE_BEARER_REQUEST_TYPE:
-            sgwc_s5c_handle_update_bearer_request(gtp_xact, sess,
-                    &gtp_message);
+            sgwc_s5c_handle_update_bearer_request(
+                    sess, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_DELETE_BEARER_REQUEST_TYPE:
-            sgwc_s5c_handle_delete_bearer_request(gtp_xact, sess,
-                    &gtp_message);
+            sgwc_s5c_handle_delete_bearer_request(
+                    sess, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_BEARER_RESOURCE_FAILURE_INDICATION_TYPE:
-            sgwc_s5c_handle_bearer_resource_failure_indication(gtp_xact, sess,
-                    &gtp_message);
+            sgwc_s5c_handle_bearer_resource_failure_indication(
+                    sess, gtp_xact, recvbuf, &gtp_message);
             break;
         default:
             ogs_warn("Not implmeneted(type:%d)", gtp_message.h.type);

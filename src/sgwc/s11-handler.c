@@ -462,8 +462,9 @@ void sgwc_s11_handle_create_bearer_response(
             OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_CREATE);
 }
 
-void sgwc_s11_handle_update_bearer_response(ogs_gtp_xact_t *s11_xact,
-    sgwc_ue_t *sgwc_ue, ogs_gtp_message_t *message)
+void sgwc_s11_handle_update_bearer_response(
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
     int rv;
     uint8_t cause_value;
@@ -477,6 +478,8 @@ void sgwc_s11_handle_update_bearer_response(ogs_gtp_xact_t *s11_xact,
     s5c_xact = s11_xact->assoc_xact;
     ogs_assert(s5c_xact);
     ogs_assert(message);
+    req = &message->update_bearer_response;
+    ogs_assert(req);
 
     ogs_debug("Update Bearer Response");
     if (!sgwc_ue) {
@@ -491,8 +494,6 @@ void sgwc_s11_handle_update_bearer_response(ogs_gtp_xact_t *s11_xact,
 
     rv = ogs_gtp_xact_commit(s11_xact);
     ogs_expect(rv == OGS_OK);
-
-    req = &message->update_bearer_response;
 
     if (req->cause.presence) {
         ogs_gtp_cause_t *cause = req->cause.data;
@@ -562,8 +563,9 @@ void sgwc_s11_handle_update_bearer_response(ogs_gtp_xact_t *s11_xact,
     ogs_expect(rv == OGS_OK);
 }
 
-void sgwc_s11_handle_delete_bearer_response(ogs_gtp_xact_t *s11_xact,
-    sgwc_ue_t *sgwc_ue, ogs_gtp_message_t *message)
+void sgwc_s11_handle_delete_bearer_response(
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
     int rv;
     uint8_t cause_value;
@@ -577,6 +579,8 @@ void sgwc_s11_handle_delete_bearer_response(ogs_gtp_xact_t *s11_xact,
     s5c_xact = s11_xact->assoc_xact;
     ogs_assert(s5c_xact);
     ogs_assert(message);
+    req = &message->delete_bearer_response;
+    ogs_assert(req);
 
     ogs_debug("Delete Bearer Response");
 
@@ -592,8 +596,6 @@ void sgwc_s11_handle_delete_bearer_response(ogs_gtp_xact_t *s11_xact,
 
     rv = ogs_gtp_xact_commit(s11_xact);
     ogs_expect(rv == OGS_OK);
-
-    req = &message->delete_bearer_response;
 
     if (req->cause.presence) {
         ogs_gtp_cause_t *cause = req->cause.data;

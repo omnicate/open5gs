@@ -342,8 +342,9 @@ void sgwc_s5c_handle_create_bearer_request(
             OGS_PFCP_MODIFY_UL_ONLY|OGS_PFCP_MODIFY_CREATE);
 }
 
-void sgwc_s5c_handle_update_bearer_request(ogs_gtp_xact_t *s5c_xact, 
-    sgwc_sess_t *sess, ogs_gtp_message_t *message)
+void sgwc_s5c_handle_update_bearer_request(
+        sgwc_sess_t *sess, ogs_gtp_xact_t *s5c_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
     int rv;
     uint8_t cause_value = 0;
@@ -354,11 +355,12 @@ void sgwc_s5c_handle_update_bearer_request(ogs_gtp_xact_t *s5c_xact,
 
     ogs_assert(s5c_xact);
     ogs_assert(message);
+    req = &message->update_bearer_request;
+    ogs_assert(req);
 
     ogs_debug("Update Bearer Request");
 
     cause_value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
-    req = &message->update_bearer_request;
 
     if (!sess) {
         ogs_warn("No Context");
@@ -412,8 +414,9 @@ void sgwc_s5c_handle_update_bearer_request(ogs_gtp_xact_t *s5c_xact,
     ogs_debug("Update Bearer Request : SGW <-- PGW");
 }
 
-void sgwc_s5c_handle_delete_bearer_request(ogs_gtp_xact_t *s5c_xact, 
-    sgwc_sess_t *sess, ogs_gtp_message_t *message)
+void sgwc_s5c_handle_delete_bearer_request(
+        sgwc_sess_t *sess, ogs_gtp_xact_t *s5c_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
     int rv;
     uint8_t cause_value = 0;
@@ -424,11 +427,12 @@ void sgwc_s5c_handle_delete_bearer_request(ogs_gtp_xact_t *s5c_xact,
 
     ogs_assert(s5c_xact);
     ogs_assert(message);
+    req = &message->delete_bearer_request;
+    ogs_assert(req);
 
     ogs_debug("Delete Bearer Request");
 
     cause_value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
-    req = &message->delete_bearer_request;
 
     if (!sess) {
         ogs_warn("No Context");
@@ -477,8 +481,9 @@ void sgwc_s5c_handle_delete_bearer_request(ogs_gtp_xact_t *s5c_xact,
     ogs_expect(rv == OGS_OK);
 }
 
-void sgwc_s5c_handle_bearer_resource_failure_indication(ogs_gtp_xact_t *s5c_xact,
-        sgwc_sess_t *sess, ogs_gtp_message_t *message)
+void sgwc_s5c_handle_bearer_resource_failure_indication(
+        sgwc_sess_t *sess, ogs_gtp_xact_t *s5c_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
     uint8_t cause_value = 0;
     ogs_gtp_xact_t *s11_xact = NULL;
@@ -490,10 +495,10 @@ void sgwc_s5c_handle_bearer_resource_failure_indication(ogs_gtp_xact_t *s5c_xact
     s11_xact = s5c_xact->assoc_xact;
     ogs_assert(s11_xact);
     ogs_assert(message);
+    ind = &message->bearer_resource_failure_indication;
+    ogs_assert(ind);
 
     ogs_debug("Bearer Resource Failure Indication");
-
-    ind = &message->bearer_resource_failure_indication;
 
     if (!sess) {
         ogs_warn("No Context");
