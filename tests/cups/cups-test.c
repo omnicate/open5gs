@@ -244,9 +244,9 @@ static void cups_test1(abts_case *tc, void *data)
     test_sess.upf_n3_teid = 2;
     test_sess.ue_ip.addr = inet_addr("10.45.0.2");
 
-    rv = test_gtpu_build_ping(&sendbuf, &test_sess, "10.45.0.1");
+    rv = test_gtpu_build_ping(&sendbuf, &test_sess, TEST_PING_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
-    rv = testgnb_gtpu_sendto(gtpu, &test_sess, sendbuf);
+    rv = testgnb_gtpu_sendto(gtpu, sendbuf, TEST_SGWU_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
     /* Receive GTP-U ICMP Packet */
@@ -284,9 +284,9 @@ static void cups_test1(abts_case *tc, void *data)
     test_sess.upf_n3_teid = 4;
     test_sess.ue_ip.addr = inet_addr("10.45.0.3");
 
-    rv = test_gtpu_build_ping(&sendbuf, &test_sess, "10.45.0.1");
+    rv = test_gtpu_build_ping(&sendbuf, &test_sess, TEST_PING_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
-    rv = testgnb_gtpu_sendto(gtpu, &test_sess, sendbuf);
+    rv = testgnb_gtpu_sendto(gtpu, sendbuf, TEST_SGWU_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
     /* Receive GTP-U ICMP Packet */

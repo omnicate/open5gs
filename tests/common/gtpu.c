@@ -87,29 +87,26 @@ int testgnb_gtpu_send(ogs_socknode_t *node, ogs_pkbuf_t *sendbuf)
 }
 
 int testgnb_gtpu_sendto(
-        ogs_socknode_t *node, test_sess_t *sess, ogs_pkbuf_t *sendbuf)
+        ogs_socknode_t *node, ogs_pkbuf_t *sendbuf, const char *ipstr)
 {
     int rv;
 
-    ogs_sockaddr_t upf;
+    ogs_sockaddr_t *addr;
+    int port = OGS_GTPV1_U_UDP_PORT;
     ssize_t sent;
 
     ogs_assert(node);
     ogs_assert(node->sock);
-    ogs_assert(sess);
+    ogs_assert(ipstr);
 
-    memset(&upf, 0, sizeof(ogs_sockaddr_t));
-    upf.ogs_sin_port = htobe16(OGS_GTPV1_U_UDP_PORT);
-    if (sess->upf_n3_ip.ipv4) {
-        upf.ogs_sa_family = AF_INET;
-        upf.sin.sin_addr.s_addr = sess->upf_n3_ip.addr;
-    } else {
-        ogs_fatal("TODO : IPv6 Test GTPU");
-        ogs_assert_if_reached();
-    }
+    rv = ogs_getaddrinfo(&addr, AF_UNSPEC, ipstr, port, 0);
+    ogs_assert(rv == OGS_OK);
 
-    sent = ogs_sendto(node->sock->fd, sendbuf->data, sendbuf->len, 0, &upf);
+    sent = ogs_sendto(node->sock->fd, sendbuf->data, sendbuf->len, 0, addr);
+
     ogs_pkbuf_free(sendbuf);
+    ogs_freeaddrinfo(addr);
+
     if (sent < 0 || sent != sendbuf->len)
         return OGS_ERROR;
 

@@ -24,6 +24,10 @@
 extern "C" {
 #endif
 
+#define TEST_PING_IPV4          "10.45.0.1"
+#define TEST_SGWU_IPV4          "127.0.0.7"
+#define TEST_UPF_IPV4           "127.0.0.4"
+
 #define testgnb_gtpu_server(x) test_gtpu_server(x, OGS_GTPV1_U_UDP_PORT)
 #define testgnb_gtpu_read(x) test_gtpu_read(x)
 #define testgnb_gtpu_close(x) test_gtpu_close(x)
@@ -32,7 +36,7 @@ ogs_socknode_t *test_gtpu_server(const char *ipstr, int port);
 ogs_pkbuf_t *test_gtpu_read(ogs_socknode_t *node);
 int testgnb_gtpu_send(ogs_socknode_t *node, ogs_pkbuf_t *sendbuf);
 int testgnb_gtpu_sendto(
-        ogs_socknode_t *node, test_sess_t *sess, ogs_pkbuf_t *sendbuf);
+        ogs_socknode_t *node, ogs_pkbuf_t *sendbuf, const char *ipstr);
 void test_gtpu_close(ogs_socknode_t *node);
 
 int test_gtpu_build_ping(ogs_pkbuf_t **sendbuf,
