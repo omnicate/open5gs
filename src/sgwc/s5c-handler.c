@@ -521,4 +521,3 @@ void sgwc_s5c_handle_bearer_resource_failure_indication(
     ogs_gtp_send_error_message(s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
             OGS_GTP_BEARER_RESOURCE_FAILURE_INDICATION_TYPE, cause_value);
 }
-
