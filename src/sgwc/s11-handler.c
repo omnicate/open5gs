@@ -341,6 +341,7 @@ void sgwc_s11_handle_create_bearer_response(
     sgwc_sess_t *sess = NULL;
     sgwc_bearer_t *bearer = NULL;
     sgwc_tunnel_t *dl_tunnel = NULL, *ul_tunnel = NULL;
+    ogs_pfcp_far_t *far = NULL;
 
     ogs_gtp_xact_t *s5c_xact = NULL;
 
@@ -448,6 +449,13 @@ void sgwc_s11_handle_create_bearer_response(
                 OGS_GTP_CAUSE_MANDATORY_IE_MISSING);
         return;
     }
+
+    far = dl_tunnel->far;
+    ogs_assert(far);
+
+    ogs_pfcp_ip_to_outer_header_creation(&dl_tunnel->remote_ip,
+        &far->outer_header_creation, &far->outer_header_creation_len);
+    far->outer_header_creation.teid = dl_tunnel->remote_teid;
 
     sgwc_pfcp_send_tunnel_modification_request(
             dl_tunnel, s5c_xact, gtpbuf,
