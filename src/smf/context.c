@@ -1307,9 +1307,9 @@ smf_bearer_t *smf_bearer_find(uint32_t index)
     return ogs_pool_find(&smf_bearer_pool, index);
 }
 
-smf_bearer_t *smf_bearer_find_by_smf_s5u_teid(uint32_t smf_s5u_teid)
+smf_bearer_t *smf_bearer_find_by_upf_s5u_teid(uint32_t upf_s5u_teid)
 {
-    return smf_bearer_find(smf_s5u_teid);
+    return smf_bearer_find(upf_s5u_teid);
 }
 
 smf_bearer_t *smf_bearer_find_by_ebi(smf_sess_t *sess, uint8_t ebi)

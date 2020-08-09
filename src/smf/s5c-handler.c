@@ -274,7 +274,7 @@ void smf_s5c_handle_create_bearer_response(
         ogs_gtp_create_bearer_response_t *rsp)
 {
     int rv;
-    ogs_gtp_f_teid_t *sgw_s5u_teid, *smf_s5u_teid;
+    ogs_gtp_f_teid_t *sgw_s5u_teid, *upf_s5u_teid;
     smf_bearer_t *bearer = NULL;
     ogs_pfcp_far_t *far = NULL;
 
@@ -321,12 +321,12 @@ void smf_s5c_handle_create_bearer_response(
         return;
     }
 
-    /* Correlate with SMF-S5U-TEID */
-    smf_s5u_teid = rsp->bearer_contexts.s5_s8_u_pgw_f_teid.data;
-    ogs_assert(smf_s5u_teid);
+    /* Correlate with UPF-S5U-TEID */
+    upf_s5u_teid = rsp->bearer_contexts.s5_s8_u_pgw_f_teid.data;
+    ogs_assert(upf_s5u_teid);
 
-    /* Find the Bearer by SMF-S5U-TEID */
-    bearer = smf_bearer_find_by_smf_s5u_teid(be32toh(smf_s5u_teid->teid));
+    /* Find the Bearer by UPF-S5U-TEID */
+    bearer = smf_bearer_find_by_upf_s5u_teid(be32toh(upf_s5u_teid->teid));
     ogs_assert(bearer);
 
     /* Set EBI */
