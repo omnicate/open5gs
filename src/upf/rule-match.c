@@ -199,13 +199,13 @@ ogs_pfcp_pdr_t *upf_pdr_find_by_packet(ogs_pkbuf_t *pkt)
             if (far->outer_header_creation.teid == 0)
                 continue;
 
-            ogs_fatal("PROTO:%d SRC:%d-%d DST:%d-%d",
+            ogs_debug("PROTO:%d SRC:%d-%d DST:%d-%d",
                     ipfw->proto,
                     ipfw->port.local.low,
                     ipfw->port.local.high,
                     ipfw->port.remote.low,
                     ipfw->port.remote.high);
-            ogs_fatal("SRC:%08x %08x %08x %08x/%08x %08x %08x %08x",
+            ogs_debug("SRC:%08x %08x %08x %08x/%08x %08x %08x %08x",
                     be32toh(ipfw->ip.local.addr[0]),
                     be32toh(ipfw->ip.local.addr[1]),
                     be32toh(ipfw->ip.local.addr[2]),
@@ -214,7 +214,7 @@ ogs_pfcp_pdr_t *upf_pdr_find_by_packet(ogs_pkbuf_t *pkt)
                     be32toh(ipfw->ip.local.mask[1]),
                     be32toh(ipfw->ip.local.mask[2]),
                     be32toh(ipfw->ip.local.mask[3]));
-            ogs_fatal("DST:%08x %08x %08x %08x/%08x %08x %08x %08x",
+            ogs_debug("DST:%08x %08x %08x %08x/%08x %08x %08x %08x",
                     be32toh(ipfw->ip.remote.addr[0]),
                     be32toh(ipfw->ip.remote.addr[1]),
                     be32toh(ipfw->ip.remote.addr[2]),
