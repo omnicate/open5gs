@@ -236,7 +236,7 @@ void sgwc_sxa_handle_session_modification_response(
     ogs_gtp_xact_t *s5c_xact = NULL;
 
     sgwc_bearer_t *bearer = NULL;
-    sgwc_tunnel_t *tunnel = NULL;
+    sgwc_tunnel_t *dl_tunnel = NULL, *ul_tunnel = NULL;
     sgwc_ue_t *sgwc_ue = NULL;
 
     ogs_pkbuf_t *pkbuf = NULL;
@@ -316,6 +316,11 @@ void sgwc_sxa_handle_session_modification_response(
     sgwc_ue = bearer->sgwc_ue;
     ogs_assert(sgwc_ue);
 
+    dl_tunnel = sgwc_dl_tunnel_in_bearer(bearer);
+    ogs_assert(dl_tunnel);
+    ul_tunnel = sgwc_ul_tunnel_in_bearer(bearer);
+    ogs_assert(ul_tunnel);
+
     ogs_pfcp_xact_commit(pfcp_xact);
 
     if (flags & OGS_PFCP_MODIFY_CREATE) {
@@ -329,19 +334,17 @@ void sgwc_sxa_handle_session_modification_response(
             gtp_req = &recv_message->create_bearer_request;
             ogs_assert(gtp_req);
 
-            tunnel = sgwc_ul_tunnel_in_bearer(bearer);
-            ogs_assert(tunnel);
-
             /* Remove S5U-F-TEID */
             gtp_req->bearer_contexts.s5_s8_u_sgw_f_teid.presence = 0;
 
             /* Send Data Plane(UL) : SGW-S1U */
             memset(&sgw_s1u_teid, 0, sizeof(ogs_gtp_f_teid_t));
-            sgw_s1u_teid.interface_type = tunnel->interface_type;
-            sgw_s1u_teid.teid = htobe32(tunnel->local_teid);
+            sgw_s1u_teid.interface_type = ul_tunnel->interface_type;
+            sgw_s1u_teid.teid = htobe32(ul_tunnel->local_teid);
 #if 1
             rv = ogs_gtp_sockaddr_to_f_teid(
-                tunnel->local_addr, tunnel->local_addr6, &sgw_s1u_teid, &len);
+                ul_tunnel->local_addr, ul_tunnel->local_addr6,
+                &sgw_s1u_teid, &len);
             ogs_expect(rv == OGS_OK);
 #else
             if (sgwc_self()->gtpu_addr) {
@@ -392,9 +395,6 @@ void sgwc_sxa_handle_session_modification_response(
             gtp_rsp = &recv_message->create_bearer_response;
             ogs_assert(gtp_rsp);
 
-            tunnel = sgwc_dl_tunnel_in_bearer(bearer);
-            ogs_assert(tunnel);
-
             /* Remove SGW-S1U-TEID */
             gtp_rsp->bearer_contexts.s4_u_sgsn_f_teid.presence = 0;
 
@@ -419,20 +419,20 @@ void sgwc_sxa_handle_session_modification_response(
             /* Data Plane(DL) : SGW-S5U */
             memset(&sgw_s5u_teid, 0, sizeof(ogs_gtp_f_teid_t));
             sgw_s5u_teid.interface_type = OGS_GTP_F_TEID_S5_S8_SGW_GTP_U;
-            sgw_s5u_teid.teid = htobe32(tunnel->local_teid);
+            sgw_s5u_teid.teid = htobe32(dl_tunnel->local_teid);
             rv = ogs_gtp_sockaddr_to_f_teid(
-                    tunnel->local_addr, tunnel->local_addr6,
+                    dl_tunnel->local_addr, dl_tunnel->local_addr6,
                     &sgw_s5u_teid, &len);
             ogs_expect(rv == OGS_OK);
             gtp_rsp->bearer_contexts.s5_s8_u_sgw_f_teid.presence = 1;
             gtp_rsp->bearer_contexts.s5_s8_u_sgw_f_teid.data = &sgw_s5u_teid;
             gtp_rsp->bearer_contexts.s5_s8_u_sgw_f_teid.len = len;
 
-            /* Data Plane(DL) : PGW-S5U */
+            /* Data Plane(UL) : PGW-S5U */
             pgw_s5u_teid.interface_type = OGS_GTP_F_TEID_S5_S8_PGW_GTP_U;
-            pgw_s5u_teid.teid = htobe32(tunnel->remote_teid);
+            pgw_s5u_teid.teid = htobe32(ul_tunnel->remote_teid);
             rv = ogs_gtp_ip_to_f_teid(
-                    &tunnel->remote_ip, &pgw_s5u_teid, &len);
+                    &ul_tunnel->remote_ip, &pgw_s5u_teid, &len);
             gtp_rsp->bearer_contexts.s5_s8_u_pgw_f_teid.presence = 1;
             gtp_rsp->bearer_contexts.s5_s8_u_pgw_f_teid.data = &pgw_s5u_teid;
             gtp_rsp->bearer_contexts.s5_s8_u_pgw_f_teid.len = len;
@@ -484,12 +484,6 @@ void sgwc_sxa_handle_session_modification_response(
             gtp_rsp = &recv_message->create_session_response;
             ogs_assert(gtp_rsp);
 
-            tunnel = sgwc_ul_tunnel_in_bearer(bearer);
-            ogs_assert(tunnel);
-
-            ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d]",
-                tunnel->remote_teid, tunnel->local_teid);
-
             /* Send Control Plane(UL) : SGW-S11 */
             memset(&sgw_s11_teid, 0, sizeof(ogs_gtp_f_teid_t));
             sgw_s11_teid.interface_type = OGS_GTP_F_TEID_S11_S4_SGW_GTP_C;
@@ -504,11 +498,12 @@ void sgwc_sxa_handle_session_modification_response(
 
             /* Send Data Plane(UL) : SGW-S1U */
             memset(&sgw_s1u_teid, 0, sizeof(ogs_gtp_f_teid_t));
-            sgw_s1u_teid.interface_type = tunnel->interface_type;
-            sgw_s1u_teid.teid = htobe32(tunnel->local_teid);
+            sgw_s1u_teid.interface_type = ul_tunnel->interface_type;
+            sgw_s1u_teid.teid = htobe32(ul_tunnel->local_teid);
 #if 1
             rv = ogs_gtp_sockaddr_to_f_teid(
-                tunnel->local_addr, tunnel->local_addr6, &sgw_s1u_teid, &len);
+                ul_tunnel->local_addr, ul_tunnel->local_addr6,
+                &sgw_s1u_teid, &len);
             ogs_expect(rv == OGS_OK);
 #else
             if (sgwc_self()->gtpu_addr) {
@@ -562,9 +557,6 @@ void sgwc_sxa_handle_session_modification_response(
             ogs_assert(gtp_rsp);
 
             memset(&send_message, 0, sizeof(ogs_gtp_message_t));
-
-            tunnel = sgwc_ul_tunnel_in_bearer(bearer);
-            ogs_assert(tunnel);
 
             memset(&cause, 0, sizeof(cause));
             cause.value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
@@ -621,17 +613,17 @@ void sgwc_sxa_handle_session_modification_response(
             }
 
 #if 0
-            if (dl_tunnel->gnode && dl_tunnel->gnode != enb) {
-                ogs_assert(dl_tunnel->gnode->sock);
+            if (dl_ul_tunnel->gnode && dl_ul_tunnel->gnode != enb) {
+                ogs_assert(dl_ul_tunnel->gnode->sock);
 
                 ogs_debug("[SGW] SEND End Marker to ENB[%s]: TEID[0x%x]",
-                    OGS_ADDR(&dl_tunnel->gnode->addr, buf),
-                    dl_tunnel->remote_teid);
-                sgwc_gtp_send_end_marker(dl_tunnel);
+                    OGS_ADDR(&dl_ul_tunnel->gnode->addr, buf),
+                    dl_ul_tunnel->remote_teid);
+                sgwc_gtp_send_end_marker(dl_ul_tunnel);
             }
 
             /* Setup GTP Node */
-            OGS_SETUP_GTP_NODE(dl_tunnel, enb);
+            OGS_SETUP_GTP_NODE(dl_ul_tunnel, enb);
 
             /* Reset UE state */
             SGW_RESET_UE_STATE(sgwc_ue, SGW_S1U_INACTIVE);

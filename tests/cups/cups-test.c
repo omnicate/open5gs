@@ -744,7 +744,6 @@ static void cups_test2(abts_case *tc, void *data)
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
-#if 0
     /* Send E-RAB Setup Response */
     rv = tests1ap_build_e_rab_setup_response(
             &sendbuf, 1, 1, 7, 3, TEST_ENB_IPV4);
@@ -791,7 +790,6 @@ static void cups_test2(abts_case *tc, void *data)
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
-#endif
 
     ogs_msleep(300);
 
