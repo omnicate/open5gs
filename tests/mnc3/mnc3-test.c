@@ -127,6 +127,11 @@ static void test1_func(abts_case *tc, void *data)
     test_sess.gnb_n3_ip.addr = inet_addr("127.0.0.5");
     test_sess.gnb_n3_teid = 0;
 
+    test_sess.upf_n3_ip.ipv4 = true;
+    test_sess.upf_n3_ip.addr = inet_addr("127.0.0.7");
+    test_sess.upf_n3_teid = 2;
+    test_sess.ue_ip.addr = inet_addr("10.45.0.2");
+
     /* eNB connects to MME */
     s1ap = testenb_s1ap_client("127.0.0.1");
     ABTS_PTR_NOTNULL(tc, s1ap);
@@ -149,10 +154,6 @@ static void test1_func(abts_case *tc, void *data)
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
     ogs_s1ap_free(&message);
     ogs_pkbuf_free(recvbuf);
-
-    collection = mongoc_client_get_collection(
-        ogs_mongoc()->client, ogs_mongoc()->name, "subscribers");
-    ABTS_PTR_NOTNULL(tc, collection);
 
     /********** Insert Subscriber in Database */
     collection = mongoc_client_get_collection(
@@ -272,23 +273,15 @@ static void test1_func(abts_case *tc, void *data)
     ogs_pkbuf_free(recvbuf);
 
     /* Send GTP-U ICMP Packet */
-    test_sess.upf_n3_ip.ipv4 = true;
-    test_sess.upf_n3_ip.addr = inet_addr("127.0.0.7");
-    test_sess.upf_n3_teid = 2;
-    test_sess.ue_ip.addr = inet_addr("10.45.0.2");
-
     rv = test_gtpu_build_ping(&sendbuf, &test_sess, "10.45.0.1");
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
     rv = testgnb_gtpu_sendto(gtpu, &test_sess, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
-    ogs_msleep(300);
-#if 0
     /* Receive GTP-U ICMP Packet */
     recvbuf = testenb_gtpu_read(gtpu);
     ABTS_PTR_NOTNULL(tc, recvbuf);
     ogs_pkbuf_free(recvbuf);
-#endif
 
     /********** Remove Subscriber in Database */
     doc = BCON_NEW("imsi", BCON_UTF8(test_ue.imsi));
