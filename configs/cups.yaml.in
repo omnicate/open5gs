@@ -22,6 +22,8 @@ mme:
     freeDiameter:
       identity: mme.open-ims.test
       realm: open-ims.test
+#      port: 3868
+#      sec_port: 5868
       listen_on: 127.0.0.2
       load_extension:
         - module: @freediameter_extensions_builddir@/dbg_msg_dumps.fdx
@@ -35,6 +37,7 @@ mme:
       connect:
         - identity: hss.open-ims.test
           addr: 127.0.0.4
+#          port: 3868
 
     s1ap:
       addr: 127.0.0.1
@@ -67,12 +70,6 @@ sgwu:
     pfcp:
       addr: 127.0.0.7
 
-sgw:
-    gtpc:
-      addr: 127.0.0.2
-    gtpu:
-      addr: 127.0.0.2
-
 smf:
     sbi:
       - addr: 127.0.0.3
@@ -94,6 +91,8 @@ smf:
     freeDiameter:
       identity: smf.open-ims.test
       realm: open-ims.test
+#      port: 3868
+#      sec_port: 5868
       listen_on: 127.0.0.3
       load_extension:
         - module: @freediameter_extensions_builddir@/dbg_msg_dumps.fdx
@@ -107,6 +106,7 @@ smf:
       connect:
         - identity: pcrf.open-ims.test
           addr: 127.0.0.5
+#          port: 3868
 
 upf:
     pfcp:
