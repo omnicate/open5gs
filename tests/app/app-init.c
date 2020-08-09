@@ -49,17 +49,17 @@ int app_initialize(const char *const argv[])
     }
 
     if (ogs_config()->parameter.no_nrf == 0)
-        nrf_thread = test_child_create("nrf", argv);
+        nrf_thread = test_child_create("nrf", argv_out);
     if (ogs_config()->parameter.no_pcrf == 0)
         pcrf_thread = test_child_create("pcrf", argv_out);
     if (ogs_config()->parameter.no_hss == 0)
         hss_thread = test_child_create("hss", argv_out);
     if (ogs_config()->parameter.no_upf == 0)
-        upf_thread = test_child_create("upf", argv);
+        upf_thread = test_child_create("upf", argv_out);
     if (ogs_config()->parameter.no_sgwu == 0)
         sgwu_thread = test_child_create("sgwu", argv_out);
     if (ogs_config()->parameter.no_smf == 0)
-        smf_thread = test_child_create("smf", argv);
+        smf_thread = test_child_create("smf", argv_out);
     if (ogs_config()->parameter.no_sgwc == 0)
         sgwc_thread = test_child_create("sgwc", argv_out);
     if (ogs_config()->parameter.no_mme == 0)
