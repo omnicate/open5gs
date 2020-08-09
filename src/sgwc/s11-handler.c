@@ -667,8 +667,9 @@ void sgwc_s11_handle_delete_bearer_response(
     sgwc_bearer_remove(bearer);
 }
 
-void sgwc_s11_handle_release_access_bearers_request(ogs_gtp_xact_t *s11_xact, 
-        sgwc_ue_t *sgwc_ue, ogs_gtp_release_access_bearers_request_t *req)
+void sgwc_s11_handle_release_access_bearers_request(
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
+        ogs_gtp_release_access_bearers_request_t *req)
 {
     int rv;
     ogs_gtp_release_access_bearers_response_t *rsp = NULL;
@@ -792,8 +793,8 @@ void sgwc_s11_handle_lo_dldata_notification(sgwc_bearer_t *bearer)
 }
 
 void sgwc_s11_handle_downlink_data_notification_ack(
-        ogs_gtp_xact_t *s11_xact, sgwc_ue_t *sgwc_ue,
-        ogs_gtp_downlink_data_notification_acknowledge_t *ack)
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
     int rv;
     ogs_assert(s11_xact);
@@ -816,7 +817,7 @@ void sgwc_s11_handle_downlink_data_notification_ack(
 }
 
 void sgwc_s11_handle_create_indirect_data_forwarding_tunnel_request(
-        ogs_gtp_xact_t *s11_xact, sgwc_ue_t *sgwc_ue,
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
         ogs_gtp_create_indirect_data_forwarding_tunnel_request_t *req)
 {
     int rv;
@@ -984,7 +985,8 @@ void sgwc_s11_handle_create_indirect_data_forwarding_tunnel_request(
 }
 
 void sgwc_s11_handle_delete_indirect_data_forwarding_tunnel_request(
-        ogs_gtp_xact_t *s11_xact, sgwc_ue_t *sgwc_ue)
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *recv_message)
 {
     int rv;
     ogs_gtp_delete_indirect_data_forwarding_tunnel_response_t *rsp = NULL;
@@ -1066,8 +1068,9 @@ void sgwc_s11_handle_delete_indirect_data_forwarding_tunnel_request(
     ogs_expect(rv == OGS_OK);
 }
 
-void sgwc_s11_handle_bearer_resource_command(ogs_gtp_xact_t *s11_xact,
-        sgwc_ue_t *sgwc_ue, ogs_gtp_message_t *message)
+void sgwc_s11_handle_bearer_resource_command(
+        sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
     int rv;
     ogs_pkbuf_t *pkbuf = NULL;

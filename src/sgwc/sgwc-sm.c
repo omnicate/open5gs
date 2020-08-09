@@ -215,25 +215,26 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
                     sgwc_ue, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_RELEASE_ACCESS_BEARERS_REQUEST_TYPE:
-            sgwc_s11_handle_release_access_bearers_request(gtp_xact, sgwc_ue,
-                &gtp_message.release_access_bearers_request);
+            sgwc_s11_handle_release_access_bearers_request(
+                    sgwc_ue, gtp_xact,
+                    &gtp_message.release_access_bearers_request);
             break;
         case OGS_GTP_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE_TYPE:
-            sgwc_s11_handle_downlink_data_notification_ack(gtp_xact, sgwc_ue,
-                &gtp_message.downlink_data_notification_acknowledge);
+            sgwc_s11_handle_downlink_data_notification_ack(
+                    sgwc_ue, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_REQUEST_TYPE:
             sgwc_s11_handle_create_indirect_data_forwarding_tunnel_request(
-                gtp_xact, sgwc_ue,
+                sgwc_ue, gtp_xact,
                 &gtp_message.create_indirect_data_forwarding_tunnel_request);
             break;
         case OGS_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_REQUEST_TYPE:
             sgwc_s11_handle_delete_indirect_data_forwarding_tunnel_request(
-                gtp_xact, sgwc_ue);
+                    sgwc_ue, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_BEARER_RESOURCE_COMMAND_TYPE:
             sgwc_s11_handle_bearer_resource_command(
-                    gtp_xact, sgwc_ue, &gtp_message);
+                    sgwc_ue, gtp_xact, recvbuf, &gtp_message);
             break;
         default:
             ogs_warn("Not implemented(type:%d)", gtp_message.h.type);
