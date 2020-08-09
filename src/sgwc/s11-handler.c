@@ -255,8 +255,9 @@ void sgwc_s11_handle_modify_bearer_request(
     ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d]",
         dl_tunnel->remote_teid, dl_tunnel->local_teid);
 
-    sgwc_pfcp_send_tunnel_modification_request(dl_tunnel, s11_xact, gtpbuf,
-            OGS_PFCP_MODIFY_DL_ONLY| OGS_PFCP_MODIFY_ACTIVATE);
+    sgwc_pfcp_send_tunnel_modification_request(
+            dl_tunnel, s11_xact, gtpbuf,
+            OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_ACTIVATE);
 }
 
 void sgwc_s11_handle_delete_session_request(
@@ -450,6 +451,7 @@ void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact,
     ogs_debug("    SGW_S5U_TEID[%d] PGW_S5U_TEID[%d]",
         ul_tunnel->local_teid, ul_tunnel->remote_teid);
 
+#if 0
     enb = ogs_gtp_node_find_by_f_teid(&sgwc_self()->enb_s1u_list, enb_s1u_teid);
     if (!enb) {
         enb = ogs_gtp_node_add_by_f_teid(
@@ -511,6 +513,7 @@ void sgwc_s11_handle_create_bearer_response(ogs_gtp_xact_t *s11_xact,
 
     rv = ogs_gtp_xact_commit(s5c_xact);
     ogs_expect(rv == OGS_OK);
+#endif
 }
 
 void sgwc_s11_handle_update_bearer_response(ogs_gtp_xact_t *s11_xact,

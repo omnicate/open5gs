@@ -229,6 +229,7 @@ void sgwc_sxa_handle_session_modification_response(
     uint16_t decoded;
 
     ogs_gtp_xact_t *s11_xact = NULL;
+    ogs_gtp_xact_t *s5c_xact = NULL;
 
     sgwc_bearer_t *bearer = NULL;
     sgwc_tunnel_t *tunnel = NULL;
@@ -243,9 +244,6 @@ void sgwc_sxa_handle_session_modification_response(
     flags = pfcp_xact->modify_flags;
     ogs_assert(flags);
 
-    s11_xact = pfcp_xact->assoc_xact;
-    ogs_assert(s11_xact);
-
     bearer = pfcp_xact->data;
     ogs_assert(bearer);
     sgwc_ue = bearer->sgwc_ue;
@@ -253,7 +251,87 @@ void sgwc_sxa_handle_session_modification_response(
 
     ogs_pfcp_xact_commit(pfcp_xact);
 
-    if (flags & OGS_PFCP_MODIFY_ACTIVATE) {
+    if (flags & OGS_PFCP_MODIFY_CREATE) {
+        if (flags & OGS_PFCP_MODIFY_UL_ONLY) {
+            ogs_gtp_create_bearer_request_t *gtp_req = NULL;
+            ogs_gtp_f_teid_t sgw_s1u_teid;
+
+            s5c_xact = pfcp_xact->assoc_xact;
+            ogs_assert(s5c_xact);
+
+            gtp_req = &recv_message->create_bearer_request;
+            ogs_assert(gtp_req);
+
+            tunnel = sgwc_ul_tunnel_in_bearer(bearer);
+            ogs_assert(tunnel);
+
+            /* Remove S5U-F-TEID */
+            gtp_req->bearer_contexts.s5_s8_u_sgw_f_teid.presence = 0;
+
+            /* Send Data Plane(UL) : SGW-S1U */
+            memset(&sgw_s1u_teid, 0, sizeof(ogs_gtp_f_teid_t));
+            sgw_s1u_teid.interface_type = tunnel->interface_type;
+            sgw_s1u_teid.teid = htobe32(tunnel->local_teid);
+#if 1
+            rv = ogs_gtp_sockaddr_to_f_teid(
+                tunnel->local_addr, tunnel->local_addr6, &sgw_s1u_teid, &len);
+            ogs_assert(rv == OGS_OK);
+#else
+            if (sgwc_self()->gtpu_addr) {
+                addr = ogs_hash_get(sgwc_self()->adv_gtpu_hash,
+                            &sgwc_self()->gtpu_addr->sin.sin_addr,
+                            sizeof(sgwc_self()->gtpu_addr->sin.sin_addr));
+            }
+            if (sgwc_self()->gtpu_addr6) {
+                addr6 = ogs_hash_get(sgwc_self()->adv_gtpu_hash6,
+                            &sgwc_self()->gtpu_addr6->sin6.sin6_addr,
+                            sizeof(sgwc_self()->gtpu_addr6->sin6.sin6_addr));
+            }
+            // Swap the SGW-S1U IP to IP to be advertised to UE
+            if (addr || addr6) {
+                rv = ogs_gtp_sockaddr_to_f_teid(
+                        addr, addr6, &sgw_s1u_teid, &len);
+                ogs_assert(rv == OGS_OK);
+            } else {
+                rv = ogs_gtp_sockaddr_to_f_teid(
+                        sgwc_self()->gtpu_addr, sgwc_self()->gtpu_addr6,
+                        &sgw_s1u_teid, &len);
+                ogs_assert(rv == OGS_OK);
+            }
+#endif
+            gtp_req->bearer_contexts.s1_u_enodeb_f_teid.presence = 1;
+            gtp_req->bearer_contexts.s1_u_enodeb_f_teid.data = &sgw_s1u_teid;
+            gtp_req->bearer_contexts.s1_u_enodeb_f_teid.len = len;
+
+            recv_message->h.type = OGS_GTP_CREATE_BEARER_REQUEST_TYPE;
+            recv_message->h.teid = sgwc_ue->mme_s11_teid;
+
+            pkbuf = ogs_gtp_build_msg(recv_message);
+            ogs_expect_or_return(pkbuf);
+
+            s11_xact = ogs_gtp_xact_local_create(
+                    sgwc_ue->gnode, &recv_message->h, pkbuf, timeout, sess);
+            ogs_expect_or_return(s11_xact);
+
+            ogs_gtp_xact_associate(s5c_xact, s11_xact);
+
+            rv = ogs_gtp_xact_commit(s11_xact);
+            ogs_expect(rv == OGS_OK);
+        } else if (flags & OGS_PFCP_MODIFY_DL_ONLY) {
+            ogs_fatal("DL_ONKY");
+        } else {
+            ogs_fatal("Invalid modify_flags[0x%llx]", (long long)flags);
+            ogs_assert_if_reached();
+        }
+
+    } else if (flags & OGS_PFCP_MODIFY_REMOVE) {
+        ogs_fatal("TODO: REMOVE");
+        sgwc_bearer_remove(bearer);
+
+    } else if (flags & OGS_PFCP_MODIFY_ACTIVATE) {
+        s11_xact = pfcp_xact->assoc_xact;
+        ogs_assert(s11_xact);
+
         if (flags & OGS_PFCP_MODIFY_UL_ONLY) {
             ogs_gtp_create_session_response_t *gtp_rsp = NULL;
             ogs_gtp_f_teid_t sgw_s11_teid;
@@ -284,23 +362,25 @@ void sgwc_sxa_handle_session_modification_response(
             memset(&sgw_s1u_teid, 0, sizeof(ogs_gtp_f_teid_t));
             sgw_s1u_teid.interface_type = tunnel->interface_type;
             sgw_s1u_teid.teid = htobe32(tunnel->local_teid);
+#if 1
             rv = ogs_gtp_sockaddr_to_f_teid(
                 tunnel->local_addr, tunnel->local_addr6, &sgw_s1u_teid, &len);
             ogs_assert(rv == OGS_OK);
-#if 0
+#else
             if (sgwc_self()->gtpu_addr) {
                 addr = ogs_hash_get(sgwc_self()->adv_gtpu_hash,
-                                &sgwc_self()->gtpu_addr->sin.sin_addr,
-                                sizeof(sgwc_self()->gtpu_addr->sin.sin_addr));
+                            &sgwc_self()->gtpu_addr->sin.sin_addr,
+                            sizeof(sgwc_self()->gtpu_addr->sin.sin_addr));
             }
             if (sgwc_self()->gtpu_addr6) {
                 addr6 = ogs_hash_get(sgwc_self()->adv_gtpu_hash6,
-                                &sgwc_self()->gtpu_addr6->sin6.sin6_addr,
-                                sizeof(sgwc_self()->gtpu_addr6->sin6.sin6_addr));
+                            &sgwc_self()->gtpu_addr6->sin6.sin6_addr,
+                            sizeof(sgwc_self()->gtpu_addr6->sin6.sin6_addr));
             }
             // Swap the SGW-S1U IP to IP to be advertised to UE
             if (addr || addr6) {
-                rv = ogs_gtp_sockaddr_to_f_teid(addr, addr6, &sgw_s1u_teid, &len);
+                rv = ogs_gtp_sockaddr_to_f_teid(
+                        addr, addr6, &sgw_s1u_teid, &len);
                 ogs_assert(rv == OGS_OK);
             } else {
                 rv = ogs_gtp_sockaddr_to_f_teid(
@@ -429,10 +509,8 @@ void sgwc_sxa_handle_session_modification_response(
 
         } else {
             ogs_fatal("Invalid modify_flags[0x%llx]", (long long)flags);
+            ogs_assert_if_reached();
         }
-
-    } else if (flags & OGS_PFCP_MODIFY_REMOVE) {
-        sgwc_bearer_remove(bearer);
     }
 }
 

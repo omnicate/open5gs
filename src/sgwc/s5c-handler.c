@@ -186,8 +186,9 @@ void sgwc_s5c_handle_create_session_response(
     ogs_debug("    SGW_S5U_TEID[%d] PGW_S5U_TEID[%d]",
         ul_tunnel->local_teid, ul_tunnel->remote_teid);
 
-    sgwc_pfcp_send_tunnel_modification_request(ul_tunnel, s11_xact, gtpbuf,
-            OGS_PFCP_MODIFY_UL_ONLY| OGS_PFCP_MODIFY_ACTIVATE);
+    sgwc_pfcp_send_tunnel_modification_request(
+            ul_tunnel, s11_xact, gtpbuf,
+            OGS_PFCP_MODIFY_UL_ONLY|OGS_PFCP_MODIFY_ACTIVATE);
 }
 
 void sgwc_s5c_handle_delete_session_response(
@@ -249,31 +250,29 @@ void sgwc_s5c_handle_delete_session_response(
     sgwc_pfcp_send_session_deletion_request(sess, s11_xact, gtpbuf);
 }
 
-void sgwc_s5c_handle_create_bearer_request(ogs_gtp_xact_t *s5c_xact, 
-    sgwc_sess_t *sess, ogs_gtp_message_t *message)
+void sgwc_s5c_handle_create_bearer_request(
+        sgwc_sess_t *sess, ogs_gtp_xact_t *s5c_xact,
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
     int rv;
     uint8_t cause_value = 0;
-    ogs_sockaddr_t *addr = NULL, *addr6 = NULL;
-    ogs_gtp_node_t *pgw = NULL;
-    ogs_gtp_xact_t *s11_xact = NULL;
-    sgwc_bearer_t *bearer = NULL;
-    sgwc_tunnel_t *dl_tunnel = NULL, *ul_tunnel = NULL;
-    ogs_gtp_create_bearer_request_t *req = NULL;
-    ogs_pkbuf_t *pkbuf = NULL;
-    sgwc_ue_t *sgwc_ue = NULL;
 
+    sgwc_ue_t *sgwc_ue = NULL;
+    sgwc_bearer_t *bearer = NULL;
+    sgwc_tunnel_t *ul_tunnel = NULL;
+    ogs_pfcp_far_t *far = NULL;
+
+    ogs_gtp_create_bearer_request_t *req = NULL;
     ogs_gtp_f_teid_t *pgw_s5u_teid = NULL;
-    ogs_gtp_f_teid_t sgw_s1u_teid;
-    int len;
 
     ogs_assert(s5c_xact);
     ogs_assert(message);
+    req = &message->create_bearer_request;
+    ogs_assert(req);
 
     ogs_debug("Create Bearer Request");
 
     cause_value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
-    req = &message->create_bearer_request;
 
     if (!sess) {
         ogs_warn("No Context");
@@ -308,8 +307,6 @@ void sgwc_s5c_handle_create_bearer_request(ogs_gtp_xact_t *s5c_xact,
 
     bearer = sgwc_bearer_add(sess);
     ogs_assert(bearer);
-    dl_tunnel = sgwc_dl_tunnel_in_bearer(bearer);
-    ogs_assert(dl_tunnel);
     ul_tunnel = sgwc_ul_tunnel_in_bearer(bearer);
     ogs_assert(ul_tunnel);
 
@@ -322,67 +319,25 @@ void sgwc_s5c_handle_create_bearer_request(ogs_gtp_xact_t *s5c_xact,
     pgw_s5u_teid = req->bearer_contexts.s5_s8_u_sgw_f_teid.data;
     ogs_assert(pgw_s5u_teid);
     ul_tunnel->remote_teid = be32toh(pgw_s5u_teid->teid);
-    pgw = ogs_gtp_node_find_by_f_teid(&sgwc_self()->pgw_s5u_list, pgw_s5u_teid);
-    if (!pgw) {
-        pgw = ogs_gtp_node_add_by_f_teid(
-            &sgwc_self()->pgw_s5u_list, pgw_s5u_teid, sgwc_self()->gtpu_port,
-            ogs_config()->parameter.no_ipv4,
-            ogs_config()->parameter.no_ipv6,
-            ogs_config()->parameter.prefer_ipv4);
-        ogs_assert(pgw);
 
-        rv = ogs_gtp_connect(
-                sgwc_self()->gtpu_sock, sgwc_self()->gtpu_sock6, pgw);
-        ogs_assert(rv == OGS_OK);
+    rv = ogs_gtp_f_teid_to_ip(pgw_s5u_teid, &ul_tunnel->remote_ip);
+    if (rv != OGS_OK) {
+        ogs_gtp_send_error_message(s5c_xact, sess ? sess->pgw_s5c_teid : 0,
+                OGS_GTP_CREATE_BEARER_RESPONSE_TYPE,
+                OGS_GTP_CAUSE_MANDATORY_IE_MISSING);
+        return;
     }
-    /* Setup GTP Node */
-    OGS_SETUP_GTP_NODE(ul_tunnel, pgw);
 
-    /* Remove S5U-F-TEID */
-    req->bearer_contexts.s5_s8_u_sgw_f_teid.presence = 0;
+    far = ul_tunnel->far;
+    ogs_assert(far);
 
-    /* Send Data Plane(UL) : SGW-S1U */
-    memset(&sgw_s1u_teid, 0, sizeof(ogs_gtp_f_teid_t));
-    sgw_s1u_teid.interface_type = dl_tunnel->interface_type;
-    sgw_s1u_teid.teid = htobe32(dl_tunnel->local_teid);
-    if (sgwc_self()->gtpu_addr) {
-        addr = ogs_hash_get(sgwc_self()->adv_gtpu_hash,
-                        &sgwc_self()->gtpu_addr->sin.sin_addr,
-                        sizeof(sgwc_self()->gtpu_addr->sin.sin_addr));
-    }
-    if (sgwc_self()->gtpu_addr6) {
-        addr6 = ogs_hash_get(sgwc_self()->adv_gtpu_hash6,
-                        &sgwc_self()->gtpu_addr6->sin6.sin6_addr,
-                        sizeof(sgwc_self()->gtpu_addr6->sin6.sin6_addr));
-    }
-    // Swap the SGW-S1U IP to IP to be advertised to UE
-    if (addr || addr6) {
-        rv = ogs_gtp_sockaddr_to_f_teid(addr,  addr6, &sgw_s1u_teid, &len);
-        ogs_assert(rv == OGS_OK);
-    } else {
-        rv = ogs_gtp_sockaddr_to_f_teid(
-                sgwc_self()->gtpu_addr, sgwc_self()->gtpu_addr6,
-                &sgw_s1u_teid, &len);
-        ogs_assert(rv == OGS_OK);
-    }
-    req->bearer_contexts.s1_u_enodeb_f_teid.presence = 1;
-    req->bearer_contexts.s1_u_enodeb_f_teid.data = &sgw_s1u_teid;
-    req->bearer_contexts.s1_u_enodeb_f_teid.len = len;
+    ogs_pfcp_ip_to_outer_header_creation(&ul_tunnel->remote_ip,
+        &far->outer_header_creation, &far->outer_header_creation_len);
+    far->outer_header_creation.teid = ul_tunnel->remote_teid;
 
-    message->h.type = OGS_GTP_CREATE_BEARER_REQUEST_TYPE;
-    message->h.teid = sgwc_ue->mme_s11_teid;
-
-    pkbuf = ogs_gtp_build_msg(message);
-    ogs_expect_or_return(pkbuf);
-
-    s11_xact = ogs_gtp_xact_local_create(
-            sgwc_ue->gnode, &message->h, pkbuf, timeout, sess);
-    ogs_expect_or_return(s11_xact);
-
-    ogs_gtp_xact_associate(s5c_xact, s11_xact);
-
-    rv = ogs_gtp_xact_commit(s11_xact);
-    ogs_expect(rv == OGS_OK);
+    sgwc_pfcp_send_tunnel_modification_request(
+            ul_tunnel, s5c_xact, gtpbuf,
+            OGS_PFCP_MODIFY_UL_ONLY|OGS_PFCP_MODIFY_CREATE);
 }
 
 void sgwc_s5c_handle_update_bearer_request(ogs_gtp_xact_t *s5c_xact, 

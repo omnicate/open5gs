@@ -295,7 +295,6 @@ static void cups_test1(abts_case *tc, void *data)
     ogs_pkbuf_free(recvbuf);
 #endif
 
-#if 0
     /* Send AA-Request */
     ogs_msleep(300);
     pcscf_rx_send_aar(&rx_sid, "10.45.0.3", 1, 1);
@@ -318,6 +317,7 @@ static void cups_test1(abts_case *tc, void *data)
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
+#if 0
     /* Send AA-Request without Flow */
     ogs_msleep(300);
     pcscf_rx_send_aar(&rx_sid, "10.45.0.3", 2, 1);
