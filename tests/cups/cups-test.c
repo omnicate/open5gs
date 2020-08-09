@@ -20,8 +20,7 @@
 #include "test-epc.h"
 #include "pcscf-fd-path.h"
 
-#define TEST1_PING 1
-#define TEST3_PING 0
+#define TEST3_ONLY_PING 0
 
 static void cups_test1(abts_case *tc, void *data)
 {
@@ -239,7 +238,6 @@ static void cups_test1(abts_case *tc, void *data)
     ABTS_PTR_NOTNULL(tc, recvbuf);
     ogs_pkbuf_free(recvbuf);
 
-#if TEST1_PING
     /* Send GTP-U ICMP Packet */
     test_sess.upf_n3_teid = 2;
     test_sess.ue_ip.addr = inet_addr("10.45.0.2");
@@ -253,7 +251,6 @@ static void cups_test1(abts_case *tc, void *data)
     recvbuf = testenb_gtpu_read(gtpu);
     ABTS_PTR_NOTNULL(tc, recvbuf);
     ogs_pkbuf_free(recvbuf);
-#endif
 
     /* Send PDN Connectivity Request */
     rv = tests1ap_build_pdn_connectivity_request(&sendbuf, msgindex);
@@ -280,7 +277,6 @@ static void cups_test1(abts_case *tc, void *data)
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
-#if TEST1_PING
     /* Send GTP-U ICMP Packet */
     test_sess.upf_n3_teid = 4;
     test_sess.ue_ip.addr = inet_addr("10.45.0.3");
@@ -294,7 +290,6 @@ static void cups_test1(abts_case *tc, void *data)
     recvbuf = testenb_gtpu_read(gtpu);
     ABTS_PTR_NOTNULL(tc, recvbuf);
     ogs_pkbuf_free(recvbuf);
-#endif
 
     /* Send AA-Request */
     ogs_msleep(300);
@@ -1034,10 +1029,14 @@ static void cups_test3(abts_case *tc, void *data)
     ABTS_PTR_NOTNULL(tc, recvbuf);
     ogs_pkbuf_free(recvbuf);
 
-#if TEST3_PING
     /* Send GTP-U ICMP Packet */
+#if TEST3_ONLY_PING
     test_sess.upf_n3_teid = 2;
     test_sess.ue_ip.addr = inet_addr("10.45.0.2");
+#else
+    test_sess.upf_n3_teid = 0xe;
+    test_sess.ue_ip.addr = inet_addr("10.45.0.6");
+#endif
 
     rv = test_gtpu_build_ping(&sendbuf, &test_sess, TEST_PING_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
@@ -1048,7 +1047,6 @@ static void cups_test3(abts_case *tc, void *data)
     recvbuf = testenb_gtpu_read(gtpu);
     ABTS_PTR_NOTNULL(tc, recvbuf);
     ogs_pkbuf_free(recvbuf);
-#endif
 
     /* Send PDN Connectivity Request */
     rv = tests1ap_build_pdn_connectivity_request(&sendbuf, msgindex);
@@ -1097,10 +1095,14 @@ static void cups_test3(abts_case *tc, void *data)
     /* Send GTP-U ICMP Packet */
     ogs_msleep(50);
 
-#if TEST3_PING
     /* Send GTP-U ICMP Packet */
+#if TEST3_ONLY_PING
     test_sess.upf_n3_teid = 4;
     test_sess.ue_ip.addr = inet_addr("10.45.0.3");
+#else
+    test_sess.upf_n3_teid = 0x12;
+    test_sess.ue_ip.addr = inet_addr("10.45.0.7");
+#endif
 
     rv = test_gtpu_build_ping(&sendbuf, &test_sess, TEST_PING_IPV4);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
@@ -1113,7 +1115,6 @@ static void cups_test3(abts_case *tc, void *data)
     ogs_pkbuf_free(recvbuf);
 
     ogs_msleep(300);
-#endif
 
     /* Send PDN disconnectivity request */
     rv = tests1ap_build_pdn_disconnectivity_request(&sendbuf, msgindex);
