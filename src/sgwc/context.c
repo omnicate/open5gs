@@ -45,11 +45,6 @@ void sgwc_context_init(void)
     ogs_list_init(&self.gtpc_list6);
     ogs_list_init(&self.gtpu_list);
     ogs_list_init(&self.gtpu_list6);
-    ogs_list_init(&self.adv_gtpu_list);
-    ogs_list_init(&self.adv_gtpu_list6);
-
-    self.adv_gtpu_hash = ogs_hash_make();
-    self.adv_gtpu_hash6 = ogs_hash_make();
 
     ogs_gtp_node_init(512);
     ogs_list_init(&self.mme_s11_list);
@@ -77,11 +72,6 @@ void sgwc_context_final(void)
 
     ogs_assert(self.imsi_ue_hash);
     ogs_hash_destroy(self.imsi_ue_hash);
-
-    ogs_assert(self.adv_gtpu_hash);
-    ogs_hash_destroy(self.adv_gtpu_hash);
-    ogs_assert(self.adv_gtpu_hash6);
-    ogs_hash_destroy(self.adv_gtpu_hash6);
 
     ogs_pool_final(&sgwc_tunnel_pool);
     ogs_pool_final(&sgwc_bearer_pool);

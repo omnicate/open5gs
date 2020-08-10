@@ -341,34 +341,10 @@ void sgwc_sxa_handle_session_modification_response(
             memset(&sgw_s1u_teid, 0, sizeof(ogs_gtp_f_teid_t));
             sgw_s1u_teid.interface_type = ul_tunnel->interface_type;
             sgw_s1u_teid.teid = htobe32(ul_tunnel->local_teid);
-#if 1
             rv = ogs_gtp_sockaddr_to_f_teid(
-                ul_tunnel->local_addr, ul_tunnel->local_addr6,
-                &sgw_s1u_teid, &len);
+                    ul_tunnel->local_addr, ul_tunnel->local_addr6,
+                    &sgw_s1u_teid, &len);
             ogs_expect(rv == OGS_OK);
-#else
-            if (sgwc_self()->gtpu_addr) {
-                addr = ogs_hash_get(sgwc_self()->adv_gtpu_hash,
-                            &sgwc_self()->gtpu_addr->sin.sin_addr,
-                            sizeof(sgwc_self()->gtpu_addr->sin.sin_addr));
-            }
-            if (sgwc_self()->gtpu_addr6) {
-                addr6 = ogs_hash_get(sgwc_self()->adv_gtpu_hash6,
-                            &sgwc_self()->gtpu_addr6->sin6.sin6_addr,
-                            sizeof(sgwc_self()->gtpu_addr6->sin6.sin6_addr));
-            }
-            // Swap the SGW-S1U IP to IP to be advertised to UE
-            if (addr || addr6) {
-                rv = ogs_gtp_sockaddr_to_f_teid(
-                        addr, addr6, &sgw_s1u_teid, &len);
-                ogs_assert(rv == OGS_OK);
-            } else {
-                rv = ogs_gtp_sockaddr_to_f_teid(
-                        sgwc_self()->gtpu_addr, sgwc_self()->gtpu_addr6,
-                        &sgw_s1u_teid, &len);
-                ogs_assert(rv == OGS_OK);
-            }
-#endif
             gtp_req->bearer_contexts.s1_u_enodeb_f_teid.presence = 1;
             gtp_req->bearer_contexts.s1_u_enodeb_f_teid.data = &sgw_s1u_teid;
             gtp_req->bearer_contexts.s1_u_enodeb_f_teid.len = len;
@@ -500,34 +476,10 @@ void sgwc_sxa_handle_session_modification_response(
             memset(&sgw_s1u_teid, 0, sizeof(ogs_gtp_f_teid_t));
             sgw_s1u_teid.interface_type = ul_tunnel->interface_type;
             sgw_s1u_teid.teid = htobe32(ul_tunnel->local_teid);
-#if 1
             rv = ogs_gtp_sockaddr_to_f_teid(
                 ul_tunnel->local_addr, ul_tunnel->local_addr6,
                 &sgw_s1u_teid, &len);
             ogs_expect(rv == OGS_OK);
-#else
-            if (sgwc_self()->gtpu_addr) {
-                addr = ogs_hash_get(sgwc_self()->adv_gtpu_hash,
-                            &sgwc_self()->gtpu_addr->sin.sin_addr,
-                            sizeof(sgwc_self()->gtpu_addr->sin.sin_addr));
-            }
-            if (sgwc_self()->gtpu_addr6) {
-                addr6 = ogs_hash_get(sgwc_self()->adv_gtpu_hash6,
-                            &sgwc_self()->gtpu_addr6->sin6.sin6_addr,
-                            sizeof(sgwc_self()->gtpu_addr6->sin6.sin6_addr));
-            }
-            // Swap the SGW-S1U IP to IP to be advertised to UE
-            if (addr || addr6) {
-                rv = ogs_gtp_sockaddr_to_f_teid(
-                        addr, addr6, &sgw_s1u_teid, &len);
-                ogs_assert(rv == OGS_OK);
-            } else {
-                rv = ogs_gtp_sockaddr_to_f_teid(
-                        sgwc_self()->gtpu_addr, sgwc_self()->gtpu_addr6,
-                        &sgw_s1u_teid, &len);
-                ogs_assert(rv == OGS_OK);
-            }
-#endif
             gtp_rsp->bearer_contexts_created.s1_u_enodeb_f_teid.presence = 1;
             gtp_rsp->bearer_contexts_created.s1_u_enodeb_f_teid.data =
                 &sgw_s1u_teid;
