@@ -315,6 +315,7 @@ void smf_bearer_binding(smf_sess_t *sess)
 
             rv = ogs_gtp_xact_commit(xact);
             ogs_expect(rv == OGS_OK);
+
         } else if (pcc_rule->type == OGS_PCC_RULE_TYPE_REMOVE) {
             bearer = smf_bearer_find_by_name(sess, pcc_rule->name);
             ogs_assert(bearer);
