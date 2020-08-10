@@ -531,67 +531,67 @@ static int reconfigure_packet_filter(smf_pf_t *pf, ogs_gtp_tft_t *tft, int i)
     for (j = 0; j < tft->pf[i].num_of_component; j++) {
         switch(tft->pf[i].component[j].type) {
         case GTP_PACKET_FILTER_PROTOCOL_IDENTIFIER_NEXT_HEADER_TYPE:
-            pf->rule.proto = tft->pf[i].component[j].proto;
+            pf->ipfw_rule.proto = tft->pf[i].component[j].proto;
             break;
         case GTP_PACKET_FILTER_IPV4_REMOTE_ADDRESS_TYPE:
-            pf->rule.ipv4_remote = 1;
-            pf->rule.ip.remote.addr[0] = tft->pf[i].component[j].ipv4.addr;
-            pf->rule.ip.remote.mask[0] = tft->pf[i].component[j].ipv4.mask;
+            pf->ipfw_rule.ipv4_remote = 1;
+            pf->ipfw_rule.ip.remote.addr[0] = tft->pf[i].component[j].ipv4.addr;
+            pf->ipfw_rule.ip.remote.mask[0] = tft->pf[i].component[j].ipv4.mask;
             break;
         case GTP_PACKET_FILTER_IPV4_LOCAL_ADDRESS_TYPE:
-            pf->rule.ipv4_local = 1;
-            pf->rule.ip.local.addr[0] = tft->pf[i].component[j].ipv4.addr;
-            pf->rule.ip.local.mask[0] = tft->pf[i].component[j].ipv4.mask;
+            pf->ipfw_rule.ipv4_local = 1;
+            pf->ipfw_rule.ip.local.addr[0] = tft->pf[i].component[j].ipv4.addr;
+            pf->ipfw_rule.ip.local.mask[0] = tft->pf[i].component[j].ipv4.mask;
             break;
         case GTP_PACKET_FILTER_IPV6_REMOTE_ADDRESS_TYPE:
-            pf->rule.ipv6_remote = 1;
-            memcpy(pf->rule.ip.remote.addr,
+            pf->ipfw_rule.ipv6_remote = 1;
+            memcpy(pf->ipfw_rule.ip.remote.addr,
                 tft->pf[i].component[j].ipv6_mask.addr,
-                sizeof(pf->rule.ip.remote.addr));
-            memcpy(pf->rule.ip.remote.mask,
+                sizeof(pf->ipfw_rule.ip.remote.addr));
+            memcpy(pf->ipfw_rule.ip.remote.mask,
                 tft->pf[i].component[j].ipv6_mask.mask,
-                sizeof(pf->rule.ip.remote.mask));
+                sizeof(pf->ipfw_rule.ip.remote.mask));
             break;
         case GTP_PACKET_FILTER_IPV6_REMOTE_ADDRESS_PREFIX_LENGTH_TYPE:
-            pf->rule.ipv6_remote = 1;
-            memcpy(pf->rule.ip.remote.addr,
+            pf->ipfw_rule.ipv6_remote = 1;
+            memcpy(pf->ipfw_rule.ip.remote.addr,
                 tft->pf[i].component[j].ipv6_mask.addr,
-                sizeof(pf->rule.ip.remote.addr));
-            n2mask((struct in6_addr *)pf->rule.ip.remote.mask,
+                sizeof(pf->ipfw_rule.ip.remote.addr));
+            n2mask((struct in6_addr *)pf->ipfw_rule.ip.remote.mask,
                 tft->pf[i].component[j].ipv6.prefixlen);
             break;
         case GTP_PACKET_FILTER_IPV6_LOCAL_ADDRESS_TYPE:
-            pf->rule.ipv6_local = 1;
-            memcpy(pf->rule.ip.local.addr,
+            pf->ipfw_rule.ipv6_local = 1;
+            memcpy(pf->ipfw_rule.ip.local.addr,
                 tft->pf[i].component[j].ipv6_mask.addr,
-                sizeof(pf->rule.ip.local.addr));
-            memcpy(pf->rule.ip.local.mask,
+                sizeof(pf->ipfw_rule.ip.local.addr));
+            memcpy(pf->ipfw_rule.ip.local.mask,
                 tft->pf[i].component[j].ipv6_mask.mask,
-                sizeof(pf->rule.ip.local.mask));
+                sizeof(pf->ipfw_rule.ip.local.mask));
             break;
         case GTP_PACKET_FILTER_IPV6_LOCAL_ADDRESS_PREFIX_LENGTH_TYPE:
-            pf->rule.ipv6_local = 1;
-            memcpy(pf->rule.ip.local.addr,
+            pf->ipfw_rule.ipv6_local = 1;
+            memcpy(pf->ipfw_rule.ip.local.addr,
                 tft->pf[i].component[j].ipv6_mask.addr,
-                sizeof(pf->rule.ip.local.addr));
-            n2mask((struct in6_addr *)pf->rule.ip.local.mask,
+                sizeof(pf->ipfw_rule.ip.local.addr));
+            n2mask((struct in6_addr *)pf->ipfw_rule.ip.local.mask,
                 tft->pf[i].component[j].ipv6.prefixlen);
             break;
         case GTP_PACKET_FILTER_SINGLE_LOCAL_PORT_TYPE:
-            pf->rule.port.local.low = pf->rule.port.local.high =
+            pf->ipfw_rule.port.local.low = pf->ipfw_rule.port.local.high =
                     tft->pf[i].component[j].port.low;
             break;
         case GTP_PACKET_FILTER_SINGLE_REMOTE_PORT_TYPE:
-            pf->rule.port.remote.low = pf->rule.port.remote.high =
+            pf->ipfw_rule.port.remote.low = pf->ipfw_rule.port.remote.high =
                     tft->pf[i].component[j].port.low;
             break;
         case GTP_PACKET_FILTER_LOCAL_PORT_RANGE_TYPE:
-            pf->rule.port.local.low = tft->pf[i].component[j].port.low;
-            pf->rule.port.local.high = tft->pf[i].component[j].port.high;
+            pf->ipfw_rule.port.local.low = tft->pf[i].component[j].port.low;
+            pf->ipfw_rule.port.local.high = tft->pf[i].component[j].port.high;
             break;
         case GTP_PACKET_FILTER_REMOTE_PORT_RANGE_TYPE:
-            pf->rule.port.remote.low = tft->pf[i].component[j].port.low;
-            pf->rule.port.remote.high = tft->pf[i].component[j].port.high;
+            pf->ipfw_rule.port.remote.low = tft->pf[i].component[j].port.low;
+            pf->ipfw_rule.port.remote.high = tft->pf[i].component[j].port.high;
             break;
         default:
             ogs_error("Unknown Packet Filter Type(%d)",

@@ -268,7 +268,9 @@ typedef struct smf_pf_s {
 ED3(uint8_t spare:2;,
     uint8_t direction:2;,
     uint8_t identifier:4;)
-    ogs_ipfw_rule_t rule;
+
+    ogs_ipfw_rule_t ipfw_rule;
+    char *flow_description;
 
     smf_bearer_t    *bearer;
 } smf_pf_t;

@@ -1439,6 +1439,9 @@ int smf_pf_remove(smf_pf_t *pf)
     ogs_assert(pf->bearer);
 
     ogs_list_remove(&pf->bearer->pf_list, pf);
+    if (pf->flow_description)
+        ogs_free(pf->flow_description);
+
     ogs_pool_free(&smf_pf_pool, pf);
 
     return OGS_OK;
