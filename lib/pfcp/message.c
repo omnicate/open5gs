@@ -20,7 +20,7 @@
 /*******************************************************************************
  * This file had been created by pfcp-tlv.py script v0.1.0
  * Please do not modify this file but regenerate it via script.
- * Created on: 2020-08-09 21:39:00.897607 by acetcom
+ * Created on: 2020-08-10 19:57:30.962781 by acetcom
  * from 29244-g10.docx
  ******************************************************************************/
 
@@ -2573,9 +2573,9 @@ ogs_tlv_desc_t ogs_pfcp_msg_desc_pfcp_session_establishment_request =
         &ogs_pfcp_tlv_desc_node_id,
         &ogs_pfcp_tlv_desc_f_seid,
         &ogs_pfcp_tlv_desc_create_pdr,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_create_far,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_create_urr,
         &ogs_tlv_desc_more2,
         &ogs_pfcp_tlv_desc_create_qer,
@@ -2606,7 +2606,7 @@ ogs_tlv_desc_t ogs_pfcp_msg_desc_pfcp_session_establishment_response =
         &ogs_pfcp_tlv_desc_offending_ie,
         &ogs_pfcp_tlv_desc_f_seid,
         &ogs_pfcp_tlv_desc_created_pdr,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_load_control_information,
         &ogs_pfcp_tlv_desc_overload_control_information,
         &ogs_pfcp_tlv_desc_fq_csid,
@@ -2623,9 +2623,9 @@ ogs_tlv_desc_t ogs_pfcp_msg_desc_pfcp_session_modification_request =
     0, 0, 0, 0, {
         &ogs_pfcp_tlv_desc_f_seid,
         &ogs_pfcp_tlv_desc_remove_pdr,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_remove_far,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_remove_urr,
         &ogs_tlv_desc_more2,
         &ogs_pfcp_tlv_desc_remove_qer,
@@ -2633,9 +2633,9 @@ ogs_tlv_desc_t ogs_pfcp_msg_desc_pfcp_session_modification_request =
         &ogs_pfcp_tlv_desc_remove_bar,
         &ogs_pfcp_tlv_desc_remove_traffic_endpoint,
         &ogs_pfcp_tlv_desc_create_pdr,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_create_far,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_create_urr,
         &ogs_tlv_desc_more2,
         &ogs_pfcp_tlv_desc_create_qer,
@@ -2643,9 +2643,9 @@ ogs_tlv_desc_t ogs_pfcp_msg_desc_pfcp_session_modification_request =
         &ogs_pfcp_tlv_desc_create_bar,
         &ogs_pfcp_tlv_desc_create_traffic_endpoint,
         &ogs_pfcp_tlv_desc_update_pdr,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_update_far,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_update_urr,
         &ogs_tlv_desc_more2,
         &ogs_pfcp_tlv_desc_update_qer,
@@ -2677,7 +2677,7 @@ ogs_tlv_desc_t ogs_pfcp_msg_desc_pfcp_session_modification_response =
         &ogs_pfcp_tlv_desc_cause,
         &ogs_pfcp_tlv_desc_offending_ie,
         &ogs_pfcp_tlv_desc_created_pdr,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_load_control_information,
         &ogs_pfcp_tlv_desc_overload_control_information,
         &ogs_pfcp_tlv_desc_usage_report_session_modification_response,

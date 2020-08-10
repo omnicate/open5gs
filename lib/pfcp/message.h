@@ -20,7 +20,7 @@
 /*******************************************************************************
  * This file had been created by pfcp-tlv.py script v0.1.0
  * Please do not modify this file but regenerate it via script.
- * Created on: 2020-08-09 21:39:00.888521 by acetcom
+ * Created on: 2020-08-10 19:57:30.953450 by acetcom
  * from 29244-g10.docx
  ******************************************************************************/
 
@@ -1182,8 +1182,8 @@ typedef struct ogs_pfcp_session_set_deletion_response_s {
 typedef struct ogs_pfcp_session_establishment_request_s {
     ogs_pfcp_tlv_node_id_t node_id;
     ogs_pfcp_tlv_f_seid_t cp_f_seid;
-    ogs_pfcp_tlv_create_pdr_t create_pdr[4];
-    ogs_pfcp_tlv_create_far_t create_far[4];
+    ogs_pfcp_tlv_create_pdr_t create_pdr[8];
+    ogs_pfcp_tlv_create_far_t create_far[8];
     ogs_pfcp_tlv_create_urr_t create_urr[2];
     ogs_pfcp_tlv_create_qer_t create_qer[2];
     ogs_pfcp_tlv_create_bar_t create_bar;
@@ -1206,7 +1206,7 @@ typedef struct ogs_pfcp_session_establishment_response_s {
     ogs_pfcp_tlv_cause_t cause;
     ogs_pfcp_tlv_offending_ie_t offending_ie;
     ogs_pfcp_tlv_f_seid_t up_f_seid;
-    ogs_pfcp_tlv_created_pdr_t created_pdr[4];
+    ogs_pfcp_tlv_created_pdr_t created_pdr[8];
     ogs_pfcp_tlv_load_control_information_t load_control_information;
     ogs_pfcp_tlv_overload_control_information_t overload_control_information;
     ogs_pfcp_tlv_fq_csid_t sgw_u_fq_csid;
@@ -1217,20 +1217,20 @@ typedef struct ogs_pfcp_session_establishment_response_s {
 
 typedef struct ogs_pfcp_session_modification_request_s {
     ogs_pfcp_tlv_f_seid_t cp_f_seid;
-    ogs_pfcp_tlv_remove_pdr_t remove_pdr[4];
-    ogs_pfcp_tlv_remove_far_t remove_far[4];
+    ogs_pfcp_tlv_remove_pdr_t remove_pdr[8];
+    ogs_pfcp_tlv_remove_far_t remove_far[8];
     ogs_pfcp_tlv_remove_urr_t remove_urr[2];
     ogs_pfcp_tlv_remove_qer_t remove_qer[2];
     ogs_pfcp_tlv_remove_bar_t remove_bar;
     ogs_pfcp_tlv_remove_traffic_endpoint_t remove_traffic_endpoint;
-    ogs_pfcp_tlv_create_pdr_t create_pdr[4];
-    ogs_pfcp_tlv_create_far_t create_far[4];
+    ogs_pfcp_tlv_create_pdr_t create_pdr[8];
+    ogs_pfcp_tlv_create_far_t create_far[8];
     ogs_pfcp_tlv_create_urr_t create_urr[2];
     ogs_pfcp_tlv_create_qer_t create_qer[2];
     ogs_pfcp_tlv_create_bar_t create_bar;
     ogs_pfcp_tlv_create_traffic_endpoint_t create_traffic_endpoint;
-    ogs_pfcp_tlv_update_pdr_t update_pdr[4];
-    ogs_pfcp_tlv_update_far_t update_far[4];
+    ogs_pfcp_tlv_update_pdr_t update_pdr[8];
+    ogs_pfcp_tlv_update_far_t update_far[8];
     ogs_pfcp_tlv_update_urr_t update_urr[2];
     ogs_pfcp_tlv_update_qer_t update_qer[2];
     ogs_pfcp_tlv_update_bar_session_modification_request_t update_bar;
@@ -1254,7 +1254,7 @@ typedef struct ogs_pfcp_session_modification_request_s {
 typedef struct ogs_pfcp_session_modification_response_s {
     ogs_pfcp_tlv_cause_t cause;
     ogs_pfcp_tlv_offending_ie_t offending_ie;
-    ogs_pfcp_tlv_created_pdr_t created_pdr[4];
+    ogs_pfcp_tlv_created_pdr_t created_pdr[8];
     ogs_pfcp_tlv_load_control_information_t load_control_information;
     ogs_pfcp_tlv_overload_control_information_t overload_control_information;
     ogs_pfcp_tlv_usage_report_session_modification_response_t usage_report;
