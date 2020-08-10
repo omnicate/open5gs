@@ -179,7 +179,13 @@ char *ogs_ipfw_encode_flow_description(ogs_ipfw_rule_t *ipfw_rule)
     last = flow_description + OGS_HUGE_LEN;
 
     ogs_assert(ipfw_rule);
-    p = ogs_slprintf(p, last, "permit out %d", ipfw_rule->proto);
+    p = ogs_slprintf(p, last, "permit out");
+
+    if (ipfw_rule->proto) {
+        p = ogs_slprintf(p, last, " %d", ipfw_rule->proto);
+    } else {
+        p = ogs_slprintf(p, last, " ip");
+    }
 
 #define IPV4_BITLEN    (OGS_IPV4_LEN * 8)
 #define IPV6_BITLEN    (OGS_IPV6_LEN * 8)

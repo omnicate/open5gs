@@ -684,6 +684,11 @@ void smf_s5c_handle_bearer_resource_command(
                         OGS_GTP_CAUSE_SEMANTIC_ERROR_IN_THE_TAD_OPERATION);
                     return;
                 }
+
+                if (pf->flow_description)
+                    ogs_free(pf->flow_description);
+                pf->flow_description =
+                    ogs_ipfw_encode_flow_description(&pf->ipfw_rule);
             }
 
             tft_update = 1;
@@ -707,6 +712,11 @@ void smf_s5c_handle_bearer_resource_command(
                     OGS_GTP_CAUSE_SEMANTIC_ERROR_IN_THE_TAD_OPERATION);
                 return;
             }
+
+            if (pf->flow_description)
+                ogs_free(pf->flow_description);
+            pf->flow_description =
+                ogs_ipfw_encode_flow_description(&pf->ipfw_rule);
 
             tft_update = 1;
         }
