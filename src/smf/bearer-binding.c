@@ -233,9 +233,7 @@ void smf_bearer_binding(smf_sess_t *sess)
 
             for (j = 0; j < pcc_rule->num_of_flow; j++) {
                 ogs_flow_t *flow = &pcc_rule->flow[j];
-                ogs_ipfw_rule_t ipfw_rule;
                 smf_pf_t *pf = NULL;
-                char *flow_description = NULL;
 
                 ogs_expect_or_return(flow);
                 ogs_expect_or_return(flow->description);
@@ -268,17 +266,19 @@ void smf_bearer_binding(smf_sess_t *sess)
 
                 }
 
-                flow_description = ogs_strdup(flow->description);
-                rv = ogs_ipfw_compile_rule(&ipfw_rule, flow_description);
-                ogs_free(flow_description);
-                ogs_expect_or_return(rv == OGS_OK);
-
                 pf = smf_pf_add(bearer, pcc_rule->precedence);
-                ogs_expect_or_return(pf);
+                ogs_assert(pf);
 
-                memcpy(&pf->ipfw_rule, &ipfw_rule, sizeof(ogs_ipfw_rule_t));
                 pf->direction = flow->direction;
                 pf->flow_description = ogs_strdup(flow->description);
+                rv = ogs_ipfw_compile_rule(
+                        &pf->ipfw_rule, pf->flow_description);
+                if (rv != OGS_OK) {
+                    ogs_error("Invalid Flow-Description[%s]",
+                            pf->flow_description);
+                    smf_pf_remove(pf);
+                    break;
+                }
             }
 
             memset(&tft, 0, sizeof tft);

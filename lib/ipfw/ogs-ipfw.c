@@ -46,7 +46,7 @@
 
 void compile_rule(char *av[], uint32_t *rbuf, int *rbufsize, void *tstate);
 
-int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *description)
+int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *flow_description)
 {
     ogs_ipfw_rule_t zero_rule;
     char *token, *dir;
@@ -61,6 +61,8 @@ int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *description)
 	int l;
 	ipfw_insn *cmd;
 
+    char *description = NULL;
+
     if (!ipfw_rule) {
         fprintf(stderr, "ipfw_rule is NULL\n");
         return OGS_ERROR;
@@ -72,13 +74,19 @@ int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *description)
     av[0] = NULL;
 
     /* ACTION */
-    if (!description) { /* FIXME : OLD gcc generates uninitialized warning */
+    if (!flow_description) {
+        /* FIXME : OLD gcc generates uninitialized warning */
         fprintf(stderr, "description is NULL\n");
         return OGS_ERROR;
     }
+
+    description = ogs_strdup(flow_description);
+    ogs_assert(description);
+
     token = strtok_r(description, " ", &saveptr);
     if (strcmp(token, "permit") != 0) {
         fprintf(stderr, "Not begins with reserved keyword : 'permit'");
+        ogs_free(description);
         return OGS_ERROR;
     }
     av[1] = token;
@@ -87,6 +95,7 @@ int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *description)
     dir = token = strtok_r(NULL, " ", &saveptr);
     if (strcmp(token, "out") != 0) {
         fprintf(stderr, "Not begins with reserved keyword : 'permit out'");
+        ogs_free(description);
         return OGS_ERROR;
     }
 
@@ -169,8 +178,10 @@ int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *description)
     memset(&zero_rule, 0, sizeof(ogs_ipfw_rule_t));
     if (memcmp(ipfw_rule, &zero_rule, sizeof(ogs_ipfw_rule_t)) == 0) {
         fprintf(stderr, "Cannot find Flow-Description");
+        ogs_free(description);
         return OGS_ERROR;
     }
 
+    ogs_free(description);
     return OGS_OK;
 }
