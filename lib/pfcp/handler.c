@@ -270,6 +270,65 @@ ogs_pfcp_pdr_t *ogs_pfcp_handle_create_pdr(ogs_pfcp_sess_t *sess,
     return pdr;
 }
 
+ogs_pfcp_pdr_t *ogs_pfcp_handle_update_pdr(ogs_pfcp_sess_t *sess,
+        ogs_pfcp_tlv_update_pdr_t *message,
+        uint8_t *cause_value, uint8_t *offending_ie_value)
+{
+    ogs_pfcp_pdr_t *pdr = NULL;
+    int i, len;
+    int rv;
+
+    ogs_assert(message);
+    ogs_assert(sess);
+
+    if (message->presence == 0)
+        return NULL;
+
+    if (message->pdr_id.presence == 0) {
+        ogs_error("No PDR-ID");
+        *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
+        *offending_ie_value = OGS_PFCP_PDR_ID_TYPE;
+        return NULL;
+    }
+
+    pdr = ogs_pfcp_pdr_find(sess, message->pdr_id.u16);
+    if (!pdr) {
+        ogs_error("Cannot find PDR-ID[%d] in PDR", message->pdr_id.u16);
+        *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_INCORRECT;
+        *offending_ie_value = OGS_PFCP_PDR_ID_TYPE;
+        return NULL;
+    }
+
+    for (i = 0; i < OGS_MAX_NUM_OF_RULE; i++) {
+        ogs_pfcp_sdf_filter_t sdf_filter_in_message;
+        if (message->pdi.sdf_filter[i].presence == 0)
+            break;
+
+        len = ogs_pfcp_parse_sdf_filter(
+                &sdf_filter_in_message, &message->pdi.sdf_filter[i]);
+        ogs_assert(message->pdi.sdf_filter[i].len == len);
+        if (sdf_filter_in_message.fd) {
+            ogs_pfcp_rule_t *rule = NULL;
+            char *flow_description = NULL;
+
+            flow_description = ogs_malloc(
+                    sdf_filter_in_message.flow_description_len+1);
+            ogs_cpystrn(flow_description,
+                    sdf_filter_in_message.flow_description,
+                    sdf_filter_in_message.flow_description_len+1);
+
+            rule = ogs_pfcp_rule_add(pdr);
+            ogs_assert(rule);
+            rv = ogs_ipfw_compile_rule(&rule->ipfw, flow_description);
+            ogs_assert(rv == OGS_OK);
+
+            ogs_free(flow_description);
+        }
+    }
+
+    return pdr;
+}
+
 bool ogs_pfcp_handle_remove_pdr(ogs_pfcp_sess_t *sess,
         ogs_pfcp_tlv_remove_pdr_t *message,
         uint8_t *cause_value, uint8_t *offending_ie_value)

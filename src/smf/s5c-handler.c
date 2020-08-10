@@ -383,13 +383,14 @@ void smf_s5c_handle_update_bearer_response(
         ogs_gtp_update_bearer_response_t *rsp)
 {
     int rv;
-    uint64_t flags = 0;
+    uint64_t gtp_flags = 0;
+    uint64_t pfcp_flags = 0;
     smf_bearer_t *bearer = NULL;
 
     ogs_assert(xact);
     ogs_assert(rsp);
-    flags = xact->update_flags;
-    ogs_assert(flags);
+    gtp_flags = xact->update_flags;
+    ogs_assert(gtp_flags);
 
     ogs_debug("[SMF] Update Bearer Response");
 
@@ -430,21 +431,7 @@ void smf_s5c_handle_update_bearer_response(
     ogs_debug("[SMF] Update Bearer Response : SGW[0x%x] --> SMF[0x%x]",
             sess->sgw_s5c_teid, sess->smf_n4_teid);
 
-    if (flags & OGS_GTP_MODIFY_QOS_UPDATE) {
-        ogs_pfcp_qer_t *qer = NULL;
-
-        /* Only 1 QER is used per bearer */
-        qer = ogs_list_first(&bearer->pfcp.qer_list);
-        if (qer) {
-            qer->mbr.uplink = bearer->qos.mbr.uplink;
-            qer->mbr.downlink = bearer->qos.mbr.downlink;
-            qer->gbr.uplink = bearer->qos.gbr.uplink;
-            qer->gbr.downlink = bearer->qos.gbr.downlink;
-
-        }
-    }
-
-    if (flags & OGS_GTP_MODIFY_TFT_UPDATE) {
+    if (gtp_flags & OGS_GTP_MODIFY_TFT_UPDATE) {
         smf_pf_t *pf = NULL;
         ogs_pfcp_pdr_t *pdr = NULL;
 
@@ -473,11 +460,28 @@ void smf_s5c_handle_update_bearer_response(
                 }
             }
         }
+
+        pfcp_flags |= OGS_PFCP_MODIFY_TFT_UPDATE;
     }
 
-    if (flags & (OGS_GTP_MODIFY_TFT_UPDATE|OGS_GTP_MODIFY_QOS_UPDATE))
-        smf_epc_pfcp_send_bearer_modification_request(
-                bearer, OGS_PFCP_MODIFY_QOS_UPDATE);
+    if (gtp_flags & OGS_GTP_MODIFY_QOS_UPDATE) {
+        ogs_pfcp_qer_t *qer = NULL;
+
+        /* Only 1 QER is used per bearer */
+        qer = ogs_list_first(&bearer->pfcp.qer_list);
+        if (qer) {
+            qer->mbr.uplink = bearer->qos.mbr.uplink;
+            qer->mbr.downlink = bearer->qos.mbr.downlink;
+            qer->gbr.uplink = bearer->qos.gbr.uplink;
+            qer->gbr.downlink = bearer->qos.gbr.downlink;
+
+        }
+
+        pfcp_flags |= OGS_PFCP_MODIFY_QOS_UPDATE;
+    }
+
+    if (pfcp_flags)
+        smf_epc_pfcp_send_bearer_modification_request(bearer, pfcp_flags);
 }
 
 void smf_s5c_handle_delete_bearer_response(

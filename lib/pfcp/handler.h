@@ -51,6 +51,9 @@ int ogs_pfcp_up_handle_pdr(ogs_pfcp_pdr_t *pdr, ogs_pkbuf_t *recvbuf);
 ogs_pfcp_pdr_t *ogs_pfcp_handle_create_pdr(ogs_pfcp_sess_t *sess,
         ogs_pfcp_tlv_create_pdr_t *message,
         uint8_t *cause_value, uint8_t *offending_ie_value);
+ogs_pfcp_pdr_t *ogs_pfcp_handle_update_pdr(ogs_pfcp_sess_t *sess,
+        ogs_pfcp_tlv_update_pdr_t *message,
+        uint8_t *cause_value, uint8_t *offending_ie_value);
 bool ogs_pfcp_handle_remove_pdr(ogs_pfcp_sess_t *sess,
         ogs_pfcp_tlv_remove_pdr_t *message,
         uint8_t *cause_value, uint8_t *offending_ie_value);
