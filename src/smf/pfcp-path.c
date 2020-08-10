@@ -293,6 +293,39 @@ void smf_5gc_pfcp_send_session_modification_request(
     ogs_expect(rv == OGS_OK);
 }
 
+void smf_5gc_pfcp_send_qos_flow_modification_request(smf_bearer_t *qos_flow,
+        ogs_sbi_session_t *session, uint64_t flags)
+{
+    int rv;
+    ogs_pkbuf_t *n4buf = NULL;
+    ogs_pfcp_header_t h;
+    ogs_pfcp_xact_t *xact = NULL;
+    smf_sess_t *sess = NULL;
+
+    ogs_assert(qos_flow);
+    sess = qos_flow->sess;
+    ogs_assert(sess);
+
+    ogs_assert(session);
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
+    h.seid = sess->upf_n4_seid;
+
+    n4buf = smf_n4_build_qos_flow_modification_request(h.type, qos_flow, flags);
+    ogs_expect_or_return(n4buf);
+
+    xact = ogs_pfcp_xact_local_create(
+            sess->pfcp_node, &h, n4buf, sess_5gc_timeout, qos_flow);
+    ogs_expect_or_return(xact);
+
+    xact->assoc_session = session;
+    xact->modify_flags = flags;
+
+    rv = ogs_pfcp_xact_commit(xact);
+    ogs_expect(rv == OGS_OK);
+}
+
 void smf_5gc_pfcp_send_session_deletion_request(
         smf_sess_t *sess, ogs_sbi_session_t *session, int trigger)
 {
@@ -348,7 +381,8 @@ void smf_epc_pfcp_send_session_establishment_request(
     ogs_expect(rv == OGS_OK);
 }
 
-void smf_epc_pfcp_send_session_modification_request(smf_bearer_t *bearer)
+void smf_epc_pfcp_send_bearer_modification_request(
+        smf_bearer_t *bearer, uint64_t flags)
 {
     int rv;
     ogs_pkbuf_t *n4buf = NULL;
@@ -364,12 +398,13 @@ void smf_epc_pfcp_send_session_modification_request(smf_bearer_t *bearer)
     h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
     h.seid = sess->upf_n4_seid;
 
-    n4buf = smf_epc_n4_build_session_modification_request(h.type, bearer);
+    n4buf = smf_n4_build_qos_flow_modification_request(h.type, bearer, flags);
     ogs_expect_or_return(n4buf);
 
     xact = ogs_pfcp_xact_local_create(
             sess->pfcp_node, &h, n4buf, sess_epc_timeout, bearer);
     ogs_expect_or_return(xact);
+    xact->modify_flags = flags;
 
     rv = ogs_pfcp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);
@@ -396,40 +431,6 @@ void smf_epc_pfcp_send_session_deletion_request(
             sess->pfcp_node, &h, n4buf, sess_epc_timeout, sess);
     ogs_expect_or_return(xact);
     xact->assoc_xact = gtp_xact;
-
-    rv = ogs_pfcp_xact_commit(xact);
-    ogs_expect(rv == OGS_OK);
-}
-
-void smf_5gc_pfcp_send_qos_flow_modification_request(smf_bearer_t *qos_flow,
-        ogs_sbi_session_t *session, uint64_t flags)
-{
-    int rv;
-    ogs_pkbuf_t *n4buf = NULL;
-    ogs_pfcp_header_t h;
-    ogs_pfcp_xact_t *xact = NULL;
-    smf_sess_t *sess = NULL;
-
-    ogs_assert(qos_flow);
-    sess = qos_flow->sess;
-    ogs_assert(sess);
-
-    ogs_assert(session);
-
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
-    h.seid = sess->upf_n4_seid;
-
-    n4buf = smf_5gc_n4_build_qos_flow_modification_request(
-            h.type, qos_flow, flags);
-    ogs_expect_or_return(n4buf);
-
-    xact = ogs_pfcp_xact_local_create(
-            sess->pfcp_node, &h, n4buf, sess_5gc_timeout, qos_flow);
-    ogs_expect_or_return(xact);
-
-    xact->assoc_session = session;
-    xact->modify_flags = flags;
 
     rv = ogs_pfcp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);

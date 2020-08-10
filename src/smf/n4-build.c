@@ -113,43 +113,7 @@ ogs_pkbuf_t *smf_n4_build_session_establishment_request(
     return pkbuf;
 }
 
-ogs_pkbuf_t *smf_5gc_n4_build_session_modification_request(
-        uint8_t type, smf_sess_t *sess, uint64_t modify_flags)
-{
-    int i;
-
-    ogs_pfcp_message_t pfcp_message;
-    ogs_pfcp_session_modification_request_t *req = NULL;
-    ogs_pfcp_far_t *far = NULL;
-    ogs_pkbuf_t *pkbuf = NULL;
-    smf_bearer_t *bearer = NULL;
-
-    ogs_debug("Session Modification Request");
-    ogs_assert(sess);
-    ogs_assert(modify_flags);
-
-    req = &pfcp_message.pfcp_session_modification_request;
-    memset(&pfcp_message, 0, sizeof(ogs_pfcp_message_t));
-
-    if (modify_flags & OGS_PFCP_MODIFY_DEACTIVATE) {
-        /* Update FAR - Only DL */
-        i = 0;
-        ogs_list_for_each(&sess->bearer_list, bearer) {
-            ogs_list_for_each(&bearer->pfcp.far_list, far) {
-                ogs_pfcp_build_update_dl_far_deactivate(
-                        &req->update_far[i], i, far);
-                i++;
-            }
-        }
-    }
-
-    pfcp_message.h.type = type;
-    pkbuf = ogs_pfcp_build_msg(&pfcp_message);
-
-    return pkbuf;
-}
-
-ogs_pkbuf_t *smf_5gc_n4_build_qos_flow_modification_request(
+ogs_pkbuf_t *smf_n4_build_qos_flow_modification_request(
         uint8_t type, smf_bearer_t *qos_flow, uint64_t modify_flags)
 {
     ogs_pfcp_message_t pfcp_message;
@@ -272,98 +236,31 @@ ogs_pkbuf_t *smf_n4_build_session_deletion_request(
     return ogs_pfcp_build_msg(&pfcp_message);
 }
 
-ogs_pkbuf_t *smf_epc_n4_build_session_modification_request(
-        uint8_t type, smf_bearer_t *bearer)
+ogs_pkbuf_t *smf_5gc_n4_build_session_modification_request(
+        uint8_t type, smf_sess_t *sess, uint64_t modify_flags)
 {
-    ogs_pfcp_message_t pfcp_message;
-    ogs_pfcp_session_modification_request_t *req = NULL;
-    ogs_pfcp_pdr_t *pdr = NULL;
-    ogs_pfcp_far_t *far = NULL;
-    ogs_pfcp_qer_t *qer = NULL;
-    ogs_pkbuf_t *pkbuf = NULL;
     int i;
 
-    smf_sess_t *sess = NULL;
+    ogs_pfcp_message_t pfcp_message;
+    ogs_pfcp_session_modification_request_t *req = NULL;
+    ogs_pfcp_far_t *far = NULL;
+    ogs_pkbuf_t *pkbuf = NULL;
+    smf_bearer_t *bearer = NULL;
 
     ogs_debug("Session Modification Request");
-    ogs_assert(bearer);
-    sess = bearer->sess;
     ogs_assert(sess);
+    ogs_assert(modify_flags);
 
     req = &pfcp_message.pfcp_session_modification_request;
     memset(&pfcp_message, 0, sizeof(ogs_pfcp_message_t));
 
-    if (!bearer->pfcp_epc_modify.create &&
-        !bearer->pfcp_epc_modify.tft_update &&
-        !bearer->pfcp_epc_modify.qos_update &&
-        !bearer->pfcp_epc_modify.remove) {
-        ogs_error("No Session Modification");
-        return NULL;
-    }
-
-    if (bearer->pfcp_epc_modify.remove) {
-        /* Remove PDR */
+    if (modify_flags & OGS_PFCP_MODIFY_DEACTIVATE) {
+        /* Update FAR - Only DL */
         i = 0;
-        ogs_list_for_each(&bearer->pfcp.pdr_list, pdr) {
-            ogs_pfcp_tlv_remove_pdr_t *message = &req->remove_pdr[i];
-
-            message->presence = 1;
-            message->pdr_id.presence = 1;
-            message->pdr_id.u16 = pdr->id;
-            i++;
-        }
-
-        /* Remove FAR */
-        i = 0;
-        ogs_list_for_each(&bearer->pfcp.far_list, far) {
-            ogs_pfcp_tlv_remove_far_t *message = &req->remove_far[i];
-
-            message->presence = 1;
-            message->far_id.presence = 1;
-            message->far_id.u32 = far->id;
-            i++;
-        }
-
-        /* Remove QER */
-        i = 0;
-        ogs_list_for_each(&bearer->pfcp.qer_list, qer) {
-            ogs_pfcp_tlv_remove_qer_t *message = &req->remove_qer[i];
-
-            message->presence = 1;
-            message->qer_id.presence = 1;
-            message->qer_id.u32 = qer->id;
-            i++;
-        }
-    } else {
-        if (bearer->pfcp_epc_modify.create) {
-            ogs_pfcp_pdrbuf_init();
-
-            /* Create PDR */
-            i = 0;
-            ogs_list_for_each(&bearer->pfcp.pdr_list, pdr) {
-                ogs_pfcp_build_create_pdr(&req->create_pdr[i], i, pdr);
-                i++;
-            }
-
-            /* Create FAR */
-            i = 0;
+        ogs_list_for_each(&sess->bearer_list, bearer) {
             ogs_list_for_each(&bearer->pfcp.far_list, far) {
-                ogs_pfcp_build_create_far(&req->create_far[i], i, far);
-                i++;
-            }
-
-            /* Create QER */
-            i = 0;
-            ogs_list_for_each(&bearer->pfcp.qer_list, qer) {
-                ogs_pfcp_build_create_qer(&req->create_qer[i], i, qer);
-                i++;
-            }
-        }
-        if (bearer->pfcp_epc_modify.qos_update) {
-            /* Update QER */
-            i = 0;
-            ogs_list_for_each(&bearer->pfcp.qer_list, qer) {
-                ogs_pfcp_build_update_qer(&req->update_qer[i], i, qer);
+                ogs_pfcp_build_update_dl_far_deactivate(
+                        &req->update_far[i], i, far);
                 i++;
             }
         }
@@ -371,10 +268,6 @@ ogs_pkbuf_t *smf_epc_n4_build_session_modification_request(
 
     pfcp_message.h.type = type;
     pkbuf = ogs_pfcp_build_msg(&pfcp_message);
-
-    if (bearer->pfcp_epc_modify.create) {
-        ogs_pfcp_pdrbuf_clear();
-    }
 
     return pkbuf;
 }

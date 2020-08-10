@@ -374,7 +374,8 @@ void smf_s5c_handle_create_bearer_response(
         qer->gbr.downlink = bearer->qos.gbr.downlink;
     }
 
-    smf_epc_pfcp_send_session_modification_request(bearer);
+    smf_epc_pfcp_send_bearer_modification_request(
+            bearer, OGS_PFCP_MODIFY_CREATE);
 }
 
 void smf_s5c_handle_update_bearer_response(
@@ -449,7 +450,8 @@ void smf_s5c_handle_update_bearer_response(
 #else
     if (bearer->pfcp_epc_modify.qos_update) {
 #endif
-        smf_epc_pfcp_send_session_modification_request(bearer);
+        smf_epc_pfcp_send_bearer_modification_request(
+                bearer, OGS_PFCP_MODIFY_QOS_UPDATE);
     }
 }
 
@@ -502,7 +504,8 @@ void smf_s5c_handle_delete_bearer_response(
     ogs_debug("[SMF] Delete Bearer Response : SGW[0x%x] --> SMF[0x%x]",
             sess->sgw_s5c_teid, sess->smf_n4_teid);
 
-    smf_epc_pfcp_send_session_modification_request(bearer);
+    smf_epc_pfcp_send_bearer_modification_request(
+            bearer, OGS_PFCP_MODIFY_REMOVE);
 }
 
 static int reconfigure_packet_filter(smf_pf_t *pf, ogs_gtp_tft_t *tft, int i)

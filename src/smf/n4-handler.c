@@ -330,16 +330,19 @@ void smf_epc_n4_handle_session_modification_response(
         ogs_pfcp_session_modification_response_t *rsp)
 {
     smf_bearer_t *bearer = NULL;
+    uint64_t flags = 0;
 
     ogs_assert(xact);
     ogs_assert(rsp);
 
     bearer = xact->data;
     ogs_assert(bearer);
+    flags = xact->modify_flags;
+    ogs_assert(flags);
 
     ogs_pfcp_xact_commit(xact);
 
-    if (bearer->pfcp_epc_modify.remove)
+    if (flags & OGS_PFCP_MODIFY_REMOVE)
         smf_bearer_remove(bearer);
 }
 
