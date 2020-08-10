@@ -243,6 +243,17 @@ char *ogs_ipfw_encode_flow_description(ogs_ipfw_rule_t *ipfw_rule)
     } else
         p = ogs_slprintf(p, last, " any");
 
+    if (ipfw_rule->port.local.low == ipfw_rule->port.local.high) {
+        if (ipfw_rule->port.local.low == 0) {
+            /* Nothing */
+        } else {
+            p = ogs_slprintf(p, last, " %d", ipfw_rule->port.local.low);
+        }
+    } else {
+        p = ogs_slprintf(p, last, " %d-%d",
+                ipfw_rule->port.local.low, ipfw_rule->port.local.high);
+    }
+
     p = ogs_slprintf(p, last, " to");
     memset(&sa, 0, sizeof(sa));
 
@@ -301,6 +312,17 @@ char *ogs_ipfw_encode_flow_description(ogs_ipfw_rule_t *ipfw_rule)
         }
     } else
         p = ogs_slprintf(p, last, " any");
+
+    if (ipfw_rule->port.remote.low == ipfw_rule->port.remote.high) {
+        if (ipfw_rule->port.remote.low == 0) {
+            /* Nothing */
+        } else {
+            p = ogs_slprintf(p, last, " %d", ipfw_rule->port.remote.low);
+        }
+    } else {
+        p = ogs_slprintf(p, last, " %d-%d",
+                ipfw_rule->port.remote.low, ipfw_rule->port.remote.high);
+    }
 
     return ogs_strdup(flow_description);
 }
