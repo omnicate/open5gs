@@ -278,10 +278,6 @@ void smf_bearer_binding(smf_sess_t *sess)
 
             memset(&h, 0, sizeof(ogs_gtp_header_t));
             if (bearer_created == 1) {
-                memset(&bearer->pfcp_epc_modify,
-                        0, sizeof(bearer->pfcp_epc_modify));
-                bearer->pfcp_epc_modify.create = true;
-
                 h.type = OGS_GTP_CREATE_BEARER_REQUEST_TYPE;
                 h.teid = sess->sgw_s5c_teid;
 
@@ -292,14 +288,12 @@ void smf_bearer_binding(smf_sess_t *sess)
                 pkbuf = smf_s5c_build_create_bearer_request(
                         h.type, bearer, pcc_rule->num_of_flow ? &tft : NULL);
                 ogs_expect_or_return(pkbuf);
-            } else {
-                memset(&bearer->pfcp_epc_modify,
-                        0, sizeof(bearer->pfcp_epc_modify));
-                if (pcc_rule->num_of_flow)
-                    bearer->pfcp_epc_modify.tft_update = true;
-                if (qos_presence)
-                    bearer->pfcp_epc_modify.qos_update = true;
 
+                xact = ogs_gtp_xact_local_create(
+                        sess->gnode, &h, pkbuf, timeout, sess);
+                ogs_expect_or_return(xact);
+
+            } else {
                 h.type = OGS_GTP_UPDATE_BEARER_REQUEST_TYPE;
                 h.teid = sess->sgw_s5c_teid;
 
@@ -308,11 +302,16 @@ void smf_bearer_binding(smf_sess_t *sess)
                         OGS_NAS_PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
                         pcc_rule->num_of_flow ? &tft : NULL, qos_presence);
                 ogs_expect_or_return(pkbuf);
-            }
 
-            xact = ogs_gtp_xact_local_create(
-                    sess->gnode, &h, pkbuf, timeout, sess);
-            ogs_expect_or_return(xact);
+                xact = ogs_gtp_xact_local_create(
+                        sess->gnode, &h, pkbuf, timeout, sess);
+                ogs_expect_or_return(xact);
+
+                if (pcc_rule->num_of_flow)
+                    xact->update_flags |= OGS_GTP_MODIFY_TFT_UPDATE;
+                if (qos_presence)
+                    xact->update_flags |= OGS_GTP_MODIFY_QOS_UPDATE;
+            }
 
             rv = ogs_gtp_xact_commit(xact);
             ogs_expect(rv == OGS_OK);
@@ -326,10 +325,6 @@ void smf_bearer_binding(smf_sess_t *sess)
                         pcc_rule->name);
                 return;
             }
-
-            memset(&bearer->pfcp_epc_modify, 0,
-                    sizeof(bearer->pfcp_epc_modify));
-            bearer->pfcp_epc_modify.remove = true;
 
             memset(&h, 0, sizeof(ogs_gtp_header_t));
             h.type = OGS_GTP_DELETE_BEARER_REQUEST_TYPE;

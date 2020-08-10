@@ -383,10 +383,13 @@ void smf_s5c_handle_update_bearer_response(
         ogs_gtp_update_bearer_response_t *rsp)
 {
     int rv;
+    uint64_t flags = 0;
     smf_bearer_t *bearer = NULL;
 
     ogs_assert(xact);
     ogs_assert(rsp);
+    flags = xact->update_flags;
+    ogs_assert(flags);
 
     ogs_debug("[SMF] Update Bearer Response");
 
@@ -427,7 +430,7 @@ void smf_s5c_handle_update_bearer_response(
     ogs_debug("[SMF] Update Bearer Response : SGW[0x%x] --> SMF[0x%x]",
             sess->sgw_s5c_teid, sess->smf_n4_teid);
 
-    if (bearer->pfcp_epc_modify.qos_update) {
+    if (flags & OGS_GTP_MODIFY_QOS_UPDATE) {
         ogs_pfcp_qer_t *qer = NULL;
 
         /* Only 1 QER is used per bearer */
@@ -441,14 +444,13 @@ void smf_s5c_handle_update_bearer_response(
         }
     }
 
-    if (bearer->pfcp_epc_modify.tft_update)
+    if (flags & OGS_GTP_MODIFY_TFT_UPDATE)
         ogs_warn("Not Implemented");
 
 #if 0 /* FIXME */
-    if (bearer->pfcp_epc_modify.qos_update ||
-            bearer->pfcp_epc_modify.tft_update) {
+    if (flags & (OGS_GTP_MODIFY_TFT_UPDATE|OGS_GTP_MODIFY_QOS_UPDATE)) {
 #else
-    if (bearer->pfcp_epc_modify.qos_update) {
+    if (flags & OGS_GTP_MODIFY_QOS_UPDATE) {
 #endif
         smf_epc_pfcp_send_bearer_modification_request(
                 bearer, OGS_PFCP_MODIFY_QOS_UPDATE);
@@ -735,30 +737,29 @@ void smf_s5c_handle_bearer_resource_command(
     h.teid = sess->sgw_s5c_teid;
 
     if (tft_delete) {
-        memset(&bearer->pfcp_epc_modify, 0, sizeof(bearer->pfcp_epc_modify));
-        bearer->pfcp_epc_modify.remove = true;
-
         h.type = OGS_GTP_DELETE_BEARER_REQUEST_TYPE;
         pkbuf = smf_s5c_build_delete_bearer_request(
                 h.type, bearer, cmd->procedure_transaction_id.u8);
         ogs_expect_or_return(pkbuf);
-    } else {
-        memset(&bearer->pfcp_epc_modify, 0, sizeof(bearer->pfcp_epc_modify));
-        if (tft_update)
-            bearer->pfcp_epc_modify.tft_update = true;
-        if (qos_update)
-            bearer->pfcp_epc_modify.qos_update = true;
 
+        rv = ogs_gtp_xact_update_tx(xact, &h, pkbuf);
+        ogs_expect_or_return(rv == OGS_OK);
+
+    } else {
         h.type = OGS_GTP_UPDATE_BEARER_REQUEST_TYPE;
         pkbuf = smf_s5c_build_update_bearer_request(
                 h.type, bearer, cmd->procedure_transaction_id.u8,
                 tft_update ? &tft : NULL, qos_update);
         ogs_expect_or_return(pkbuf);
+
+        rv = ogs_gtp_xact_update_tx(xact, &h, pkbuf);
+        ogs_expect_or_return(rv == OGS_OK);
+
+        if (tft_update)
+            xact->update_flags |= OGS_GTP_MODIFY_TFT_UPDATE;
+        if (qos_update)
+            xact->update_flags |= OGS_GTP_MODIFY_QOS_UPDATE;
     }
-
-
-    rv = ogs_gtp_xact_update_tx(xact, &h, pkbuf);
-    ogs_expect_or_return(rv == OGS_OK);
 
     rv = ogs_gtp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);

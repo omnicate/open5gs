@@ -259,13 +259,6 @@ typedef struct smf_bearer_s {
     /* Packet Filter List */
     ogs_list_t      pf_list;
 
-    struct {
-        bool create;
-        bool tft_update;
-        bool qos_update;
-        bool remove;
-    } pfcp_epc_modify;
-
     smf_sess_t      *sess;
 } smf_bearer_t;
 

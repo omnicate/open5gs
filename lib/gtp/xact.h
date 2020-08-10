@@ -82,15 +82,9 @@ typedef struct ogs_gtp_xact_s {
 
     struct ogs_gtp_xact_s *assoc_xact; /**< Associated transaction */
 
-#define OGS_GTP_MODIFY_DL_ONLY ((uint64_t)1<<0)
-#define OGS_GTP_MODIFY_UL_ONLY ((uint64_t)1<<1)
-#define OGS_GTP_MODIFY_CREATE ((uint64_t)1<<2)
-#define OGS_GTP_MODIFY_REMOVE ((uint64_t)1<<3)
-#define OGS_GTP_MODIFY_TFT_UPDATE ((uint64_t)1<<4)
-#define OGS_GTP_MODIFY_QOS_UPDATE ((uint64_t)1<<5)
-#define OGS_GTP_MODIFY_ACTIVATE ((uint64_t)1<<6)
-#define OGS_GTP_MODIFY_DEACTIVATE ((uint64_t)1<<7)
-    int             modify_flags;
+#define OGS_GTP_MODIFY_TFT_UPDATE ((uint64_t)1<<0)
+#define OGS_GTP_MODIFY_QOS_UPDATE ((uint64_t)1<<1)
+    uint64_t        update_flags;
 } ogs_gtp_xact_t;
 
 int ogs_gtp_xact_init(ogs_timer_mgr_t *timer_mgr, int size);
