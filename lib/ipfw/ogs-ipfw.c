@@ -169,10 +169,138 @@ int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *flow_description)
 
 char *ogs_ipfw_encode_flow_description(ogs_ipfw_rule_t *ipfw_rule)
 {
-    char *flow_description = NULL;
+    char flow_description[OGS_HUGE_LEN];
+    char *p, *last;
+    char buf[OGS_ADDRSTRLEN];
+    ogs_sockaddr_t sa;
+    int prefixlen = 0;
+
+    p = flow_description;
+    last = flow_description + OGS_HUGE_LEN;
 
     ogs_assert(ipfw_rule);
-    fprintf(stderr, "asdflkjsadfasdf");
+    p = ogs_slprintf(p, last, "permit out %d", ipfw_rule->proto);
 
-    return flow_description;
+#define IPV4_BITLEN    (OGS_IPV4_LEN * 8)
+#define IPV6_BITLEN    (OGS_IPV6_LEN * 8)
+
+    p = ogs_slprintf(p, last, " from");
+    memset(&sa, 0, sizeof(sa));
+
+    if (ipfw_rule->ipv4_local) {
+        sa.ogs_sa_family = AF_INET;
+        memcpy(&sa.sin.sin_addr,
+                ipfw_rule->ip.local.addr, sizeof(struct in_addr));
+
+        OGS_ADDR(&sa, buf);
+        prefixlen = contigmask(
+                (uint8_t *)ipfw_rule->ip.local.mask, IPV4_BITLEN);
+
+        if (prefixlen < 0) {
+            ogs_error("Invalid mask[%x:%x:%x:%x]",
+                    ipfw_rule->ip.local.mask[0],
+                    ipfw_rule->ip.local.mask[1],
+                    ipfw_rule->ip.local.mask[2],
+                    ipfw_rule->ip.local.mask[3]);
+            return NULL;
+        } else if (prefixlen == 0) {
+            p = ogs_slprintf(p, last, " any");
+        } else if (prefixlen > 0 && prefixlen < IPV4_BITLEN) {
+            p = ogs_slprintf(p, last, " %s/%d", buf, prefixlen);
+        } else if (prefixlen == IPV4_BITLEN) {
+            p = ogs_slprintf(p, last, " %s", buf);
+        } else {
+            ogs_fatal("Invalid prefixlen[%d]", prefixlen);
+            ogs_assert_if_reached();
+        }
+
+    } else if (ipfw_rule->ipv6_local) {
+        sa.ogs_sa_family = AF_INET6;
+        memcpy(&sa.sin6.sin6_addr,
+                ipfw_rule->ip.local.addr, sizeof(struct in6_addr));
+
+        OGS_ADDR(&sa, buf);
+        prefixlen = contigmask(
+                (uint8_t *)ipfw_rule->ip.local.mask, IPV6_BITLEN);
+
+        if (prefixlen < 0) {
+            ogs_error("Invalid mask[%x:%x:%x:%x]",
+                    ipfw_rule->ip.local.mask[0],
+                    ipfw_rule->ip.local.mask[1],
+                    ipfw_rule->ip.local.mask[2],
+                    ipfw_rule->ip.local.mask[3]);
+            return NULL;
+        } else if (prefixlen == 0) {
+            p = ogs_slprintf(p, last, " any");
+        } else if (prefixlen > 0 && prefixlen < IPV6_BITLEN) {
+            p = ogs_slprintf(p, last, " %s/%d", buf, prefixlen);
+        } else if (prefixlen == IPV6_BITLEN) {
+            p = ogs_slprintf(p, last, " %s", buf);
+        } else {
+            ogs_fatal("Invalid prefixlen[%d]", prefixlen);
+            ogs_assert_if_reached();
+        }
+    } else
+        p = ogs_slprintf(p, last, " any");
+
+    p = ogs_slprintf(p, last, " to");
+    memset(&sa, 0, sizeof(sa));
+
+    if (ipfw_rule->ipv4_remote) {
+        sa.ogs_sa_family = AF_INET;
+        memcpy(&sa.sin.sin_addr,
+                ipfw_rule->ip.remote.addr, sizeof(struct in_addr));
+
+        OGS_ADDR(&sa, buf);
+        prefixlen = contigmask(
+                (uint8_t *)ipfw_rule->ip.remote.mask, IPV4_BITLEN);
+
+        if (prefixlen < 0) {
+            ogs_error("Invalid mask[%x:%x:%x:%x]",
+                    ipfw_rule->ip.remote.mask[0],
+                    ipfw_rule->ip.remote.mask[1],
+                    ipfw_rule->ip.remote.mask[2],
+                    ipfw_rule->ip.remote.mask[3]);
+            return NULL;
+        } else if (prefixlen == 0) {
+            p = ogs_slprintf(p, last, " any");
+        } else if (prefixlen > 0 && prefixlen < IPV4_BITLEN) {
+            p = ogs_slprintf(p, last, " %s/%d", buf, prefixlen);
+        } else if (prefixlen == IPV4_BITLEN) {
+            p = ogs_slprintf(p, last, " %s", buf);
+        } else {
+            ogs_fatal("Invalid prefixlen[%d]", prefixlen);
+            ogs_assert_if_reached();
+        }
+
+    } else if (ipfw_rule->ipv6_remote) {
+        sa.ogs_sa_family = AF_INET6;
+        memcpy(&sa.sin6.sin6_addr,
+                ipfw_rule->ip.remote.addr, sizeof(struct in6_addr));
+
+        OGS_ADDR(&sa, buf);
+        prefixlen = contigmask(
+                (uint8_t *)ipfw_rule->ip.remote.mask, IPV6_BITLEN);
+
+        if (prefixlen < 0) {
+            ogs_error("Invalid mask[%x:%x:%x:%x]",
+                    ipfw_rule->ip.remote.mask[0],
+                    ipfw_rule->ip.remote.mask[1],
+                    ipfw_rule->ip.remote.mask[2],
+                    ipfw_rule->ip.remote.mask[3]);
+            return NULL;
+        } else if (prefixlen == 0) {
+            p = ogs_slprintf(p, last, " any");
+        } else if (prefixlen > 0 && prefixlen < IPV6_BITLEN) {
+            p = ogs_slprintf(p, last, " %s/%d", buf, prefixlen);
+        } else if (prefixlen == IPV6_BITLEN) {
+            p = ogs_slprintf(p, last, " %s", buf);
+        } else {
+            ogs_fatal("Invalid prefixlen[%d]", prefixlen);
+            ogs_assert_if_reached();
+        }
+    } else
+        p = ogs_slprintf(p, last, " any");
+
+    return ogs_strdup(flow_description);
 }

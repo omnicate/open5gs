@@ -280,7 +280,11 @@ void smf_bearer_binding(smf_sess_t *sess)
                     break;
                 }
                 ogs_fatal("%s", pf->flow_description);
-                ogs_ipfw_encode_flow_description(&pf->ipfw_rule);
+                {
+                   char *tmp = ogs_ipfw_encode_flow_description(&pf->ipfw_rule);
+                   ogs_fatal("tmp = %s", tmp);
+                   ogs_free(tmp);
+                }
             }
 
             memset(&tft, 0, sizeof tft);
