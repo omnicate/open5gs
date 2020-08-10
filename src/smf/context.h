@@ -143,9 +143,6 @@ typedef struct smf_sess_s {
     uint32_t        smf_n4_teid;    /* SMF-N4-TEID is derived from INDEX */
     uint32_t        sgw_s5c_teid;   /* SGW-S5C-TEID is received from SGW */
 
-#define SMF_SEID_TO_INDEX(__iNDEX) (__iNDEX & ~0x8000000000000000)
-#define SMF_INDEX_TO_SEID(__iNDEX) (__iNDEX | 0x8000000000000000)
-#define SMF_EPC_SEID(__sEID) (__sEID & 0x8000000000000000)
     uint64_t        smf_n4_seid;    /* SMF SEID is dervied from INDEX */
     uint64_t        upf_n4_seid;    /* UPF SEID is received from Peer */
 

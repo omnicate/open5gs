@@ -213,7 +213,7 @@ void smf_pfcp_state_associated(ogs_fsm_t *s, smf_event_t *e)
                 break;
             }
 
-            if (SMF_EPC_SEID(message->h.seid))
+            if (xact->epc)
                 smf_epc_n4_handle_session_establishment_response(
                     sess, xact, &message->pfcp_session_establishment_response);
             else
@@ -227,7 +227,7 @@ void smf_pfcp_state_associated(ogs_fsm_t *s, smf_event_t *e)
                 break;
             }
 
-            if (SMF_EPC_SEID(message->h.seid))
+            if (xact->epc)
                 smf_epc_n4_handle_session_modification_response(
                     sess, xact, &message->pfcp_session_modification_response);
             else
@@ -241,7 +241,7 @@ void smf_pfcp_state_associated(ogs_fsm_t *s, smf_event_t *e)
                 break;
             }
 
-            if (SMF_EPC_SEID(message->h.seid))
+            if (xact->epc)
                 smf_epc_n4_handle_session_deletion_response(
                     sess, xact, &message->pfcp_session_deletion_response);
             else

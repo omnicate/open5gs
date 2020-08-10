@@ -375,6 +375,8 @@ void smf_epc_pfcp_send_session_establishment_request(
     xact = ogs_pfcp_xact_local_create(
             sess->pfcp_node, &h, n4buf, sess_epc_timeout, sess);
     ogs_expect_or_return(xact);
+
+    xact->epc = true; /* EPC PFCP transaction */
     xact->assoc_xact = gtp_xact;
 
     rv = ogs_pfcp_xact_commit(xact);
@@ -404,6 +406,8 @@ void smf_epc_pfcp_send_bearer_modification_request(
     xact = ogs_pfcp_xact_local_create(
             sess->pfcp_node, &h, n4buf, sess_epc_timeout, bearer);
     ogs_expect_or_return(xact);
+
+    xact->epc = true; /* EPC PFCP transaction */
     xact->modify_flags = flags;
 
     rv = ogs_pfcp_xact_commit(xact);
@@ -430,6 +434,8 @@ void smf_epc_pfcp_send_session_deletion_request(
     xact = ogs_pfcp_xact_local_create(
             sess->pfcp_node, &h, n4buf, sess_epc_timeout, sess);
     ogs_expect_or_return(xact);
+
+    xact->epc = true; /* EPC PFCP transaction */
     xact->assoc_xact = gtp_xact;
 
     rv = ogs_pfcp_xact_commit(xact);

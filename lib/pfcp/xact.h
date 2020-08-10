@@ -66,6 +66,8 @@ typedef struct ogs_pfcp_xact_s {
 
     void            *assoc_session; /**< Associated SBI session */
 
+    bool            epc;            /**< EPC or 5GC */
+
 #define OGS_PFCP_MODIFY_DL_ONLY ((uint64_t)1<<0)
 #define OGS_PFCP_MODIFY_UL_ONLY ((uint64_t)1<<1)
 #define OGS_PFCP_MODIFY_CREATE ((uint64_t)1<<2)
