@@ -192,8 +192,7 @@ ogs_pfcp_pdr_t *ogs_pfcp_handle_create_pdr(ogs_pfcp_sess_t *sess,
 
     pdr->src_if = message->pdi.source_interface.u8;
 
-    if (message->pdi.sdf_filter[0].presence)
-        ogs_pfcp_rule_remove_all(pdr);
+    ogs_pfcp_rule_remove_all(pdr);
 
     for (i = 0; i < OGS_MAX_NUM_OF_RULE; i++) {
         ogs_pfcp_sdf_filter_t sdf_filter_in_message;
@@ -302,33 +301,64 @@ ogs_pfcp_pdr_t *ogs_pfcp_handle_update_pdr(ogs_pfcp_sess_t *sess,
         return NULL;
     }
 
-    if (message->pdi.sdf_filter[0].presence)
+    if (message->pdi.presence) {
+        if (message->pdi.source_interface.presence == 0) {
+            ogs_error("No Source Interface in PDI");
+            *cause_value = OGS_PFCP_CAUSE_MANDATORY_IE_MISSING;
+            *offending_ie_value = OGS_PFCP_SOURCE_INTERFACE_TYPE;
+            return NULL;
+        }
+
+        pdr->src_if = message->pdi.source_interface.u8;
+
         ogs_pfcp_rule_remove_all(pdr);
 
-    for (i = 0; i < OGS_MAX_NUM_OF_RULE; i++) {
-        ogs_pfcp_sdf_filter_t sdf_filter_in_message;
-        if (message->pdi.sdf_filter[i].presence == 0)
-            break;
+        for (i = 0; i < OGS_MAX_NUM_OF_RULE; i++) {
+            ogs_pfcp_sdf_filter_t sdf_filter_in_message;
 
-        len = ogs_pfcp_parse_sdf_filter(
-                &sdf_filter_in_message, &message->pdi.sdf_filter[i]);
-        ogs_assert(message->pdi.sdf_filter[i].len == len);
-        if (sdf_filter_in_message.fd) {
-            ogs_pfcp_rule_t *rule = NULL;
-            char *flow_description = NULL;
+            if (message->pdi.sdf_filter[i].presence == 0)
+                break;
 
-            flow_description = ogs_malloc(
-                    sdf_filter_in_message.flow_description_len+1);
-            ogs_cpystrn(flow_description,
-                    sdf_filter_in_message.flow_description,
-                    sdf_filter_in_message.flow_description_len+1);
+            len = ogs_pfcp_parse_sdf_filter(
+                    &sdf_filter_in_message, &message->pdi.sdf_filter[i]);
+            ogs_assert(message->pdi.sdf_filter[i].len == len);
+            if (sdf_filter_in_message.fd) {
+                ogs_pfcp_rule_t *rule = NULL;
+                char *flow_description = NULL;
 
-            rule = ogs_pfcp_rule_add(pdr);
-            ogs_assert(rule);
-            rv = ogs_ipfw_compile_rule(&rule->ipfw, flow_description);
-            ogs_assert(rv == OGS_OK);
+                flow_description = ogs_malloc(
+                        sdf_filter_in_message.flow_description_len+1);
+                ogs_cpystrn(flow_description,
+                        sdf_filter_in_message.flow_description,
+                        sdf_filter_in_message.flow_description_len+1);
 
-            ogs_free(flow_description);
+                rule = ogs_pfcp_rule_add(pdr);
+                ogs_assert(rule);
+                rv = ogs_ipfw_compile_rule(&rule->ipfw, flow_description);
+                ogs_assert(rv == OGS_OK);
+
+                ogs_free(flow_description);
+            }
+
+        }
+
+        if (message->pdi.network_instance.presence) {
+            char dnn[OGS_MAX_DNN_LEN];
+
+            ogs_fqdn_parse(dnn,
+                message->pdi.network_instance.data,
+                message->pdi.network_instance.len);
+
+            if (pdr->dnn)
+                ogs_free(pdr->dnn);
+            pdr->dnn = ogs_strdup(dnn);
+        }
+
+        if (message->pdi.local_f_teid.presence) {
+            pdr->f_teid_len = message->pdi.local_f_teid.len;
+            memcpy(&pdr->f_teid,
+                    message->pdi.local_f_teid.data, pdr->f_teid_len);
+            pdr->f_teid.teid = be32toh(pdr->f_teid.teid);
         }
     }
 

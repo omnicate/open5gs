@@ -351,9 +351,19 @@ void ogs_pfcp_build_update_pdr(
     message->pdr_id.presence = 1;
     message->pdr_id.u16 = pdr->id;
 
+    message->pdi.presence = 1;
+    message->pdi.source_interface.presence = 1;
+    message->pdi.source_interface.u8 = pdr->src_if;
+
+    if (pdr->apn) {
+        message->pdi.network_instance.presence = 1;
+        message->pdi.network_instance.len = ogs_fqdn_build(
+            pdrbuf[i].dnn, pdr->apn, strlen(pdr->apn));
+        message->pdi.network_instance.data = pdrbuf[i].dnn;
+    }
+
     memset(pfcp_sdf_filter, 0, sizeof(pfcp_sdf_filter));
     for (j = 0; j < pdr->num_of_flow; j++) {
-
         pfcp_sdf_filter[j].fd = 1;
         pfcp_sdf_filter[j].flow_description_len =
                 strlen(pdr->flow_description[j]);
@@ -365,8 +375,21 @@ void ogs_pfcp_build_update_pdr(
         pdrbuf[i].sdf_filter[j] = ogs_calloc(1, len);
         ogs_pfcp_build_sdf_filter(&message->pdi.sdf_filter[j],
                 &pfcp_sdf_filter[j], pdrbuf[i].sdf_filter[j], len);
+    }
 
-        message->pdi.presence = 1;
+    if (pdr->ue_ip_addr_len) {
+        message->pdi.ue_ip_address.presence = 1;
+        message->pdi.ue_ip_address.data = &pdr->ue_ip_addr;
+        message->pdi.ue_ip_address.len = pdr->ue_ip_addr_len;
+    }
+
+    if (pdr->f_teid_len) {
+        memcpy(&pdrbuf[i].f_teid, &pdr->f_teid, pdr->f_teid_len);
+        pdrbuf[i].f_teid.teid = htobe32(pdr->f_teid.teid);
+
+        message->pdi.local_f_teid.presence = 1;
+        message->pdi.local_f_teid.data = &pdrbuf[i].f_teid;
+        message->pdi.local_f_teid.len = pdr->f_teid_len;
     }
 }
 

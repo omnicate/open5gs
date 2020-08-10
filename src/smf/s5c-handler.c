@@ -541,6 +541,7 @@ static int reconfigure_packet_filter(smf_pf_t *pf, ogs_gtp_tft_t *tft, int i)
 {
     int j;
 
+    memset(&pf->ipfw_rule, 0, sizeof(ogs_ipfw_rule_t));
     for (j = 0; j < tft->pf[i].num_of_component; j++) {
         switch(tft->pf[i].component[j].type) {
         case GTP_PACKET_FILTER_PROTOCOL_IDENTIFIER_NEXT_HEADER_TYPE:
