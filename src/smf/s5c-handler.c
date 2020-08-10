@@ -444,8 +444,22 @@ void smf_s5c_handle_update_bearer_response(
         }
     }
 
-    if (flags & OGS_GTP_MODIFY_TFT_UPDATE)
-        ogs_warn("Not Implemented");
+#if 0
+    if (flags & OGS_GTP_MODIFY_TFT_UPDATE) {
+        smf_pf_t *pf = NULL;
+        ogs_pfcp_pdr_t *pdr = NULL;
+
+        ogs_list_for_each(&bearer->pf_list, pf) {
+            ogs_fatal("pf->id = %d", pf->identifier);
+        }
+        ogs_list_for_each(&bearer->pfcp.pdr_list, pdr) {
+            int i;
+            for (i = 0; i < pdr->num_of_flow; i++) {
+                ogs_fatal("pdr->flow = %s", pdr->flow_description[i]);
+            }
+        }
+    }
+#endif
 
 #if 0 /* FIXME */
     if (flags & (OGS_GTP_MODIFY_TFT_UPDATE|OGS_GTP_MODIFY_QOS_UPDATE)) {
