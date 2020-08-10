@@ -196,7 +196,7 @@ ogs_pfcp_pdr_t *upf_pdr_find_by_packet(ogs_pkbuf_t *pkt)
                 if (far->dst_if != OGS_PFCP_INTERFACE_ACCESS)
                     continue;
 
-                /* Check if Create Bearer Response is received */
+                /* Check if Outer header creation */
                 if (far->outer_header_creation.teid == 0)
                     continue;
 

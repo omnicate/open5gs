@@ -252,6 +252,7 @@ void ogs_pfcp_build_create_pdr(
 {
     ogs_pfcp_far_t *far = NULL;
     ogs_pfcp_sess_t *pfcp_sess = NULL;
+    ogs_pfcp_sdf_filter_t pfcp_sdf_filter[OGS_MAX_NUM_OF_RULE];
     int j = 0;
     int len = 0;
 
@@ -284,8 +285,8 @@ void ogs_pfcp_build_create_pdr(
         message->pdi.network_instance.data = pdrbuf[i].dnn;
     }
 
+    memset(pfcp_sdf_filter, 0, sizeof(pfcp_sdf_filter));
     for (j = 0; j < pdr->num_of_flow; j++) {
-        ogs_pfcp_sdf_filter_t pfcp_sdf_filter[OGS_MAX_NUM_OF_RULE];
         pfcp_sdf_filter[j].fd = 1;
         pfcp_sdf_filter[j].flow_description_len =
                 strlen(pdr->flow_description[j]);
@@ -339,6 +340,7 @@ void ogs_pfcp_build_create_pdr(
 void ogs_pfcp_build_update_pdr(
     ogs_pfcp_tlv_update_pdr_t *message, int i, ogs_pfcp_pdr_t *pdr)
 {
+    ogs_pfcp_sdf_filter_t pfcp_sdf_filter[OGS_MAX_NUM_OF_RULE];
     int j = 0;
     int len = 0;
 
@@ -349,8 +351,8 @@ void ogs_pfcp_build_update_pdr(
     message->pdr_id.presence = 1;
     message->pdr_id.u16 = pdr->id;
 
+    memset(pfcp_sdf_filter, 0, sizeof(pfcp_sdf_filter));
     for (j = 0; j < pdr->num_of_flow; j++) {
-        ogs_pfcp_sdf_filter_t pfcp_sdf_filter[OGS_MAX_NUM_OF_RULE];
 
         pfcp_sdf_filter[j].fd = 1;
         pfcp_sdf_filter[j].flow_description_len =
