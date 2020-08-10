@@ -110,7 +110,6 @@ typedef struct ogs_pfcp_sess_s {
     ogs_list_t          urr_list;       /* URR List */
     ogs_list_t          qer_list;       /* QER List */
     ogs_pfcp_bar_t      *bar;           /* BAR Item */
-    ogs_list_t          rule_list;      /* Rule List */
 
     /* Related Context */
     ogs_pfcp_pdr_t      *default_pdr;   /* Used by UPF */
@@ -144,6 +143,8 @@ typedef struct ogs_pfcp_pdr_s {
 
     int                     num_of_flow;
     char                    *flow_description[OGS_MAX_NUM_OF_RULE];
+
+    ogs_list_t              rule_list;      /* Rule List */
 
     /* Related Context */
     ogs_pfcp_sess_t         *sess;
@@ -322,7 +323,7 @@ void ogs_pfcp_bar_delete(ogs_pfcp_bar_t *bar);
 
 ogs_pfcp_rule_t *ogs_pfcp_rule_add(ogs_pfcp_pdr_t *pdr);
 void ogs_pfcp_rule_remove(ogs_pfcp_rule_t *rule);
-void ogs_pfcp_rule_remove_all(ogs_pfcp_sess_t *sess);
+void ogs_pfcp_rule_remove_all(ogs_pfcp_pdr_t *pdr);
 
 int ogs_pfcp_ue_pool_generate(void);
 ogs_pfcp_ue_ip_t *ogs_pfcp_ue_ip_alloc(

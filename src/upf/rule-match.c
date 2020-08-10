@@ -170,135 +170,143 @@ ogs_pfcp_pdr_t *upf_pdr_find_by_packet(ogs_pkbuf_t *pkt)
         /* Found */
         ogs_debug("Found Session : Default PDR-ID[%d]", default_pdr->id);
 
-        ogs_list_for_each(&sess->pfcp.rule_list, rule) {
-            int k;
-            uint32_t src_mask[4];
-            uint32_t dst_mask[4];
-            ogs_ipfw_rule_t *ipfw = NULL;
+        ogs_list_for_each(&sess->pfcp.pdr_list, pdr) {
+            ogs_list_for_each(&pdr->rule_list, rule) {
+                int k;
+                uint32_t src_mask[4];
+                uint32_t dst_mask[4];
+                ogs_ipfw_rule_t *ipfw = NULL;
 
-            pdr = rule->pdr;
-            ogs_assert(pdr);
-            far = pdr->far;
-            ogs_assert(far);
-            ipfw = &rule->ipfw;
-            ogs_assert(ipfw);
+                pdr = rule->pdr;
+                ogs_assert(pdr);
+                far = pdr->far;
+                ogs_assert(far);
+                ipfw = &rule->ipfw;
+                ogs_assert(ipfw);
 
-            /* Skip if PDR is default */
-            if (pdr->id == default_pdr->id)
-                continue;
+                /* Skip if PDR is default */
+                if (pdr->id == default_pdr->id)
+                    continue;
 
-            /* Check if PDR is Downlink */
-            if (pdr->src_if != OGS_PFCP_INTERFACE_CORE)
-                continue;
+                /* Check if PDR is Downlink */
+                if (pdr->src_if != OGS_PFCP_INTERFACE_CORE)
+                    continue;
 
-            /* Check if FAR is Downlink */
-            if (far->dst_if != OGS_PFCP_INTERFACE_ACCESS)
-                continue;
+                /* Check if FAR is Downlink */
+                if (far->dst_if != OGS_PFCP_INTERFACE_ACCESS)
+                    continue;
 
-            /* Check if Create Bearer Response is received */
-            if (far->outer_header_creation.teid == 0)
-                continue;
+                /* Check if Create Bearer Response is received */
+                if (far->outer_header_creation.teid == 0)
+                    continue;
 
-            ogs_debug("PROTO:%d SRC:%d-%d DST:%d-%d",
-                    ipfw->proto,
-                    ipfw->port.local.low,
-                    ipfw->port.local.high,
-                    ipfw->port.remote.low,
-                    ipfw->port.remote.high);
-            ogs_debug("SRC:%08x %08x %08x %08x/%08x %08x %08x %08x",
-                    be32toh(ipfw->ip.local.addr[0]),
-                    be32toh(ipfw->ip.local.addr[1]),
-                    be32toh(ipfw->ip.local.addr[2]),
-                    be32toh(ipfw->ip.local.addr[3]),
-                    be32toh(ipfw->ip.local.mask[0]),
-                    be32toh(ipfw->ip.local.mask[1]),
-                    be32toh(ipfw->ip.local.mask[2]),
-                    be32toh(ipfw->ip.local.mask[3]));
-            ogs_debug("DST:%08x %08x %08x %08x/%08x %08x %08x %08x",
-                    be32toh(ipfw->ip.remote.addr[0]),
-                    be32toh(ipfw->ip.remote.addr[1]),
-                    be32toh(ipfw->ip.remote.addr[2]),
-                    be32toh(ipfw->ip.remote.addr[3]),
-                    be32toh(ipfw->ip.remote.mask[0]),
-                    be32toh(ipfw->ip.remote.mask[1]),
-                    be32toh(ipfw->ip.remote.mask[2]),
-                    be32toh(ipfw->ip.remote.mask[3]));
+                ogs_debug("PROTO:%d SRC:%d-%d DST:%d-%d",
+                        ipfw->proto,
+                        ipfw->port.local.low,
+                        ipfw->port.local.high,
+                        ipfw->port.remote.low,
+                        ipfw->port.remote.high);
+                ogs_debug("SRC:%08x %08x %08x %08x/%08x %08x %08x %08x",
+                        be32toh(ipfw->ip.local.addr[0]),
+                        be32toh(ipfw->ip.local.addr[1]),
+                        be32toh(ipfw->ip.local.addr[2]),
+                        be32toh(ipfw->ip.local.addr[3]),
+                        be32toh(ipfw->ip.local.mask[0]),
+                        be32toh(ipfw->ip.local.mask[1]),
+                        be32toh(ipfw->ip.local.mask[2]),
+                        be32toh(ipfw->ip.local.mask[3]));
+                ogs_debug("DST:%08x %08x %08x %08x/%08x %08x %08x %08x",
+                        be32toh(ipfw->ip.remote.addr[0]),
+                        be32toh(ipfw->ip.remote.addr[1]),
+                        be32toh(ipfw->ip.remote.addr[2]),
+                        be32toh(ipfw->ip.remote.addr[3]),
+                        be32toh(ipfw->ip.remote.mask[0]),
+                        be32toh(ipfw->ip.remote.mask[1]),
+                        be32toh(ipfw->ip.remote.mask[2]),
+                        be32toh(ipfw->ip.remote.mask[3]));
 
-            for (k = 0; k < 4; k++) {
-                src_mask[k] = src_addr[k] & ipfw->ip.local.mask[k];
-                dst_mask[k] = dst_addr[k] & ipfw->ip.remote.mask[k];
-            }
-
-            if (memcmp(src_mask, ipfw->ip.local.addr, addr_len) == 0 &&
-                memcmp(dst_mask, ipfw->ip.remote.addr, addr_len) == 0) {
-                /* Protocol match */
-                if (ipfw->proto == 0) { /* IP */
-                    /* No need to match port */
-                    break;
+                for (k = 0; k < 4; k++) {
+                    src_mask[k] = src_addr[k] & ipfw->ip.local.mask[k];
+                    dst_mask[k] = dst_addr[k] & ipfw->ip.remote.mask[k];
                 }
 
-                if (ipfw->proto == proto) {
-                    if (ipfw->proto == IPPROTO_TCP) {
-                        struct tcphdr *tcph =
-                            (struct tcphdr *)((char *)pkt->data + ip_hlen);
-
-                        /* Source port */
-                        if (ipfw->port.local.low &&
-                              be16toh(tcph->th_sport) < ipfw->port.local.low) {
-                            continue;
-                        }
-
-                        if (ipfw->port.local.high &&
-                              be16toh(tcph->th_sport) > ipfw->port.local.high) {
-                            continue;
-                        }
-
-                        /* Dst Port*/
-                        if (ipfw->port.remote.low &&
-                              be16toh(tcph->th_dport) < ipfw->port.remote.low) {
-                            continue;
-                        }
-
-                        if (ipfw->port.remote.high &&
-                              be16toh(tcph->th_dport) >
-                                      ipfw->port.remote.high) {
-                            continue;
-                        }
-
-                        /* Matched */
-                        break;
-                    } else if (ipfw->proto == IPPROTO_UDP) {
-                        struct udphdr *udph =
-                            (struct udphdr *)((char *)pkt->data + ip_hlen);
-
-                        /* Source port */
-                        if (ipfw->port.local.low &&
-                              be16toh(udph->uh_sport) < ipfw->port.local.low) {
-                            continue;
-                        }
-
-                        if (ipfw->port.local.high &&
-                              be16toh(udph->uh_sport) > ipfw->port.local.high) {
-                            continue;
-                        }
-
-                        /* Dst Port*/
-                        if (ipfw->port.remote.low &&
-                              be16toh(udph->uh_dport) < ipfw->port.remote.low) {
-                            continue;
-                        }
-
-                        if (ipfw->port.remote.high &&
-                              be16toh(udph->uh_dport) >
-                                      ipfw->port.remote.high) {
-                            continue;
-                        }
-
-                        /* Matched */
-                        break;
-                    } else {
+                if (memcmp(src_mask, ipfw->ip.local.addr, addr_len) == 0 &&
+                    memcmp(dst_mask, ipfw->ip.remote.addr, addr_len) == 0) {
+                    /* Protocol match */
+                    if (ipfw->proto == 0) { /* IP */
                         /* No need to match port */
                         break;
+                    }
+
+                    if (ipfw->proto == proto) {
+                        if (ipfw->proto == IPPROTO_TCP) {
+                            struct tcphdr *tcph =
+                                (struct tcphdr *)((char *)pkt->data + ip_hlen);
+
+                            /* Source port */
+                            if (ipfw->port.local.low &&
+                                  be16toh(tcph->th_sport) <
+                                      ipfw->port.local.low) {
+                                continue;
+                            }
+
+                            if (ipfw->port.local.high &&
+                                  be16toh(tcph->th_sport) >
+                                      ipfw->port.local.high) {
+                                continue;
+                            }
+
+                            /* Dst Port*/
+                            if (ipfw->port.remote.low &&
+                                  be16toh(tcph->th_dport) <
+                                      ipfw->port.remote.low) {
+                                continue;
+                            }
+
+                            if (ipfw->port.remote.high &&
+                                  be16toh(tcph->th_dport) >
+                                          ipfw->port.remote.high) {
+                                continue;
+                            }
+
+                            /* Matched */
+                            break;
+                        } else if (ipfw->proto == IPPROTO_UDP) {
+                            struct udphdr *udph =
+                                (struct udphdr *)((char *)pkt->data + ip_hlen);
+
+                            /* Source port */
+                            if (ipfw->port.local.low &&
+                                  be16toh(udph->uh_sport) <
+                                      ipfw->port.local.low) {
+                                continue;
+                            }
+
+                            if (ipfw->port.local.high &&
+                                  be16toh(udph->uh_sport) >
+                                      ipfw->port.local.high) {
+                                continue;
+                            }
+
+                            /* Dst Port*/
+                            if (ipfw->port.remote.low &&
+                                  be16toh(udph->uh_dport) <
+                                      ipfw->port.remote.low) {
+                                continue;
+                            }
+
+                            if (ipfw->port.remote.high &&
+                                  be16toh(udph->uh_dport) >
+                                      ipfw->port.remote.high) {
+                                continue;
+                            }
+
+                            /* Matched */
+                            break;
+                        } else {
+                            /* No need to match port */
+                            break;
+                        }
                     }
                 }
             }
