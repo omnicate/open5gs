@@ -192,6 +192,9 @@ ogs_pfcp_pdr_t *ogs_pfcp_handle_create_pdr(ogs_pfcp_sess_t *sess,
 
     pdr->src_if = message->pdi.source_interface.u8;
 
+    if (message->pdi.sdf_filter[0].presence)
+        ogs_pfcp_rule_remove_all(pdr);
+
     for (i = 0; i < OGS_MAX_NUM_OF_RULE; i++) {
         ogs_pfcp_sdf_filter_t sdf_filter_in_message;
         if (message->pdi.sdf_filter[i].presence == 0)
@@ -298,6 +301,9 @@ ogs_pfcp_pdr_t *ogs_pfcp_handle_update_pdr(ogs_pfcp_sess_t *sess,
         *offending_ie_value = OGS_PFCP_PDR_ID_TYPE;
         return NULL;
     }
+
+    if (message->pdi.sdf_filter[0].presence)
+        ogs_pfcp_rule_remove_all(pdr);
 
     for (i = 0; i < OGS_MAX_NUM_OF_RULE; i++) {
         ogs_pfcp_sdf_filter_t sdf_filter_in_message;

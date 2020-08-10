@@ -355,6 +355,7 @@ static void volte_test1(abts_case *tc, void *data)
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
 
+#if 0
     /* Send Bearer resource modification request */
     rv = tests1ap_build_bearer_resource_modification_request(&sendbuf,
             1, 1, 5, 0x87a44610, 9, 7,
@@ -447,6 +448,7 @@ static void volte_test1(abts_case *tc, void *data)
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
     rv = testenb_s1ap_send(s1ap, sendbuf);
     ABTS_INT_EQUAL(tc, OGS_OK, rv);
+#endif
 
     ogs_msleep(300);
 
@@ -791,7 +793,9 @@ abts_suite *test_volte(abts_suite *suite)
     suite = ADD_SUITE(suite)
 
     abts_run_test(suite, volte_test1, NULL);
+#if 0
     abts_run_test(suite, volte_test2, NULL);
+#endif
 
     return suite;
 }
