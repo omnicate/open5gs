@@ -20,7 +20,7 @@
 /*******************************************************************************
  * This file had been created by pfcp-tlv.py script v0.1.0
  * Please do not modify this file but regenerate it via script.
- * Created on: 2020-07-23 13:41:55.927459 by acetcom
+ * Created on: 2020-08-09 21:39:00.897607 by acetcom
  * from 29244-g10.docx
  ******************************************************************************/
 
@@ -1527,7 +1527,7 @@ ogs_tlv_desc_t ogs_pfcp_tlv_desc_ethernet_packet_filter =
         &ogs_pfcp_tlv_desc_c_tag,
         &ogs_pfcp_tlv_desc_s_tag,
         &ogs_pfcp_tlv_desc_sdf_filter,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         NULL,
     }
 };
@@ -1547,7 +1547,7 @@ ogs_tlv_desc_t ogs_pfcp_tlv_desc_pdi =
         &ogs_pfcp_tlv_desc_ue_ip_address,
         &ogs_pfcp_tlv_desc_traffic_endpoint_id,
         &ogs_pfcp_tlv_desc_sdf_filter,
-        &ogs_tlv_desc_more4,
+        &ogs_tlv_desc_more8,
         &ogs_pfcp_tlv_desc_application_id,
         &ogs_pfcp_tlv_desc_ethernet_pdu_session_information,
         &ogs_pfcp_tlv_desc_ethernet_packet_filter,

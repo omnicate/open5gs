@@ -153,7 +153,7 @@ def get_cells(cells):
     if ie_type == 'User Plane IP Resource Information':
         tlv_more = "3"
     if ie_type == 'SDF Filter':
-        tlv_more = "3"
+        tlv_more = "7"
 
     if int(tlv_more) > int(type_list[ie_type]["max_tlv_more"]):
         type_list[ie_type]["max_tlv_more"] = tlv_more
