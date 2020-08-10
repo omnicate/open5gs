@@ -231,6 +231,9 @@ void smf_bearer_binding(smf_sess_t *sess)
                 }
             }
 
+            ogs_list_for_each(&bearer->pfcp.pdr_list, pdr)
+                pdr->num_of_flow = 0;
+
             for (j = 0; j < pcc_rule->num_of_flow; j++) {
                 ogs_flow_t *flow = &pcc_rule->flow[j];
                 smf_pf_t *pf = NULL;
@@ -238,22 +241,16 @@ void smf_bearer_binding(smf_sess_t *sess)
                 ogs_expect_or_return(flow);
                 ogs_expect_or_return(flow->description);
 
-                /* Find First Downlink/Uplink PDR in the Bearer */
                 ogs_list_for_each(&bearer->pfcp.pdr_list, pdr) {
-                    ogs_pfcp_far_t *far = NULL;
-                    far = pdr->far;
-                    ogs_assert(far);
                     if (flow->direction == OGS_FLOW_DOWNLINK_ONLY) {
-                        if (pdr->src_if == OGS_PFCP_INTERFACE_CORE &&
-                            far->dst_if == OGS_PFCP_INTERFACE_ACCESS) {
+                        if (pdr->src_if == OGS_PFCP_INTERFACE_CORE) {
                             pdr->flow_description[pdr->num_of_flow++] =
                                 flow->description;
                             break;
                         }
 
                     } else if (flow->direction == OGS_FLOW_UPLINK_ONLY) {
-                        if (pdr->src_if == OGS_PFCP_INTERFACE_ACCESS &&
-                            far->dst_if == OGS_PFCP_INTERFACE_CORE) {
+                        if (pdr->src_if == OGS_PFCP_INTERFACE_ACCESS) {
                             pdr->flow_description[pdr->num_of_flow++] =
                                 flow->description;
                             break;
@@ -263,7 +260,6 @@ void smf_bearer_binding(smf_sess_t *sess)
                                 flow->direction);
                         break;
                     }
-
                 }
 
                 pf = smf_pf_add(bearer, pcc_rule->precedence);

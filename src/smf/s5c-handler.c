@@ -444,31 +444,40 @@ void smf_s5c_handle_update_bearer_response(
         }
     }
 
-#if 0
     if (flags & OGS_GTP_MODIFY_TFT_UPDATE) {
         smf_pf_t *pf = NULL;
         ogs_pfcp_pdr_t *pdr = NULL;
 
+        ogs_list_for_each(&bearer->pfcp.pdr_list, pdr)
+            pdr->num_of_flow = 0;
+
         ogs_list_for_each(&bearer->pf_list, pf) {
-            ogs_fatal("pf->id = %d", pf->identifier);
-        }
-        ogs_list_for_each(&bearer->pfcp.pdr_list, pdr) {
-            int i;
-            for (i = 0; i < pdr->num_of_flow; i++) {
-                ogs_fatal("pdr->flow = %s", pdr->flow_description[i]);
+            ogs_list_for_each(&bearer->pfcp.pdr_list, pdr) {
+                if (pf->direction == OGS_FLOW_DOWNLINK_ONLY) {
+                    if (pdr->src_if == OGS_PFCP_INTERFACE_CORE) {
+                        pdr->flow_description[pdr->num_of_flow++] =
+                            pf->flow_description;
+                        break;
+                    }
+
+                } else if (pf->direction == OGS_FLOW_UPLINK_ONLY) {
+                    if (pdr->src_if == OGS_PFCP_INTERFACE_ACCESS) {
+                        pdr->flow_description[pdr->num_of_flow++] =
+                            pf->flow_description;
+                        break;
+                    }
+                } else {
+                    ogs_error("Flow Bidirectional is not supported[%d]",
+                            pf->direction);
+                    break;
+                }
             }
         }
     }
-#endif
 
-#if 0 /* FIXME */
-    if (flags & (OGS_GTP_MODIFY_TFT_UPDATE|OGS_GTP_MODIFY_QOS_UPDATE)) {
-#else
-    if (flags & OGS_GTP_MODIFY_QOS_UPDATE) {
-#endif
+    if (flags & (OGS_GTP_MODIFY_TFT_UPDATE|OGS_GTP_MODIFY_QOS_UPDATE))
         smf_epc_pfcp_send_bearer_modification_request(
                 bearer, OGS_PFCP_MODIFY_QOS_UPDATE);
-    }
 }
 
 void smf_s5c_handle_delete_bearer_response(
@@ -689,6 +698,7 @@ void smf_s5c_handle_bearer_resource_command(
                     ogs_free(pf->flow_description);
                 pf->flow_description =
                     ogs_ipfw_encode_flow_description(&pf->ipfw_rule);
+                pf->direction = tft.pf[i].direction;
             }
 
             tft_update = 1;
@@ -717,6 +727,7 @@ void smf_s5c_handle_bearer_resource_command(
                 ogs_free(pf->flow_description);
             pf->flow_description =
                 ogs_ipfw_encode_flow_description(&pf->ipfw_rule);
+            pf->direction = tft.pf[i].direction;
 
             tft_update = 1;
         }
