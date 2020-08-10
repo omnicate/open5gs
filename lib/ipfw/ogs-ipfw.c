@@ -24,18 +24,6 @@
 #endif
 #endif
 
-#ifndef OGS_ERROR
-#define OGS_ERROR -1
-#endif
-
-#ifndef OGS_OK
-#define OGS_OK 0
-#endif
-
-#ifndef OGS_IPV6_LEN
-#define OGS_IPV6_LEN 16
-#endif
-
 #include "ipfw2.h"
 #include "objs/include_e/netinet/ip_fw.h"
 
@@ -63,10 +51,8 @@ int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *flow_description)
 
     char *description = NULL;
 
-    if (!ipfw_rule) {
-        fprintf(stderr, "ipfw_rule is NULL\n");
-        return OGS_ERROR;
-    }
+    ogs_assert(ipfw_rule);
+    ogs_assert(flow_description);
 
 	rbufsize = sizeof(rulebuf);
 	memset(rulebuf, 0, rbufsize);
@@ -74,36 +60,31 @@ int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *flow_description)
     av[0] = NULL;
 
     /* ACTION */
-    if (!flow_description) {
-        /* FIXME : OLD gcc generates uninitialized warning */
-        fprintf(stderr, "description is NULL\n");
-        return OGS_ERROR;
-    }
 
     description = ogs_strdup(flow_description);
     ogs_assert(description);
 
-    token = strtok_r(description, " ", &saveptr);
+    token = ogs_strtok_r(description, " ", &saveptr);
     if (strcmp(token, "permit") != 0) {
-        fprintf(stderr, "Not begins with reserved keyword : 'permit'");
+        ogs_error("Not begins with reserved keyword : 'permit'");
         ogs_free(description);
         return OGS_ERROR;
     }
     av[1] = token;
 
     /* Save DIRECTION */
-    dir = token = strtok_r(NULL, " ", &saveptr);
+    dir = token = ogs_strtok_r(NULL, " ", &saveptr);
     if (strcmp(token, "out") != 0) {
-        fprintf(stderr, "Not begins with reserved keyword : 'permit out'");
+        ogs_error("Not begins with reserved keyword : 'permit out'");
         ogs_free(description);
         return OGS_ERROR;
     }
 
     /* ADDR */
-    token = strtok_r(NULL, " ", &saveptr);
+    token = ogs_strtok_r(NULL, " ", &saveptr);
     while (token != NULL) {
         av[i++] = token;
-        token = strtok_r(NULL, " ", &saveptr);
+        token = ogs_strtok_r(NULL, " ", &saveptr);
     }
 
     /* Add DIRECTION */
@@ -177,11 +158,21 @@ int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *flow_description)
 
     memset(&zero_rule, 0, sizeof(ogs_ipfw_rule_t));
     if (memcmp(ipfw_rule, &zero_rule, sizeof(ogs_ipfw_rule_t)) == 0) {
-        fprintf(stderr, "Cannot find Flow-Description");
+        ogs_error("Cannot find Flow-Description");
         ogs_free(description);
         return OGS_ERROR;
     }
 
     ogs_free(description);
     return OGS_OK;
+}
+
+char *ogs_ipfw_encode_flow_description(ogs_ipfw_rule_t *ipfw_rule)
+{
+    char *flow_description = NULL;
+
+    ogs_assert(ipfw_rule);
+    fprintf(stderr, "asdflkjsadfasdf");
+
+    return flow_description;
 }

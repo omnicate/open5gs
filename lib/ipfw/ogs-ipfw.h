@@ -62,6 +62,7 @@ typedef struct ogs_ipfw_rule_s {
 } ogs_ipfw_rule_t;
 
 int ogs_ipfw_compile_rule(ogs_ipfw_rule_t *ipfw_rule, char *flow_description);
+char *ogs_ipfw_encode_flow_description(ogs_ipfw_rule_t *ipfw_rule);
 
 #ifdef __cplusplus
 }

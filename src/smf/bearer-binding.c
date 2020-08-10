@@ -279,6 +279,8 @@ void smf_bearer_binding(smf_sess_t *sess)
                     smf_pf_remove(pf);
                     break;
                 }
+                ogs_fatal("%s", pf->flow_description);
+                ogs_ipfw_encode_flow_description(&pf->ipfw_rule);
             }
 
             memset(&tft, 0, sizeof tft);
