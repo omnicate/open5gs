@@ -265,13 +265,15 @@ ogs_pkbuf_t *smf_5gc_n4_build_session_modification_request(
     memset(&pfcp_message, 0, sizeof(ogs_pfcp_message_t));
 
     if (modify_flags & OGS_PFCP_MODIFY_DEACTIVATE) {
-        /* Update FAR - Only DL */
         i = 0;
         ogs_list_for_each(&sess->bearer_list, bearer) {
             ogs_list_for_each(&bearer->pfcp.far_list, far) {
-                ogs_pfcp_build_update_dl_far_deactivate(
-                        &req->update_far[i], i, far);
-                i++;
+                /* Update FAR - Only DL */
+                if (far->dst_if == OGS_PFCP_INTERFACE_ACCESS) {
+                    ogs_pfcp_build_update_far_deactivate(
+                            &req->update_far[i], i, far);
+                    i++;
+                }
             }
         }
     }

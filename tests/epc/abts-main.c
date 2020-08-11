@@ -28,11 +28,15 @@ abts_suite *test_crash(abts_suite *suite);
 const struct testlist {
     abts_suite *(*func)(abts_suite *suite);
 } alltests[] = {
+#if 0
     {test_s1setup},
+#endif
     {test_attach},
+#if 0
     {test_volte},
     {test_handover},
     {test_crash},
+#endif
     {NULL},
 };
 

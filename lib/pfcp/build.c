@@ -443,22 +443,20 @@ void ogs_pfcp_build_create_far(
     }
 }
 
-void ogs_pfcp_build_update_dl_far_deactivate(
+void ogs_pfcp_build_update_far_deactivate(
         ogs_pfcp_tlv_update_far_t *message, int i, ogs_pfcp_far_t *far)
 {
     ogs_assert(message);
     ogs_assert(far);
 
-    if (far->dst_if == OGS_PFCP_INTERFACE_ACCESS) {
-        message->presence = 1;
-        message->far_id.presence = 1;
-        message->far_id.u32 = far->id;
+    message->presence = 1;
+    message->far_id.presence = 1;
+    message->far_id.u32 = far->id;
 
-        far->apply_action =
-            OGS_PFCP_APPLY_ACTION_BUFF | OGS_PFCP_APPLY_ACTION_NOCP;
-        message->apply_action.presence = 1;
-        message->apply_action.u8 = far->apply_action;
-    }
+    far->apply_action =
+        OGS_PFCP_APPLY_ACTION_BUFF | OGS_PFCP_APPLY_ACTION_NOCP;
+    message->apply_action.presence = 1;
+    message->apply_action.u8 = far->apply_action;
 }
 
 void ogs_pfcp_build_update_far_activate(

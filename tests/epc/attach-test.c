@@ -1758,12 +1758,16 @@ abts_suite *test_attach(abts_suite *suite)
 {
     suite = ADD_SUITE(suite)
 
+#if 0
     abts_run_test(suite, attach_test1, NULL);
     abts_run_test(suite, attach_test2, NULL);
+#endif
     abts_run_test(suite, attach_test3, NULL);
+#if 0
     abts_run_test(suite, attach_test4, NULL);
     abts_run_test(suite, attach_test5, NULL);
     abts_run_test(suite, attach_test6, NULL);
+#endif
 
     return suite;
 }
