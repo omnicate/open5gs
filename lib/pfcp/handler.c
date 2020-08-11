@@ -239,6 +239,10 @@ ogs_pfcp_pdr_t *ogs_pfcp_handle_create_pdr(ogs_pfcp_sess_t *sess,
         pdr->f_teid.teid = be32toh(pdr->f_teid.teid);
     }
 
+    if (message->pdi.qfi.presence) {
+        pdr->qfi = message->pdi.qfi.u8;
+    }
+
     if (message->outer_header_removal.presence) {
         pdr->outer_header_removal_len = message->outer_header_removal.len;
         memcpy(&pdr->outer_header_removal, message->outer_header_removal.data,

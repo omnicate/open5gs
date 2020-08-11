@@ -315,6 +315,11 @@ void ogs_pfcp_build_create_pdr(
         message->pdi.local_f_teid.len = pdr->f_teid_len;
     }
 
+    if (pdr->qfi) {
+        message->pdi.qfi.presence = 1;
+        message->pdi.qfi.u8 = pdr->qfi;
+    }
+
     if (pdr->outer_header_removal_len) {
         message->outer_header_removal.presence = 1;
         message->outer_header_removal.data = &pdr->outer_header_removal;

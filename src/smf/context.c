@@ -1148,7 +1148,8 @@ smf_bearer_t *smf_qos_flow_add(smf_sess_t *sess)
 
     /* Allocate QFI */
     qer->qfi = OGS_NEXT_ID(sess->qos_flow_identifier, 1, OGS_MAX_QOS_FLOW_ID+1);
-    qos_flow->qfi = qer->qfi;
+
+    qos_flow->qfi = ul_pdr->qfi = qer->qfi;
 
     qos_flow->sess = sess;
 

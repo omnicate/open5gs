@@ -879,19 +879,13 @@ static uint64_t pdr_hash_keygen(uint32_t teid, uint8_t qfi)
 
 void ogs_pfcp_pdr_hash_set(ogs_pfcp_pdr_t *pdr)
 {
-    ogs_pfcp_qer_t *qer = NULL;
-    uint8_t qfi = 0;
-
     ogs_assert(pdr);
-
-    qer = pdr->qer;
-    if (qer && qer->qfi) qfi = qer->qfi;
 
     if (pdr->hashkey)
         ogs_hash_set(ogs_pfcp_self()->pdr_hash, &pdr->hashkey,
                 sizeof(pdr->hashkey), NULL);
 
-    pdr->hashkey = pdr_hash_keygen(pdr->f_teid.teid, qfi);
+    pdr->hashkey = pdr_hash_keygen(pdr->f_teid.teid, pdr->qfi);
     ogs_hash_set(ogs_pfcp_self()->pdr_hash, &pdr->hashkey,
             sizeof(pdr->hashkey), pdr);
 }
