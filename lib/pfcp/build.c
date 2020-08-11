@@ -396,6 +396,11 @@ void ogs_pfcp_build_update_pdr(
         message->pdi.local_f_teid.data = &pdrbuf[i].f_teid;
         message->pdi.local_f_teid.len = pdr->f_teid_len;
     }
+
+    if (pdr->qfi) {
+        message->pdi.qfi.presence = 1;
+        message->pdi.qfi.u8 = pdr->qfi;
+    }
 }
 
 static struct {

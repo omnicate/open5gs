@@ -364,6 +364,10 @@ ogs_pfcp_pdr_t *ogs_pfcp_handle_update_pdr(ogs_pfcp_sess_t *sess,
                     message->pdi.local_f_teid.data, pdr->f_teid_len);
             pdr->f_teid.teid = be32toh(pdr->f_teid.teid);
         }
+
+        if (message->pdi.qfi.presence) {
+            pdr->qfi = message->pdi.qfi.u8;
+        }
     }
 
     return pdr;
