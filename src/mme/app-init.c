@@ -19,12 +19,31 @@
 
 #include "ogs-sctp.h"
 #include "ogs-app.h"
+#include "microhttpd.h"
+#include "prom.h"
+#include "promhttp.h"
+
+struct MHD_Daemon *mhddaemon;
+
+static void init(void) {
+    prom_collector_registry_default_init();
+
+    promhttp_set_active_collector_registry(NULL);
+}
 
 int app_initialize(const char *const argv[])
 {
     int rv;
 
     ogs_sctp_init(ogs_app()->usrsctp.udp_port);
+
+    init();
+
+    mhddaemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, 8000, NULL, NULL);
+    if (mhddaemon == NULL) {
+        return 1;
+    }
+
     rv = mme_initialize();
     if (rv != OGS_OK) {
         ogs_error("Failed to intialize MME");
@@ -37,6 +56,9 @@ int app_initialize(const char *const argv[])
 
 void app_terminate(void)
 {
+    prom_collector_registry_destroy(PROM_COLLECTOR_REGISTRY_DEFAULT);
+    MHD_stop_daemon(mhddaemon);
+
     mme_terminate();
     ogs_sctp_final();
     ogs_info("MME terminate...done");
