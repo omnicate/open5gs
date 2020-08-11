@@ -109,6 +109,15 @@ typedef struct sgwc_sess_s {
     uint64_t        sgwc_sxa_seid;  /* SGW-C SEID is dervied from INDEX */
     uint64_t        sgwu_sxa_seid;  /* SGW-U SEID is received from Peer */
 
+    /*
+     * PFCP modification request is set to FALSE
+     * PFCP modifitation response is set to TRUE
+     *
+     * When SGW-C is received Release Access Bearers Request,
+     * it is used to check if all sessions are deactivated.
+     */
+    bool            deactivated;
+
     ogs_pfcp_pdr_id_t   pdr_id;     /* ID Generator(1~OGS_MAX_NUM_OF_PDR) */
     ogs_pfcp_far_id_t   far_id;     /* ID Generator(1~OGS_MAX_NUM_OF_FAR) */
     ogs_pfcp_urr_id_t   urr_id;     /* ID Generator(1~OGS_MAX_NUM_OF_URR) */

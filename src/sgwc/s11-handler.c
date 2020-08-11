@@ -689,6 +689,8 @@ void sgwc_s11_handle_release_access_bearers_request(
 
     ogs_assert(sgwc_ue);
     ogs_list_for_each(&sgwc_ue->sess_list, sess) {
+
+        sess->deactivated = false;
         sgwc_pfcp_send_sess_modification_request(
                 sess, s11_xact, gtpbuf, OGS_PFCP_MODIFY_DEACTIVATE);
     }

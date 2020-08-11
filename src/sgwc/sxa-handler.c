@@ -605,38 +605,46 @@ void sgwc_sxa_handle_session_modification_response(
             ogs_assert_if_reached();
         }
     } else if (flags & OGS_PFCP_MODIFY_DEACTIVATE) {
-        ogs_gtp_release_access_bearers_request_t *gtp_req = NULL;
-        ogs_gtp_release_access_bearers_response_t *gtp_rsp = NULL;
+        bool all_sessions_are_deactivated;
 
         s11_xact = pfcp_xact->assoc_xact;
         ogs_assert(s11_xact);
 
-        gtp_req = &recv_message->release_access_bearers_request;
-        ogs_assert(gtp_req);
+        sess->deactivated = true;
 
-        gtp_rsp = &send_message.release_access_bearers_response;
-        ogs_assert(gtp_rsp);
+        all_sessions_are_deactivated = true;
+        ogs_list_for_each(&sgwc_ue->sess_list, sess) {
+            if (sess->deactivated == false)
+                all_sessions_are_deactivated = false;
+        }
 
-        memset(&send_message, 0, sizeof(ogs_gtp_message_t));
+        if (all_sessions_are_deactivated == true) {
+            ogs_gtp_release_access_bearers_response_t *gtp_rsp = NULL;
 
-        memset(&cause, 0, sizeof(cause));
-        cause.value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
+            gtp_rsp = &send_message.release_access_bearers_response;
+            ogs_assert(gtp_rsp);
 
-        gtp_rsp->cause.presence = 1;
-        gtp_rsp->cause.data = &cause;
-        gtp_rsp->cause.len = sizeof(cause);
+            memset(&send_message, 0, sizeof(ogs_gtp_message_t));
 
-        send_message.h.type = OGS_GTP_RELEASE_ACCESS_BEARERS_RESPONSE_TYPE;
-        send_message.h.teid = sgwc_ue->mme_s11_teid;
+            memset(&cause, 0, sizeof(cause));
+            cause.value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
 
-        pkbuf = ogs_gtp_build_msg(&send_message);
-        ogs_expect_or_return(pkbuf);
+            gtp_rsp->cause.presence = 1;
+            gtp_rsp->cause.data = &cause;
+            gtp_rsp->cause.len = sizeof(cause);
 
-        rv = ogs_gtp_xact_update_tx(s11_xact, &send_message.h, pkbuf);
-        ogs_expect_or_return(rv == OGS_OK);
+            send_message.h.type = OGS_GTP_RELEASE_ACCESS_BEARERS_RESPONSE_TYPE;
+            send_message.h.teid = sgwc_ue->mme_s11_teid;
 
-        rv = ogs_gtp_xact_commit(s11_xact);
-        ogs_expect(rv == OGS_OK);
+            pkbuf = ogs_gtp_build_msg(&send_message);
+            ogs_expect_or_return(pkbuf);
+
+            rv = ogs_gtp_xact_update_tx(s11_xact, &send_message.h, pkbuf);
+            ogs_expect_or_return(rv == OGS_OK);
+
+            rv = ogs_gtp_xact_commit(s11_xact);
+            ogs_expect(rv == OGS_OK);
+        }
     } else {
         ogs_fatal("Invalid modify_flags[0x%llx]", (long long)flags);
         ogs_assert_if_reached();
