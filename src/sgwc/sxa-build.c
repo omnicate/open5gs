@@ -112,6 +112,42 @@ ogs_pkbuf_t *sgwc_sxa_build_session_establishment_request(
     return pkbuf;
 }
 
+ogs_pkbuf_t *sgwc_sxa_build_sess_modification_request(
+        uint8_t type, sgwc_sess_t *sess, uint64_t modify_flags)
+{
+    int i;
+
+    ogs_pfcp_message_t pfcp_message;
+    ogs_pfcp_session_modification_request_t *req = NULL;
+    ogs_pfcp_far_t *far = NULL;
+    ogs_pkbuf_t *pkbuf = NULL;
+    sgwc_bearer_t *bearer = NULL;
+
+    ogs_debug("Session Modification Request");
+    ogs_assert(sess);
+    ogs_assert(modify_flags & OGS_PFCP_MODIFY_DEACTIVATE);
+
+    req = &pfcp_message.pfcp_session_modification_request;
+    memset(&pfcp_message, 0, sizeof(ogs_pfcp_message_t));
+
+    i = 0;
+    ogs_list_for_each(&sess->bearer_list, bearer) {
+        ogs_list_for_each(&bearer->pfcp.far_list, far) {
+            /* Update FAR - Only DL */
+            if (far->dst_if == OGS_PFCP_INTERFACE_ACCESS) {
+                ogs_pfcp_build_update_far_deactivate(
+                        &req->update_far[i], i, far);
+                i++;
+            }
+        }
+    }
+
+    pfcp_message.h.type = type;
+    pkbuf = ogs_pfcp_build_msg(&pfcp_message);
+
+    return pkbuf;
+}
+
 ogs_pkbuf_t *sgwc_sxa_build_bearer_modification_request(
         uint8_t type, sgwc_bearer_t *bearer, uint64_t modify_flags)
 {

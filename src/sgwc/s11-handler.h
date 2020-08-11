@@ -47,7 +47,7 @@ void sgwc_s11_handle_delete_bearer_response(
 
 void sgwc_s11_handle_release_access_bearers_request(
         sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
-        ogs_gtp_release_access_bearers_request_t *req);
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message);
 void sgwc_s11_handle_lo_dldata_notification(sgwc_bearer_t *bearer);
 void sgwc_s11_handle_downlink_data_notification_ack(
         sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,

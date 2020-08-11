@@ -28,6 +28,8 @@ extern "C" {
 
 ogs_pkbuf_t *sgwc_sxa_build_session_establishment_request(
         uint8_t type, sgwc_sess_t *sess);
+ogs_pkbuf_t *sgwc_sxa_build_sess_modification_request(
+        uint8_t type, sgwc_sess_t *sess, uint64_t modify_flags);
 ogs_pkbuf_t *sgwc_sxa_build_bearer_modification_request(
         uint8_t type, sgwc_bearer_t *bearer, uint64_t modify_flags);
 ogs_pkbuf_t *sgwc_sxa_build_tunnel_modification_request(

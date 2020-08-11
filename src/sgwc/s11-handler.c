@@ -658,19 +658,16 @@ void sgwc_s11_handle_delete_bearer_response(
 
 void sgwc_s11_handle_release_access_bearers_request(
         sgwc_ue_t *sgwc_ue, ogs_gtp_xact_t *s11_xact,
-        ogs_gtp_release_access_bearers_request_t *req)
+        ogs_pkbuf_t *gtpbuf, ogs_gtp_message_t *message)
 {
-    int rv;
-    ogs_gtp_release_access_bearers_response_t *rsp = NULL;
-    ogs_pkbuf_t *pkbuf = NULL;
-    ogs_gtp_message_t message;
-    sgwc_bearer_t *bearer = NULL, *next_bearer = NULL;
-    sgwc_tunnel_t *dl_tunnel = NULL;
     sgwc_sess_t *sess = NULL;
-    
+
+    ogs_gtp_release_access_bearers_request_t *req = NULL;
     ogs_gtp_cause_t cause;
 
     ogs_assert(s11_xact);
+    ogs_assert(message);
+    req = &message->release_access_bearers_request;
     ogs_assert(req);
 
     ogs_debug("Release Access Bearers Request");
@@ -690,49 +687,11 @@ void sgwc_s11_handle_release_access_bearers_request(
         return;
     }
 
-    rsp = &message.release_access_bearers_response;
-    memset(&message, 0, sizeof(ogs_gtp_message_t));
-
-    rsp->cause.presence = 1;
-    rsp->cause.data = &cause;
-    rsp->cause.len = sizeof(cause);
-
-    ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
-        sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
-    /* Set UE state to S1UE_INACTIVE */
-    SGW_SET_UE_STATE(sgwc_ue, SGW_S1U_INACTIVE);
-    /* ReSet UE state to S1UE_INACTIVE */
-    SGW_RESET_UE_STATE(sgwc_ue, SGW_DL_NOTI_SENT);
-
-    /* Release S1U(DL) path */
-    sess = sgwc_sess_first(sgwc_ue);
-    while (sess) {
-        bearer = ogs_list_first(&sess->bearer_list);
-        while (bearer) {
-            next_bearer = ogs_list_next(bearer);
-
-            dl_tunnel = sgwc_dl_tunnel_in_bearer(bearer);
-            ogs_assert(dl_tunnel);
-
-            dl_tunnel->remote_teid = 0;
-
-            bearer = next_bearer;
-        }
-
-        sess = sgwc_sess_next(sess);
+    ogs_assert(sgwc_ue);
+    ogs_list_for_each(&sgwc_ue->sess_list, sess) {
+        sgwc_pfcp_send_sess_modification_request(
+                sess, s11_xact, gtpbuf, OGS_PFCP_MODIFY_DEACTIVATE);
     }
-
-    message.h.type = OGS_GTP_RELEASE_ACCESS_BEARERS_RESPONSE_TYPE;
-    message.h.teid = sgwc_ue->mme_s11_teid;
-
-    pkbuf = ogs_gtp_build_msg(&message);
-    ogs_expect_or_return(pkbuf);
-
-    rv = ogs_gtp_xact_update_tx(s11_xact, &message.h, pkbuf);
-    ogs_expect_or_return(rv == OGS_OK);
-
-    rv = ogs_gtp_xact_commit(s11_xact);
-    ogs_expect(rv == OGS_OK);
 }
 
 void sgwc_s11_handle_lo_dldata_notification(sgwc_bearer_t *bearer)

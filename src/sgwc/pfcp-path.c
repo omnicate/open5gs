@@ -224,6 +224,36 @@ void sgwc_pfcp_send_session_establishment_request(
     ogs_expect(rv == OGS_OK);
 }
 
+void sgwc_pfcp_send_sess_modification_request(
+        sgwc_sess_t *sess, ogs_gtp_xact_t *gtp_xact,
+        ogs_pkbuf_t *gtpbuf, uint64_t flags)
+{
+    int rv;
+    ogs_pkbuf_t *sxabuf = NULL;
+    ogs_pfcp_header_t h;
+    ogs_pfcp_xact_t *xact = NULL;
+
+    ogs_assert(sess);
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
+    h.seid = sess->sgwu_sxa_seid;
+
+    sxabuf = sgwc_sxa_build_sess_modification_request(h.type, sess, flags);
+    ogs_expect_or_return(sxabuf);
+
+    xact = ogs_pfcp_xact_local_create(
+            sess->pfcp_node, &h, sxabuf, sess_timeout, sess);
+    ogs_expect_or_return(xact);
+    xact->assoc_xact = gtp_xact;
+    xact->modify_flags = flags;
+    if (gtpbuf)
+        xact->gtpbuf = ogs_pkbuf_copy(gtpbuf);
+
+    rv = ogs_pfcp_xact_commit(xact);
+    ogs_expect(rv == OGS_OK);
+}
+
 void sgwc_pfcp_send_bearer_modification_request(
         sgwc_bearer_t *bearer, ogs_gtp_xact_t *gtp_xact,
         ogs_pkbuf_t *gtpbuf, uint64_t flags)

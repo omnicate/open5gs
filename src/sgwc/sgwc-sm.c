@@ -216,8 +216,7 @@ void sgwc_state_operational(ogs_fsm_t *s, sgwc_event_t *e)
             break;
         case OGS_GTP_RELEASE_ACCESS_BEARERS_REQUEST_TYPE:
             sgwc_s11_handle_release_access_bearers_request(
-                    sgwc_ue, gtp_xact,
-                    &gtp_message.release_access_bearers_request);
+                    sgwc_ue, gtp_xact, recvbuf, &gtp_message);
             break;
         case OGS_GTP_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE_TYPE:
             sgwc_s11_handle_downlink_data_notification_ack(
