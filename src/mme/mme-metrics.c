@@ -20,6 +20,8 @@
 #include "mme-metrics.h"
 #include "prom.h"
 
+const char* messageCounterLabels[5] = {"s1ap", "emm", "esm", "s6a", "s11"};
+
 void mme_metrics_initialize(void) {
     mme_up_gauge = prom_collector_registry_must_register_metric(
             prom_gauge_new(
@@ -51,11 +53,10 @@ void mme_metrics_initialize(void) {
                     "Open5GS MME number of sessions",
                     0,
                     NULL));
-    const char* messagesCounterLabels[5] = {"s1ap", "emm", "esm", "s6a", "s11"};
     mme_messages_counter = prom_collector_registry_must_register_metric(
             prom_counter_new(
                     "open5gs_mme_messages_total",
                     "open5gs MME messages handled by the state machine",
                     5,
-                    messagesCounterLabels));
+                    messageCounterLabels));
 }
