@@ -241,8 +241,7 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
         if (rc == OGS_OK) {
             e->enb = enb;
             e->s1ap_message = &s1ap_message;
-            const char* s1apLabel[1] = {"s1ap"};
-            prom_counter_inc(mme_messages_counter, s1apLabel);
+            prom_counter_inc(mme_messages_counter, &messageCounterLabels[0]);
             ogs_fsm_dispatch(&enb->sm, e);
         } else {
             ogs_warn("Cannot decode S1AP message");
@@ -324,9 +323,7 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
         e->mme_ue = mme_ue;
         e->nas_message = &nas_message;
 
-        const char* emmLabel[1] = {"emm"};
-        prom_counter_inc(mme_messages_counter, emmLabel);
-
+        prom_counter_inc(mme_messages_counter, &messageCounterLabels[1]);
         ogs_fsm_dispatch(&mme_ue->sm, e);
         if (OGS_FSM_CHECK(&mme_ue->sm, emm_state_exception)) {
             mme_send_delete_session_or_mme_ue_context_release(mme_ue);
@@ -369,9 +366,7 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
         e->bearer = bearer;
         e->nas_message = &nas_message;
 
-        const char* esmLabel[1] = {"esm"};
-        prom_counter_inc(mme_messages_counter, esmLabel);
-
+        prom_counter_inc(mme_messages_counter, &messageCounterLabels[2]);
         ogs_fsm_dispatch(&bearer->sm, e);
         if (OGS_FSM_CHECK(&bearer->sm, esm_state_bearer_deactivated)) {
             if (default_bearer->ebi == bearer->ebi) {
@@ -441,9 +436,7 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
             break;
         }
 
-        const char* s6aLabel[1] = {"s6a"};
-        prom_counter_inc(mme_messages_counter, s6aLabel);
-
+        prom_counter_inc(mme_messages_counter, &messageCounterLabels[4]);
         switch (s6a_message->cmd_code) {
         case OGS_DIAM_S6A_CMD_CODE_AUTHENTICATION_INFORMATION:
             mme_s6a_handle_aia(mme_ue, &s6a_message->aia_message);
@@ -546,9 +539,7 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
             break;
         }
 
-        const char* s11Label[1] = {"s11"};
-        prom_counter_inc(mme_messages_counter, s11Label);
-
+        prom_counter_inc(mme_messages_counter, &messageCounterLabels[4]);
         switch (gtp_message.h.type) {
         case OGS_GTP_ECHO_REQUEST_TYPE:
             mme_s11_handle_echo_request(xact, &gtp_message.echo_request);
