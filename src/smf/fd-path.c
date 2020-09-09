@@ -535,6 +535,7 @@ static void smf_gx_cca_cb(void *data, struct msg **msg)
     gxbuf_len = sizeof(ogs_diam_gx_message_t);
     ogs_assert(gxbuf_len < 8192);
     gxbuf = ogs_pkbuf_alloc(NULL, gxbuf_len);
+    ogs_assert(gxbuf);
     ogs_pkbuf_put(gxbuf, gxbuf_len);
     gx_message = (ogs_diam_gx_message_t *)gxbuf->data;
     ogs_assert(gx_message);
@@ -747,14 +748,14 @@ out:
         e->sess = sess;
         e->pkbuf = gxbuf;
         e->gtp_xact = xact;
-        rv = ogs_queue_push(smf_self()->queue, e);
+        rv = ogs_queue_push(ogs_app()->queue, e);
         if (rv != OGS_OK) {
             ogs_warn("ogs_queue_push() failed:%d", (int)rv);
             ogs_diam_gx_message_free(gx_message);
             ogs_pkbuf_free(e->pkbuf);
             smf_event_free(e);
         } else {
-            ogs_pollset_notify(smf_self()->pollset);
+            ogs_pollset_notify(ogs_app()->pollset);
         }
     } else {
         ogs_diam_gx_message_free(gx_message);
@@ -855,6 +856,7 @@ static int smf_gx_rar_cb( struct msg **msg, struct avp *avp,
     gxbuf_len = sizeof(ogs_diam_gx_message_t);
     ogs_assert(gxbuf_len < 8192);
     gxbuf = ogs_pkbuf_alloc(NULL, gxbuf_len);
+    ogs_assert(gxbuf);
     ogs_pkbuf_put(gxbuf, gxbuf_len);
     gx_message = (ogs_diam_gx_message_t *)gxbuf->data;
     ogs_assert(gx_message);
@@ -972,14 +974,14 @@ static int smf_gx_rar_cb( struct msg **msg, struct avp *avp,
 
     e->sess = sess;
     e->pkbuf = gxbuf;
-    rv = ogs_queue_push(smf_self()->queue, e);
+    rv = ogs_queue_push(ogs_app()->queue, e);
     if (rv != OGS_OK) {
         ogs_warn("ogs_queue_push() failed:%d", (int)rv);
         ogs_diam_gx_message_free(gx_message);
         ogs_pkbuf_free(e->pkbuf);
         smf_event_free(e);
     } else {
-        ogs_pollset_notify(smf_self()->pollset);
+        ogs_pollset_notify(ogs_app()->pollset);
     }
 
     /* Set the Auth-Application-Id AVP */
@@ -1042,8 +1044,16 @@ int smf_fd_init(void)
     int ret;
 	struct disp_when data;
 
+    if (smf_self()->diam_conf_path == NULL &&
+        (smf_self()->diam_config->cnf_diamid == NULL ||
+        smf_self()->diam_config->cnf_diamrlm == NULL ||
+        smf_self()->diam_config->cnf_addr == NULL)) {
+        ogs_warn("No diameter configuration");
+        return OGS_OK;
+    }
+
     ogs_thread_mutex_init(&sess_state_mutex);
-    ogs_pool_init(&sess_state_pool, ogs_config()->pool.sess);
+    ogs_pool_init(&sess_state_pool, ogs_app()->pool.sess);
 
     ret = ogs_diam_init(FD_MODE_CLIENT|FD_MODE_SERVER,
                 smf_self()->diam_conf_path, smf_self()->diam_config);
@@ -1078,6 +1088,13 @@ int smf_fd_init(void)
 void smf_fd_final(void)
 {
     int ret;
+
+    if (smf_self()->diam_conf_path == NULL &&
+        (smf_self()->diam_config->cnf_diamid == NULL ||
+        smf_self()->diam_config->cnf_diamrlm == NULL ||
+        smf_self()->diam_config->cnf_addr == NULL)) {
+        return;
+    }
 
 	ret = fd_sess_handler_destroy(&smf_gx_reg, NULL);
     ogs_assert(ret == 0);

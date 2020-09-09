@@ -46,7 +46,15 @@ typedef struct ogs_pfcp_context_s {
 
     uint32_t        pfcp_started;   /* UTC time when the PFCP entity started */
 
-    ogs_list_t      n4_list;        /* PFCP Node List */
+    /* CP Function Features */
+    ogs_pfcp_cp_function_features_t cp_function_features;
+    /* UP Function Features */
+    ogs_pfcp_up_function_features_t up_function_features;
+    int up_function_features_len;
+
+    ogs_list_t      gtpu_resource_list; /* UP IP Resource List */
+
+    ogs_list_t      peer_list;      /* PFCP Node List */
     ogs_pfcp_node_t *node;          /* Iterator for Peer round-robin */
 
     ogs_list_t      dev_list;       /* Tun Device List */
@@ -95,31 +103,28 @@ typedef struct ogs_pfcp_gtpu_resource_s {
     ogs_pfcp_user_plane_ip_resource_info_t info;
 } __attribute__ ((packed)) ogs_pfcp_gtpu_resource_t;
 
+typedef struct ogs_pfcp_sess_s ogs_pfcp_sess_t;
 typedef struct ogs_pfcp_pdr_s ogs_pfcp_pdr_t;
 typedef struct ogs_pfcp_far_s ogs_pfcp_far_t;
 typedef struct ogs_pfcp_urr_s ogs_pfcp_urr_t;
 typedef struct ogs_pfcp_qer_s ogs_pfcp_qer_t;
 typedef struct ogs_pfcp_bar_s ogs_pfcp_bar_t;
 
-typedef struct ogs_pfcp_sess_s {
-    ogs_list_t          pdr_list;       /* PDR List */
-    ogs_list_t          far_list;       /* FAR List */
-    ogs_list_t          urr_list;       /* URR List */
-    ogs_list_t          qer_list;       /* QER List */
-    ogs_pfcp_bar_t      *bar;           /* BAR Item */
-
-    /* Related Context */
-    ogs_pfcp_pdr_t      *default_pdr;   /* Used by UPF */
-} ogs_pfcp_sess_t;
-
 typedef struct ogs_pfcp_pdr_s {
     ogs_lnode_t             lnode;
+    uint32_t                index;
 
     uint64_t                hashkey;
 
+    uint8_t                 *id_node;      /* Pool-Node for ID */
     ogs_pfcp_pdr_id_t       id;
     ogs_pfcp_precedence_t   precedence;
     ogs_pfcp_interface_t    src_if;
+
+    union {
+        char *apn;
+        char *dnn;
+    };
 
     ogs_pfcp_ue_ip_addr_t   ue_ip_addr;
     int                     ue_ip_addr_len;
@@ -127,6 +132,9 @@ typedef struct ogs_pfcp_pdr_s {
     ogs_pfcp_f_teid_t       f_teid;
     int                     f_teid_len;
     ogs_pfcp_outer_header_removal_t outer_header_removal;
+    int                     outer_header_removal_len;
+
+    uint8_t                 qfi;
 
     ogs_pfcp_far_t          *far;
     ogs_pfcp_urr_t          *urr;
@@ -135,20 +143,26 @@ typedef struct ogs_pfcp_pdr_s {
     int                     num_of_flow;
     char                    *flow_description[OGS_MAX_NUM_OF_RULE];
 
+    ogs_list_t              rule_list;      /* Rule List */
+
     /* Related Context */
     ogs_pfcp_sess_t         *sess;
 } ogs_pfcp_pdr_t;
 
 typedef struct ogs_pfcp_far_s {
     ogs_lnode_t             lnode;
+    uint32_t                index;
 
+    uint8_t                 *id_node;      /* Pool-Node for ID */
     ogs_pfcp_far_id_t       id;
     ogs_pfcp_apply_action_t apply_action;
     ogs_pfcp_interface_t    dst_if;
     ogs_pfcp_outer_header_creation_t outer_header_creation;
     int                     outer_header_creation_len;
 
-#define MAX_NUM_OF_PACKET_BUFFER 512
+    ogs_pfcp_smreq_flags_t  smreq_flags;
+
+#define MAX_NUM_OF_PACKET_BUFFER 48
     uint32_t                num_of_buffered_packet;
     ogs_pkbuf_t*            buffered_packet[MAX_NUM_OF_PACKET_BUFFER];
 
@@ -157,9 +171,20 @@ typedef struct ogs_pfcp_far_s {
     void                    *gnode;
 } ogs_pfcp_far_t;
 
+/*
+ * Note that buffer size 48 should not be modified. To modify this value,
+ * we need to consider the overflow of the FAR memory pool.
+ *
+ * 8192 memory pool is currently being used.
+ * If you want to, you need to add big memory pool for FAR memory.
+ */
+OGS_STATIC_ASSERT((sizeof(ogs_pfcp_far_t) * OGS_MAX_NUM_OF_FAR) < 8192);
+
 typedef struct ogs_pfcp_urr_s {
     ogs_lnode_t             lnode;
+    uint32_t                index;
 
+    uint8_t                 *id_node;      /* Pool-Node for ID */
     ogs_pfcp_urr_id_t       id;
 
     ogs_pfcp_sess_t         *sess;
@@ -167,7 +192,9 @@ typedef struct ogs_pfcp_urr_s {
 
 typedef struct ogs_pfcp_qer_s {
     ogs_lnode_t             lnode;
+    uint32_t                index;
 
+    uint8_t                 *id_node;      /* Pool-Node for ID */
     ogs_pfcp_qer_id_t       id;
 
     ogs_pfcp_gate_status_t  gate_status;
@@ -180,10 +207,31 @@ typedef struct ogs_pfcp_qer_s {
 } ogs_pfcp_qer_t;
 
 typedef struct ogs_pfcp_bar_s {
+    ogs_lnode_t             lnode;
+    uint32_t                index;
+
+    uint8_t                 *id_node;      /* Pool-Node for ID */
     ogs_pfcp_bar_id_t       id;
 
     ogs_pfcp_sess_t         *sess;
 } ogs_pfcp_bar_t;
+
+typedef struct ogs_pfcp_sess_s {
+    ogs_list_t          pdr_list;       /* PDR List */
+    ogs_list_t          far_list;       /* FAR List */
+    ogs_list_t          urr_list;       /* URR List */
+    ogs_list_t          qer_list;       /* QER List */
+    ogs_pfcp_bar_t      *bar;           /* BAR Item */
+
+    OGS_POOL(pdr_id_pool, uint8_t);
+    OGS_POOL(far_id_pool, uint8_t);
+    OGS_POOL(urr_id_pool, uint8_t);
+    OGS_POOL(qer_id_pool, uint8_t);
+    OGS_POOL(bar_id_pool, uint8_t);
+
+    /* Related Context */
+    ogs_pfcp_pdr_t      *default_pdr;   /* Used by UPF */
+} ogs_pfcp_sess_t;
 
 typedef struct ogs_pfcp_subnet_s ogs_pfcp_subnet_t;
 typedef struct ogs_pfcp_ue_ip_s {
@@ -224,6 +272,15 @@ typedef struct ogs_pfcp_subnet_s {
 
     ogs_pfcp_dev_t  *dev;           /* Related Context */
 } ogs_pfcp_subnet_t;
+
+typedef struct ogs_pfcp_rule_s {
+    ogs_lnode_t lnode;
+
+    ogs_ipfw_rule_t ipfw;
+
+    /* Related Context */
+    ogs_pfcp_pdr_t  *pdr;
+} ogs_pfcp_rule_t;
 
 void ogs_pfcp_context_init(int num_of_gtpu_resource);
 void ogs_pfcp_context_final(void);
@@ -301,6 +358,10 @@ void ogs_pfcp_qer_remove_all(ogs_pfcp_sess_t *sess);
 ogs_pfcp_bar_t *ogs_pfcp_bar_new(ogs_pfcp_sess_t *sess);
 void ogs_pfcp_bar_delete(ogs_pfcp_bar_t *bar);
 
+ogs_pfcp_rule_t *ogs_pfcp_rule_add(ogs_pfcp_pdr_t *pdr);
+void ogs_pfcp_rule_remove(ogs_pfcp_rule_t *rule);
+void ogs_pfcp_rule_remove_all(ogs_pfcp_pdr_t *pdr);
+
 int ogs_pfcp_ue_pool_generate(void);
 ogs_pfcp_ue_ip_t *ogs_pfcp_ue_ip_alloc(
         int family, const char *apn, uint8_t *addr);
@@ -317,6 +378,10 @@ ogs_pfcp_subnet_t *ogs_pfcp_subnet_add(
 ogs_pfcp_subnet_t *ogs_pfcp_subnet_next(ogs_pfcp_subnet_t *subnet);
 void ogs_pfcp_subnet_remove(ogs_pfcp_subnet_t *subnet);
 void ogs_pfcp_subnet_remove_all(void);
+ogs_pfcp_subnet_t *ogs_pfcp_find_subnet(int family, const char *apn);
+
+void ogs_pfcp_pool_init(ogs_pfcp_sess_t *sess);
+void ogs_pfcp_pool_final(ogs_pfcp_sess_t *sess);
 
 #ifdef __cplusplus
 }

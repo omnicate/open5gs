@@ -114,7 +114,7 @@ int ngap_delayed_send_to_ran_ue(
         e = amf_event_new(AMF_EVT_NGAP_TIMER);
         ogs_assert(e);
         e->timer = ogs_timer_add(
-                amf_self()->timer_mgr, amf_timer_ng_delayed_send, e);
+                ogs_app()->timer_mgr, amf_timer_ng_delayed_send, e);
         ogs_assert(e->timer);
         e->pkbuf = pkbuf;
         e->ran_ue = ran_ue;
@@ -143,7 +143,7 @@ int ngap_send_to_5gsm(amf_ue_t *amf_ue, ogs_pkbuf_t *esmbuf)
     ogs_assert(e);
     e->amf_ue = amf_ue;
     e->pkbuf = esmbuf;
-    rv = ogs_queue_push(amf_self()->queue, e);
+    rv = ogs_queue_push(ogs_app()->queue, e);
     if (rv != OGS_OK) {
         ogs_warn("ogs_queue_push() failed:%d", (int)rv);
         ogs_pkbuf_free(e->pkbuf);
@@ -169,6 +169,7 @@ int ngap_send_to_nas(ran_ue_t *ran_ue,
     /* The Packet Buffer(pkbuf_t) for NAS message MUST make a HEADROOM. 
      * When calculating AES_CMAC, we need to use the headroom of the packet. */
     nasbuf = ogs_pkbuf_alloc(NULL, OGS_NAS_HEADROOM+nasPdu->size);
+    ogs_assert(nasbuf);
     ogs_pkbuf_reserve(nasbuf, OGS_NAS_HEADROOM);
     ogs_pkbuf_put_data(nasbuf, nasPdu->buf, nasPdu->size);
 
@@ -224,7 +225,7 @@ int ngap_send_to_nas(ran_ue_t *ran_ue,
         e->ngap.code = procedureCode;
         e->nas.type = security_header_type.type;
         e->pkbuf = nasbuf;
-        rv = ogs_queue_push(amf_self()->queue, e);
+        rv = ogs_queue_push(ogs_app()->queue, e);
         if (rv != OGS_OK) {
             ogs_warn("ogs_queue_push() failed:%d", (int)rv);
             ogs_pkbuf_free(e->pkbuf);
@@ -312,31 +313,17 @@ void ngap_send_ran_ue_context_release_command(
     ogs_debug("    RAN_UE_NGAP_ID[%d] AMF_UE_NGAP_ID[%lld]",
             ran_ue->ran_ue_ngap_id, (long long)ran_ue->amf_ue_ngap_id);
 
-    if (delay) {
-        ogs_assert(action != NGAP_UE_CTX_REL_INVALID_ACTION);
-        ran_ue->ue_ctx_rel_action = action;
+    ogs_assert(action != NGAP_UE_CTX_REL_INVALID_ACTION);
+    ran_ue->ue_ctx_rel_action = action;
 
-        ogs_debug("    Group[%d] Cause[%d] Action[%d] Delay[%d]",
-                group, (int)cause, action, delay);
+    ogs_debug("    Group[%d] Cause[%d] Action[%d] Delay[%d]",
+            group, (int)cause, action, delay);
 
-        ngapbuf = ngap_build_ue_context_release_command(ran_ue, group, cause);
-        ogs_expect_or_return(ngapbuf);
+    ngapbuf = ngap_build_ue_context_release_command(ran_ue, group, cause);
+    ogs_expect_or_return(ngapbuf);
 
-        rv = ngap_delayed_send_to_ran_ue(ran_ue, ngapbuf, delay);
-        ogs_expect(rv == OGS_OK);
-    } else {
-        ogs_assert(action != NGAP_UE_CTX_REL_INVALID_ACTION);
-        ran_ue->ue_ctx_rel_action = action;
-
-        ogs_debug("    Group[%d] Cause[%d] Action[%d] Delay[%d]",
-                group, (int)cause, action, delay);
-
-        ngapbuf = ngap_build_ue_context_release_command(ran_ue, group, cause);
-        ogs_expect_or_return(ngapbuf);
-
-        rv = ngap_delayed_send_to_ran_ue(ran_ue, ngapbuf, 0);
-        ogs_expect(rv == OGS_OK);
-    }
+    rv = ngap_delayed_send_to_ran_ue(ran_ue, ngapbuf, delay);
+    ogs_expect(rv == OGS_OK);
 }
 
 void ngap_send_amf_ue_context_release_command(

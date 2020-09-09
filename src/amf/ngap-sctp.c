@@ -37,7 +37,7 @@ ogs_sock_t *ngap_server(ogs_socknode_t *node)
 
     ogs_assert(node);
 
-    ogs_socknode_sctp_option(node, &ogs_config()->sockopt);
+    ogs_socknode_sctp_option(node, &ogs_app()->sockopt);
     ogs_socknode_nodelay(node, true);
 
 #if HAVE_USRSCTP
@@ -48,7 +48,7 @@ ogs_sock_t *ngap_server(ogs_socknode_t *node)
 #else
     sock = ogs_sctp_server(SOCK_STREAM, node);
     ogs_assert(sock);
-    node->poll = ogs_pollset_add(amf_self()->pollset,
+    node->poll = ogs_pollset_add(ogs_app()->pollset,
             OGS_POLLIN, sock->fd, lksctp_accept_handler, sock);
 #endif
 
@@ -126,6 +126,7 @@ void ngap_recv_handler(ogs_sock_t *sock)
     ogs_assert(sock);
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_MAX_SDU_LEN);
+    ogs_assert(pkbuf);
     ogs_pkbuf_put(pkbuf, OGS_MAX_SDU_LEN);
     size = ogs_sctp_recvmsg(
             sock, pkbuf->data, pkbuf->len, &from, &sinfo, &flags);

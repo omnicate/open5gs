@@ -157,7 +157,8 @@ void mme_s6a_send_air(mme_ue_t *mme_ue,
     ogs_assert(ret == 0);
 
     /* Set Vendor-Specific-Application-Id AVP */
-    ret = ogs_diam_message_vendor_specific_appid_set(req, OGS_DIAM_S6A_APPLICATION_ID);
+    ret = ogs_diam_message_vendor_specific_appid_set(
+            req, OGS_DIAM_S6A_APPLICATION_ID);
     ogs_assert(ret == 0);
     
     ret = clock_gettime(CLOCK_REALTIME, &sess_data->ts);
@@ -226,6 +227,7 @@ static void mme_s6a_aia_cb(void *data, struct msg **msg)
     s6abuf_len = sizeof(ogs_diam_s6a_message_t);
     ogs_assert(s6abuf_len < 8192);
     s6abuf = ogs_pkbuf_alloc(NULL, s6abuf_len);
+    ogs_assert(s6abuf);
     ogs_pkbuf_put(s6abuf, s6abuf_len);
     s6a_message = (ogs_diam_s6a_message_t *)s6abuf->data;
     ogs_assert(s6a_message);
@@ -294,7 +296,16 @@ static void mme_s6a_aia_cb(void *data, struct msg **msg)
     }
 
     if (s6a_message->result_code != ER_DIAMETER_SUCCESS) {
-        ogs_warn("ERROR DIAMETER Result Code(%d)", s6a_message->result_code);
+        if (s6a_message->err)
+            ogs_info("    Result Code: %d", s6a_message->result_code);
+        else if (s6a_message->exp_err)
+            ogs_info("    Experimental Result Code: %d",
+                    s6a_message->result_code);
+        else {
+            ogs_fatal("ERROR DIAMETER Result Code(%d)",
+                    s6a_message->result_code);
+            ogs_assert_if_reached();
+        }
         goto out;
     }
 
@@ -373,13 +384,13 @@ out:
         ogs_assert(e);
         e->mme_ue = mme_ue;
         e->pkbuf = s6abuf;
-        rv = ogs_queue_push(mme_self()->queue, e);
+        rv = ogs_queue_push(ogs_app()->queue, e);
         if (rv != OGS_OK) {
             ogs_error("ogs_queue_push() failed:%d", (int)rv);
             ogs_pkbuf_free(e->pkbuf);
             mme_event_free(e);
         } else {
-            ogs_pollset_notify(mme_self()->pollset);
+            ogs_pollset_notify(ogs_app()->pollset);
         }
     }
 
@@ -628,6 +639,7 @@ static void mme_s6a_ula_cb(void *data, struct msg **msg)
     s6abuf_len = sizeof(ogs_diam_s6a_message_t);
     ogs_assert(s6abuf_len < 8192);
     s6abuf = ogs_pkbuf_alloc(NULL, s6abuf_len);
+    ogs_assert(s6abuf);
     ogs_pkbuf_put(s6abuf, s6abuf_len);
     s6a_message = (ogs_diam_s6a_message_t *)s6abuf->data;
     ogs_assert(s6a_message);
@@ -1069,13 +1081,13 @@ static void mme_s6a_ula_cb(void *data, struct msg **msg)
         ogs_assert(e);
         e->mme_ue = mme_ue;
         e->pkbuf = s6abuf;
-        rv = ogs_queue_push(mme_self()->queue, e);
+        rv = ogs_queue_push(ogs_app()->queue, e);
         if (rv != OGS_OK) {
             ogs_error("ogs_queue_push() failed:%d", (int)rv);
             ogs_pkbuf_free(e->pkbuf);
             mme_event_free(e);
         } else {
-            ogs_pollset_notify(mme_self()->pollset);
+            ogs_pollset_notify(ogs_app()->pollset);
         }
     }
 

@@ -55,7 +55,6 @@ void smf_s5c_handle_create_session_request(
     int rv;
     uint8_t cause_value = 0;
 
-    char apn[OGS_MAX_APN_LEN];
     ogs_gtp_uli_t uli;
 
     smf_ue_t *smf_ue = NULL;
@@ -116,7 +115,7 @@ void smf_s5c_handle_create_session_request(
     }
 
     if (!ogs_diam_peer_connected()) {
-        ogs_error("No Diameter Peer");
+        ogs_warn("No Diameter Peer");
         cause_value = OGS_GTP_CAUSE_REMOTE_PEER_NOT_RESPONDING;
     }
 
@@ -135,10 +134,10 @@ void smf_s5c_handle_create_session_request(
     memcpy(&sess->e_tai, &uli.tai, sizeof(sess->e_tai));
     memcpy(&sess->e_cgi, &uli.e_cgi, sizeof(sess->e_cgi));
 
-    /* Select UPF based on UE Location Information */
+    /* Select PGW based on UE Location Information */
     smf_sess_select_upf(sess);
 
-    /* Check if selected UPF is associated with SMF */
+    /* Check if selected PGW is associated with SMF */
     ogs_assert(sess->pfcp_node);
     if (!OGS_FSM_CHECK(&sess->pfcp_node->sm, smf_pfcp_state_associated)) {
         ogs_gtp_send_error_message(xact, sess ? sess->sgw_s5c_teid : 0,
@@ -155,8 +154,8 @@ void smf_s5c_handle_create_session_request(
 
     smf_sess_set_ue_ip(sess);
 
-    ogs_info("UE IMSI:[%s] APN:[%s] IPv4:[%s] IPv6:[%s]",
-	    smf_ue->imsi_bcd, apn,
+    ogs_info("UE IMSI:[%s] IPv4:[%s] IPv6:[%s]",
+	    smf_ue->imsi_bcd,
         sess->ipv4 ? OGS_INET_NTOP(&sess->ipv4->addr, buf1) : "",
         sess->ipv6 ? OGS_INET6_NTOP(&sess->ipv6->addr, buf2) : "");
 
@@ -184,8 +183,8 @@ void smf_s5c_handle_create_session_request(
 
     ogs_debug("    SGW_S5C_TEID[0x%x] SMF_N4_TEID[0x%x]",
             sess->sgw_s5c_teid, sess->smf_n4_teid);
-    ogs_debug("    SGW_S5U_TEID[0x%x] UPF_S5U_TEID[0x%x]",
-            bearer->sgw_s5u_teid, bearer->upf_s5u_teid);
+    ogs_debug("    SGW_S5U_TEID[0x%x] PGW_S5U_TEID[0x%x]",
+            bearer->sgw_s5u_teid, bearer->pgw_s5u_teid);
 
     decoded = ogs_gtp_parse_bearer_qos(&bearer_qos,
         &req->bearer_contexts_to_be_created.bearer_level_qos);
@@ -274,9 +273,9 @@ void smf_s5c_handle_create_bearer_response(
         ogs_gtp_create_bearer_response_t *rsp)
 {
     int rv;
-    ogs_gtp_f_teid_t *sgw_s5u_teid, *smf_s5u_teid;
+    ogs_gtp_f_teid_t *sgw_s5u_teid, *pgw_s5u_teid;
     smf_bearer_t *bearer = NULL;
-    ogs_pfcp_far_t *far = NULL;
+    ogs_pfcp_far_t *dl_far = NULL;
 
     ogs_assert(xact);
     ogs_assert(rsp);
@@ -321,12 +320,12 @@ void smf_s5c_handle_create_bearer_response(
         return;
     }
 
-    /* Correlate with SMF-S5U-TEID */
-    smf_s5u_teid = rsp->bearer_contexts.s5_s8_u_pgw_f_teid.data;
-    ogs_assert(smf_s5u_teid);
+    /* Correlate with PGW-S5U-TEID */
+    pgw_s5u_teid = rsp->bearer_contexts.s5_s8_u_pgw_f_teid.data;
+    ogs_assert(pgw_s5u_teid);
 
-    /* Find the Bearer by SMF-S5U-TEID */
-    bearer = smf_bearer_find_by_smf_s5u_teid(be32toh(smf_s5u_teid->teid));
+    /* Find the Bearer by PGW-S5U-TEID */
+    bearer = smf_bearer_find_by_pgw_s5u_teid(be32toh(pgw_s5u_teid->teid));
     ogs_assert(bearer);
 
     /* Set EBI */
@@ -343,30 +342,29 @@ void smf_s5c_handle_create_bearer_response(
             sess->sgw_s5c_teid, sess->smf_n4_teid);
 
     /* Setup FAR */
-    ogs_list_for_each(&bearer->pfcp.far_list, far) {
-        if (far->dst_if == OGS_PFCP_INTERFACE_ACCESS) {
-            ogs_pfcp_ip_to_outer_header_creation(&bearer->sgw_s5u_ip,
-                &far->outer_header_creation, &far->outer_header_creation_len);
-            far->outer_header_creation.teid = bearer->sgw_s5u_teid;
-        }
-    }
+    dl_far = bearer->dl_far;
+    ogs_assert(dl_far);
+
+    ogs_pfcp_ip_to_outer_header_creation(&bearer->sgw_s5u_ip,
+        &dl_far->outer_header_creation, &dl_far->outer_header_creation_len);
+    dl_far->outer_header_creation.teid = bearer->sgw_s5u_teid;
 
     /* Setup QER */
     if (bearer->qos.mbr.downlink || bearer->qos.mbr.uplink ||
         bearer->qos.gbr.downlink || bearer->qos.gbr.uplink) {
-        ogs_pfcp_pdr_t *pdr = NULL;
         ogs_pfcp_qer_t *qer = NULL;
 
         /* Only 1 QER is used per bearer */
-        qer = ogs_list_first(&bearer->pfcp.qer_list);
+        qer = bearer->qer;
         if (!qer) {
-            qer = ogs_pfcp_qer_add(&bearer->pfcp);
+            qer = ogs_pfcp_qer_add(&sess->pfcp);
             ogs_assert(qer);
-            qer->id = OGS_NEXT_ID(sess->qer_id, 1, OGS_MAX_NUM_OF_QER+1);
+            qer->id = qer->index;
+            bearer->qer = qer;
         }
 
-        ogs_list_for_each(&bearer->pfcp.pdr_list, pdr)
-            ogs_pfcp_pdr_associate_qer(pdr, qer);
+        ogs_pfcp_pdr_associate_qer(bearer->dl_pdr, qer);
+        ogs_pfcp_pdr_associate_qer(bearer->ul_pdr, qer);
 
         qer->mbr.uplink = bearer->qos.mbr.uplink;
         qer->mbr.downlink = bearer->qos.mbr.downlink;
@@ -374,7 +372,8 @@ void smf_s5c_handle_create_bearer_response(
         qer->gbr.downlink = bearer->qos.gbr.downlink;
     }
 
-    smf_epc_pfcp_send_session_modification_request(bearer);
+    smf_epc_pfcp_send_bearer_modification_request(
+            bearer, OGS_PFCP_MODIFY_CREATE);
 }
 
 void smf_s5c_handle_update_bearer_response(
@@ -382,10 +381,14 @@ void smf_s5c_handle_update_bearer_response(
         ogs_gtp_update_bearer_response_t *rsp)
 {
     int rv;
+    uint64_t gtp_flags = 0;
+    uint64_t pfcp_flags = 0;
     smf_bearer_t *bearer = NULL;
 
     ogs_assert(xact);
     ogs_assert(rsp);
+    gtp_flags = xact->update_flags;
+    ogs_assert(gtp_flags);
 
     ogs_debug("[SMF] Update Bearer Response");
 
@@ -426,11 +429,40 @@ void smf_s5c_handle_update_bearer_response(
     ogs_debug("[SMF] Update Bearer Response : SGW[0x%x] --> SMF[0x%x]",
             sess->sgw_s5c_teid, sess->smf_n4_teid);
 
-    if (bearer->pfcp_epc_modify.qos_update) {
+    if (gtp_flags & OGS_GTP_MODIFY_TFT_UPDATE) {
+        smf_pf_t *pf = NULL;
+        ogs_pfcp_pdr_t *dl_pdr = NULL, *ul_pdr = NULL;
+
+        dl_pdr = bearer->dl_pdr;
+        ogs_assert(dl_pdr);
+        ul_pdr = bearer->ul_pdr;
+        ogs_assert(ul_pdr);
+
+        dl_pdr->num_of_flow = 0;
+        ul_pdr->num_of_flow = 0;
+
+        ogs_list_for_each(&bearer->pf_list, pf) {
+            if (pf->direction == OGS_FLOW_DOWNLINK_ONLY) {
+                dl_pdr->flow_description[dl_pdr->num_of_flow++] =
+                    pf->flow_description;
+
+            } else if (pf->direction == OGS_FLOW_UPLINK_ONLY) {
+                ul_pdr->flow_description[ul_pdr->num_of_flow++] =
+                    pf->flow_description;
+            } else {
+                ogs_error("Flow Bidirectional is not supported[%d]",
+                        pf->direction);
+            }
+        }
+
+        pfcp_flags |= OGS_PFCP_MODIFY_TFT_UPDATE;
+    }
+
+    if (gtp_flags & OGS_GTP_MODIFY_QOS_UPDATE) {
         ogs_pfcp_qer_t *qer = NULL;
 
         /* Only 1 QER is used per bearer */
-        qer = ogs_list_first(&bearer->pfcp.qer_list);
+        qer = bearer->qer;
         if (qer) {
             qer->mbr.uplink = bearer->qos.mbr.uplink;
             qer->mbr.downlink = bearer->qos.mbr.downlink;
@@ -438,19 +470,12 @@ void smf_s5c_handle_update_bearer_response(
             qer->gbr.downlink = bearer->qos.gbr.downlink;
 
         }
+
+        pfcp_flags |= OGS_PFCP_MODIFY_QOS_UPDATE;
     }
 
-    if (bearer->pfcp_epc_modify.tft_update)
-        ogs_warn("Not Implemented");
-
-#if 0 /* FIXME */
-    if (bearer->pfcp_epc_modify.qos_update ||
-            bearer->pfcp_epc_modify.tft_update) {
-#else
-    if (bearer->pfcp_epc_modify.qos_update) {
-#endif
-        smf_epc_pfcp_send_session_modification_request(bearer);
-    }
+    if (pfcp_flags)
+        smf_epc_pfcp_send_bearer_modification_request(bearer, pfcp_flags);
 }
 
 void smf_s5c_handle_delete_bearer_response(
@@ -502,77 +527,79 @@ void smf_s5c_handle_delete_bearer_response(
     ogs_debug("[SMF] Delete Bearer Response : SGW[0x%x] --> SMF[0x%x]",
             sess->sgw_s5c_teid, sess->smf_n4_teid);
 
-    smf_epc_pfcp_send_session_modification_request(bearer);
+    smf_epc_pfcp_send_bearer_modification_request(
+            bearer, OGS_PFCP_MODIFY_REMOVE);
 }
 
 static int reconfigure_packet_filter(smf_pf_t *pf, ogs_gtp_tft_t *tft, int i)
 {
     int j;
 
+    memset(&pf->ipfw_rule, 0, sizeof(ogs_ipfw_rule_t));
     for (j = 0; j < tft->pf[i].num_of_component; j++) {
         switch(tft->pf[i].component[j].type) {
         case GTP_PACKET_FILTER_PROTOCOL_IDENTIFIER_NEXT_HEADER_TYPE:
-            pf->rule.proto = tft->pf[i].component[j].proto;
+            pf->ipfw_rule.proto = tft->pf[i].component[j].proto;
             break;
         case GTP_PACKET_FILTER_IPV4_REMOTE_ADDRESS_TYPE:
-            pf->rule.ipv4_remote = 1;
-            pf->rule.ip.remote.addr[0] = tft->pf[i].component[j].ipv4.addr;
-            pf->rule.ip.remote.mask[0] = tft->pf[i].component[j].ipv4.mask;
+            pf->ipfw_rule.ipv4_remote = 1;
+            pf->ipfw_rule.ip.remote.addr[0] = tft->pf[i].component[j].ipv4.addr;
+            pf->ipfw_rule.ip.remote.mask[0] = tft->pf[i].component[j].ipv4.mask;
             break;
         case GTP_PACKET_FILTER_IPV4_LOCAL_ADDRESS_TYPE:
-            pf->rule.ipv4_local = 1;
-            pf->rule.ip.local.addr[0] = tft->pf[i].component[j].ipv4.addr;
-            pf->rule.ip.local.mask[0] = tft->pf[i].component[j].ipv4.mask;
+            pf->ipfw_rule.ipv4_local = 1;
+            pf->ipfw_rule.ip.local.addr[0] = tft->pf[i].component[j].ipv4.addr;
+            pf->ipfw_rule.ip.local.mask[0] = tft->pf[i].component[j].ipv4.mask;
             break;
         case GTP_PACKET_FILTER_IPV6_REMOTE_ADDRESS_TYPE:
-            pf->rule.ipv6_remote = 1;
-            memcpy(pf->rule.ip.remote.addr,
+            pf->ipfw_rule.ipv6_remote = 1;
+            memcpy(pf->ipfw_rule.ip.remote.addr,
                 tft->pf[i].component[j].ipv6_mask.addr,
-                sizeof(pf->rule.ip.remote.addr));
-            memcpy(pf->rule.ip.remote.mask,
+                sizeof(pf->ipfw_rule.ip.remote.addr));
+            memcpy(pf->ipfw_rule.ip.remote.mask,
                 tft->pf[i].component[j].ipv6_mask.mask,
-                sizeof(pf->rule.ip.remote.mask));
+                sizeof(pf->ipfw_rule.ip.remote.mask));
             break;
         case GTP_PACKET_FILTER_IPV6_REMOTE_ADDRESS_PREFIX_LENGTH_TYPE:
-            pf->rule.ipv6_remote = 1;
-            memcpy(pf->rule.ip.remote.addr,
+            pf->ipfw_rule.ipv6_remote = 1;
+            memcpy(pf->ipfw_rule.ip.remote.addr,
                 tft->pf[i].component[j].ipv6_mask.addr,
-                sizeof(pf->rule.ip.remote.addr));
-            n2mask((struct in6_addr *)pf->rule.ip.remote.mask,
+                sizeof(pf->ipfw_rule.ip.remote.addr));
+            n2mask((struct in6_addr *)pf->ipfw_rule.ip.remote.mask,
                 tft->pf[i].component[j].ipv6.prefixlen);
             break;
         case GTP_PACKET_FILTER_IPV6_LOCAL_ADDRESS_TYPE:
-            pf->rule.ipv6_local = 1;
-            memcpy(pf->rule.ip.local.addr,
+            pf->ipfw_rule.ipv6_local = 1;
+            memcpy(pf->ipfw_rule.ip.local.addr,
                 tft->pf[i].component[j].ipv6_mask.addr,
-                sizeof(pf->rule.ip.local.addr));
-            memcpy(pf->rule.ip.local.mask,
+                sizeof(pf->ipfw_rule.ip.local.addr));
+            memcpy(pf->ipfw_rule.ip.local.mask,
                 tft->pf[i].component[j].ipv6_mask.mask,
-                sizeof(pf->rule.ip.local.mask));
+                sizeof(pf->ipfw_rule.ip.local.mask));
             break;
         case GTP_PACKET_FILTER_IPV6_LOCAL_ADDRESS_PREFIX_LENGTH_TYPE:
-            pf->rule.ipv6_local = 1;
-            memcpy(pf->rule.ip.local.addr,
+            pf->ipfw_rule.ipv6_local = 1;
+            memcpy(pf->ipfw_rule.ip.local.addr,
                 tft->pf[i].component[j].ipv6_mask.addr,
-                sizeof(pf->rule.ip.local.addr));
-            n2mask((struct in6_addr *)pf->rule.ip.local.mask,
+                sizeof(pf->ipfw_rule.ip.local.addr));
+            n2mask((struct in6_addr *)pf->ipfw_rule.ip.local.mask,
                 tft->pf[i].component[j].ipv6.prefixlen);
             break;
         case GTP_PACKET_FILTER_SINGLE_LOCAL_PORT_TYPE:
-            pf->rule.port.local.low = pf->rule.port.local.high =
+            pf->ipfw_rule.port.local.low = pf->ipfw_rule.port.local.high =
                     tft->pf[i].component[j].port.low;
             break;
         case GTP_PACKET_FILTER_SINGLE_REMOTE_PORT_TYPE:
-            pf->rule.port.remote.low = pf->rule.port.remote.high =
+            pf->ipfw_rule.port.remote.low = pf->ipfw_rule.port.remote.high =
                     tft->pf[i].component[j].port.low;
             break;
         case GTP_PACKET_FILTER_LOCAL_PORT_RANGE_TYPE:
-            pf->rule.port.local.low = tft->pf[i].component[j].port.low;
-            pf->rule.port.local.high = tft->pf[i].component[j].port.high;
+            pf->ipfw_rule.port.local.low = tft->pf[i].component[j].port.low;
+            pf->ipfw_rule.port.local.high = tft->pf[i].component[j].port.high;
             break;
         case GTP_PACKET_FILTER_REMOTE_PORT_RANGE_TYPE:
-            pf->rule.port.remote.low = tft->pf[i].component[j].port.low;
-            pf->rule.port.remote.high = tft->pf[i].component[j].port.high;
+            pf->ipfw_rule.port.remote.low = tft->pf[i].component[j].port.low;
+            pf->ipfw_rule.port.remote.high = tft->pf[i].component[j].port.high;
             break;
         default:
             ogs_error("Unknown Packet Filter Type(%d)",
@@ -665,6 +692,12 @@ void smf_s5c_handle_bearer_resource_command(
                         OGS_GTP_CAUSE_SEMANTIC_ERROR_IN_THE_TAD_OPERATION);
                     return;
                 }
+
+                if (pf->flow_description)
+                    ogs_free(pf->flow_description);
+                pf->flow_description =
+                    ogs_ipfw_encode_flow_description(&pf->ipfw_rule);
+                pf->direction = tft.pf[i].direction;
             }
 
             tft_update = 1;
@@ -688,6 +721,12 @@ void smf_s5c_handle_bearer_resource_command(
                     OGS_GTP_CAUSE_SEMANTIC_ERROR_IN_THE_TAD_OPERATION);
                 return;
             }
+
+            if (pf->flow_description)
+                ogs_free(pf->flow_description);
+            pf->flow_description =
+                ogs_ipfw_encode_flow_description(&pf->ipfw_rule);
+            pf->direction = tft.pf[i].direction;
 
             tft_update = 1;
         }
@@ -732,30 +771,29 @@ void smf_s5c_handle_bearer_resource_command(
     h.teid = sess->sgw_s5c_teid;
 
     if (tft_delete) {
-        memset(&bearer->pfcp_epc_modify, 0, sizeof(bearer->pfcp_epc_modify));
-        bearer->pfcp_epc_modify.remove = true;
-
         h.type = OGS_GTP_DELETE_BEARER_REQUEST_TYPE;
         pkbuf = smf_s5c_build_delete_bearer_request(
                 h.type, bearer, cmd->procedure_transaction_id.u8);
         ogs_expect_or_return(pkbuf);
-    } else {
-        memset(&bearer->pfcp_epc_modify, 0, sizeof(bearer->pfcp_epc_modify));
-        if (tft_update)
-            bearer->pfcp_epc_modify.tft_update = true;
-        if (qos_update)
-            bearer->pfcp_epc_modify.qos_update = true;
 
+        rv = ogs_gtp_xact_update_tx(xact, &h, pkbuf);
+        ogs_expect_or_return(rv == OGS_OK);
+
+    } else {
         h.type = OGS_GTP_UPDATE_BEARER_REQUEST_TYPE;
         pkbuf = smf_s5c_build_update_bearer_request(
                 h.type, bearer, cmd->procedure_transaction_id.u8,
                 tft_update ? &tft : NULL, qos_update);
         ogs_expect_or_return(pkbuf);
+
+        rv = ogs_gtp_xact_update_tx(xact, &h, pkbuf);
+        ogs_expect_or_return(rv == OGS_OK);
+
+        if (tft_update)
+            xact->update_flags |= OGS_GTP_MODIFY_TFT_UPDATE;
+        if (qos_update)
+            xact->update_flags |= OGS_GTP_MODIFY_QOS_UPDATE;
     }
-
-
-    rv = ogs_gtp_xact_update_tx(xact, &h, pkbuf);
-    ogs_expect_or_return(rv == OGS_OK);
 
     rv = ogs_gtp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);

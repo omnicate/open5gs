@@ -20,6 +20,7 @@
 #include "sbi-path.h"
 #include "ngap-path.h"
 #include "nas-path.h"
+#include "ngap-handler.h"
 #include "nnrf-handler.h"
 #include "namf-handler.h"
 #include "nsmf-handler.h"
@@ -624,7 +625,7 @@ void amf_state_operational(ogs_fsm_t *s, amf_event_t *e)
         ogs_assert(gnb);
         ogs_assert(OGS_FSM_STATE(&gnb->sm));
 
-        rc = nga_ngap_decode(&ngap_message, pkbuf);
+        rc = ogs_ngap_decode(&ngap_message, pkbuf);
         if (rc == OGS_OK) {
             e->gnb = gnb;
             e->ngap.message = &ngap_message;
@@ -636,18 +637,36 @@ void amf_state_operational(ogs_fsm_t *s, amf_event_t *e)
                     NGAP_CauseProtocol_abstract_syntax_error_falsely_constructed_message);
         }
 
-        nga_ngap_free(&ngap_message);
+        ogs_ngap_free(&ngap_message);
         ogs_pkbuf_free(pkbuf);
         break;
 
     case AMF_EVT_NGAP_TIMER:
         ran_ue = e->ran_ue;
         ogs_assert(ran_ue);
-        gnb = e->gnb;
-        ogs_assert(gnb);
-        ogs_assert(OGS_FSM_STATE(&gnb->sm));
 
-        ogs_fsm_dispatch(&gnb->sm, e);
+        switch (e->timer_id) {
+        case AMF_TIMER_NG_DELAYED_SEND:
+            gnb = e->gnb;
+            ogs_assert(gnb);
+            pkbuf = e->pkbuf;
+            ogs_assert(pkbuf);
+
+            ogs_expect(OGS_OK == ngap_send_to_ran_ue(ran_ue, pkbuf));
+            ogs_timer_delete(e->timer);
+            break;
+        case AMF_TIMER_NG_HOLDING:
+            ogs_warn("Implicit NG release");
+            ogs_warn("    RAN_UE_NGAP_ID[%d] AMF_UE_NGAP_ID[%lld]",
+                  ran_ue->ran_ue_ngap_id,
+                  (long long)ran_ue->amf_ue_ngap_id);
+            ngap_handle_ue_context_release_action(ran_ue);
+            break;
+        default:
+            ogs_error("Unknown timer[%s:%d]",
+                    amf_timer_get_name(e->timer_id), e->timer_id);
+            break;
+        }
         break;
 
     case AMF_EVT_5GMM_MESSAGE:
@@ -691,15 +710,38 @@ void amf_state_operational(ogs_fsm_t *s, amf_event_t *e)
                 }
             }
 
+            /* 
+             * TS23.502
+             * 4.2.3.2 UE Triggered Service Request
+             *
+             * 4. [Conditional]
+             * AMF to SMF: Nsmf_PDUSession_UpdateSMContext Request
+             *
+             * The AMF may receive a Service Request to establish another
+             * NAS signalling connection via a NG-RAN while it has maintained
+             * an old NAS signalling connection for UE still via NG-RAN.
+             * In this case, AMF shall trigger the AN release procedure toward
+             * the old NG-RAN to release the old NAS signalling connection
+             * as defined in clause 4.2.6 with following logic: */
+
             /* If NAS(amf_ue_t) has already been associated with
              * older NG(ran_ue_t) context */
             if (CM_CONNECTED(amf_ue)) {
-               /* Implcit NG release */
-                ogs_debug("[%s] Implicit NG release", amf_ue->suci);
+                /* Previous NG(ran_ue_t) context the holding timer(30secs)
+                 * is started.
+                 * Newly associated NG(ran_ue_t) context holding timer
+                 * is stopped. */
+                ogs_debug("[%s] Start NG Holding Timer", amf_ue->suci);
                 ogs_debug("[%s]    RAN_UE_NGAP_ID[%d] AMF_UE_NGAP_ID[%lld]",
                         amf_ue->suci, amf_ue->ran_ue->ran_ue_ngap_id,
                         (long long)amf_ue->ran_ue->amf_ue_ngap_id);
-                ran_ue_remove(amf_ue->ran_ue);
+
+                /* De-associate NG with NAS/EMM */
+                ran_ue_deassociate(amf_ue->ran_ue);
+
+                ngap_send_ran_ue_context_release_command(amf_ue->ran_ue,
+                        NGAP_Cause_PR_nas, NGAP_CauseNas_normal_release,
+                        NGAP_UE_CTX_REL_NG_CONTEXT_REMOVE, 0);
             }
             amf_ue_associate_ran_ue(amf_ue, ran_ue);
         }
