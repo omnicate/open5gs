@@ -35,8 +35,9 @@ int app_initialize(const char *const argv[])
     init();
     int rv;
 
-    mhddaemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, 8000, NULL, NULL);
+    mhddaemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, 8001, NULL, NULL);
     if (mhddaemon == NULL) {
+        ogs_error("pcrf-metrics: Failed to initialize prometheus httpd");
         return 1;
     }
 

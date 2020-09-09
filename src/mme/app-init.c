@@ -39,8 +39,9 @@ int app_initialize(const char *const argv[])
 
     init();
 
-    mhddaemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, 8000, NULL, NULL);
+    mhddaemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, 8002, NULL, NULL);
     if (mhddaemon == NULL) {
+	ogs_error("mme-metrics: Failed to initialize prometheus httpd");
         return 1;
     }
 
