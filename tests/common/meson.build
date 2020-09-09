@@ -100,3 +100,4 @@ libtestcommon_dep = declare_dependency(
                     libnas_eps_dep,
                     libnas_5gs_dep,
                     libdiameter_rx_dep])
+    )
