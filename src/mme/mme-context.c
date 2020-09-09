@@ -54,6 +54,7 @@ static int context_initialized = 0;
 static int num_of_enb_ue = 0;
 static int num_of_mme_sess = 0;
 
+static void stats_add_enb_ue(void);
 static void stats_remove_enb_ue(void);
 static void stats_add_mme_session(void);
 static void stats_remove_mme_session(void);

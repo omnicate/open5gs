@@ -35,13 +35,7 @@ void mme_metrics_initialize(void) {
                     "Open5GS MME sessions added",
                     0,
                     NULL));
-    mme_ue_gauge = prom_collector_registry_must_register_metric(
-            prom_gauge_new(
-                    "open5gs_mme_gauge",
-                    "Open5GS MME number of UE",
-                    0,
-                    NULL));
-    mme_enb_gauge = prom_collector_registry_must_register_metric(
+    mme_enb_ue_gauge = prom_collector_registry_must_register_metric(
             prom_gauge_new(
                     "open5gs_enb_gauge",
                     "Open5GS MME number of eNB",
