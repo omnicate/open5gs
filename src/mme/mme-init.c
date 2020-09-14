@@ -52,18 +52,10 @@ void mme_metrics_initialize(void) {
                     NULL)
     );
 
-    mme_ue_gauge = prom_collector_registry_must_register_metric(
+    mme_enb_ue_gauge = prom_collector_registry_must_register_metric(
             prom_gauge_new(
-                    "open5gs_mme_gauge",
-                    "Open5gs MME number of UE",
-                    0,
-                    NULL)
-                    );
-
-    mme_enb_gauge = prom_collector_registry_must_register_metric(
-            prom_gauge_new(
-                    "open5gs_enb_gauge",
-                    "Open5gs MME number of eNB",
+                    "open5gs_enb_ue_gauge",
+                    "Open5gs MME number of eNB and UE",
                     0,
                     NULL)
                     );

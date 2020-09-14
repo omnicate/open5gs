@@ -3311,22 +3311,27 @@ static void stats_add_enb_ue(void)
 {
     num_of_enb_ue = num_of_enb_ue + 1;
     ogs_info("[Added] Number of eNB-UEs is now %d", num_of_enb_ue);
+    prom_gauge_set(mme_enb_ue_gauge, num_of_enb_ue, NULL);
 }
 
 static void stats_remove_enb_ue(void)
 {
     num_of_enb_ue = num_of_enb_ue - 1;
     ogs_info("[Removed] Number of eNB-UEs is now %d", num_of_enb_ue);
+    prom_gauge_set(mme_enb_ue_gauge, num_of_enb_ue, NULL);
 }
 
 static void stats_add_mme_session(void)
 {
     num_of_mme_sess = num_of_mme_sess + 1;
     ogs_info("[Added] Number of MME-Sessions is now %d", num_of_mme_sess);
+    prom_counter_inc(mme_sessions_counter, NULL);
+    prom_gauge_set(mme_sessions_gauge, num_of_mme_sess, NULL);
 }
 
 static void stats_remove_mme_session(void)
 {
     num_of_mme_sess = num_of_mme_sess - 1;
     ogs_info("[Removed] Number of MME-Sessions is now %d", num_of_mme_sess);
+    prom_gauge_set(mme_sessions_gauge, num_of_mme_sess, NULL);
 }

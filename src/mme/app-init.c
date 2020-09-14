@@ -37,7 +37,7 @@ int app_initialize(const char *const argv[])
 
     init();
 
-    mhddaemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, 8000, NULL, NULL);
+    mhddaemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, 8001, NULL, NULL);
     if (mhddaemon == NULL) {
         return 1;
     }
