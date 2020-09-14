@@ -25,6 +25,8 @@
 #include "pfcp-path.h"
 #include "n4-handler.h"
 
+static void node_timeout(ogs_pfcp_xact_t *xact, void *data);
+
 void upf_pfcp_state_initial(ogs_fsm_t *s, upf_event_t *e)
 {
     int rv;
@@ -42,7 +44,7 @@ void upf_pfcp_state_initial(ogs_fsm_t *s, upf_event_t *e)
             ogs_pfcp_self()->pfcp_sock, ogs_pfcp_self()->pfcp_sock6, node);
     ogs_assert(rv == OGS_OK);
 
-    node->t_no_heartbeat = ogs_timer_add(upf_self()->timer_mgr,
+    node->t_no_heartbeat = ogs_timer_add(ogs_app()->timer_mgr,
             upf_timer_no_heartbeat, node);
     ogs_assert(node->t_no_heartbeat);
 
@@ -83,9 +85,9 @@ void upf_pfcp_state_will_associate(ogs_fsm_t *s, upf_event_t *e)
     case OGS_FSM_ENTRY_SIG:
         if (node->t_association) {
             ogs_timer_start(node->t_association,
-                ogs_config()->time.message.pfcp.association_interval);
+                ogs_app()->time.message.pfcp.association_interval);
 
-            upf_pfcp_send_association_setup_request(node);
+            ogs_pfcp_up_send_association_setup_request(node, node_timeout);
         }
         break;
 
@@ -106,9 +108,9 @@ void upf_pfcp_state_will_associate(ogs_fsm_t *s, upf_event_t *e)
 
             ogs_assert(node->t_association);
             ogs_timer_start(node->t_association,
-                ogs_config()->time.message.pfcp.association_interval);
+                ogs_app()->time.message.pfcp.association_interval);
 
-            upf_pfcp_send_association_setup_request(node);
+            ogs_pfcp_up_send_association_setup_request(node, node_timeout);
             break;
         default:
             ogs_error("Unknown timer[%s:%d]",
@@ -124,17 +126,17 @@ void upf_pfcp_state_will_associate(ogs_fsm_t *s, upf_event_t *e)
 
         switch (message->h.type) {
         case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
-            upf_n4_handle_association_setup_request(node, xact,
+            ogs_pfcp_up_handle_association_setup_request(node, xact,
                     &message->pfcp_association_setup_request);
             OGS_FSM_TRAN(s, upf_pfcp_state_associated);
             break;
         case OGS_PFCP_ASSOCIATION_SETUP_RESPONSE_TYPE:
-            upf_n4_handle_association_setup_response(node, xact,
+            ogs_pfcp_up_handle_association_setup_response(node, xact,
                     &message->pfcp_association_setup_response);
             OGS_FSM_TRAN(s, upf_pfcp_state_associated);
             break;
         default:
-            ogs_error("cannot handle PFCP message type[%d]",
+            ogs_warn("cannot handle PFCP message type[%d]",
                     message->h.type);
             break;
         }
@@ -170,7 +172,7 @@ void upf_pfcp_state_associated(ogs_fsm_t *s, upf_event_t *e)
     case OGS_FSM_ENTRY_SIG:
         ogs_info("PFCP associated");
         ogs_timer_start(node->t_no_heartbeat,
-                ogs_config()->time.message.pfcp.no_heartbeat_duration);
+                ogs_app()->time.message.pfcp.no_heartbeat_duration);
         break;
     case OGS_FSM_EXIT_SIG:
         ogs_info("PFCP de-associated");
@@ -187,21 +189,21 @@ void upf_pfcp_state_associated(ogs_fsm_t *s, upf_event_t *e)
 
         switch (message->h.type) {
         case OGS_PFCP_HEARTBEAT_REQUEST_TYPE:
-            upf_n4_handle_heartbeat_request(node, xact,
+            ogs_pfcp_handle_heartbeat_request(node, xact,
                     &message->pfcp_heartbeat_request);
             break;
         case OGS_PFCP_HEARTBEAT_RESPONSE_TYPE:
-            upf_n4_handle_heartbeat_response(node, xact,
+            ogs_pfcp_handle_heartbeat_response(node, xact,
                     &message->pfcp_heartbeat_response);
             break;
         case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
             ogs_warn("PFCP[REQ] has already been associated");
-            upf_n4_handle_association_setup_request(node, xact,
+            ogs_pfcp_up_handle_association_setup_request(node, xact,
                     &message->pfcp_association_setup_request);
             break;
         case OGS_PFCP_ASSOCIATION_SETUP_RESPONSE_TYPE:
             ogs_warn("PFCP[RSP] has already been associated");
-            upf_n4_handle_association_setup_response(node, xact,
+            ogs_pfcp_up_handle_association_setup_response(node, xact,
                     &message->pfcp_association_setup_response);
             break;
         case OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE:
@@ -235,7 +237,7 @@ void upf_pfcp_state_associated(ogs_fsm_t *s, upf_event_t *e)
             node = e->pfcp_node;
             ogs_assert(node);
 
-            upf_pfcp_send_heartbeat_request(node);
+            ogs_pfcp_send_heartbeat_request(node, node_timeout);
             break;
         default:
             ogs_error("Unknown timer[%s:%d]",
@@ -268,6 +270,37 @@ void upf_pfcp_state_exception(ogs_fsm_t *s, upf_event_t *e)
         break;
     default:
         ogs_error("Unknown event %s", upf_event_get_name(e));
+        break;
+    }
+}
+
+static void node_timeout(ogs_pfcp_xact_t *xact, void *data)
+{
+    int rv;
+
+    upf_event_t *e = NULL;
+    uint8_t type;
+
+    ogs_assert(xact);
+    type = xact->seq[0].type;
+
+    switch (type) {
+    case OGS_PFCP_HEARTBEAT_REQUEST_TYPE:
+        ogs_assert(data);
+
+        e = upf_event_new(UPF_EVT_N4_NO_HEARTBEAT);
+        e->pfcp_node = data;
+
+        rv = ogs_queue_push(ogs_app()->queue, e);
+        if (rv != OGS_OK) {
+            ogs_warn("ogs_queue_push() failed:%d", (int)rv);
+            upf_event_free(e);
+        }
+        break;
+    case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
+        break;
+    default:
+        ogs_error("Not implemented [type:%d]", type);
         break;
     }
 }

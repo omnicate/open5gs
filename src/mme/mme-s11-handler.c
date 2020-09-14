@@ -100,15 +100,32 @@ void mme_s11_handle_create_session_response(
         cause_value = OGS_GTP_CAUSE_MANDATORY_IE_MISSING;
     }
 
+    if (rsp->pdn_address_allocation.presence) {
+        ogs_paa_t paa;
+
+        memcpy(&paa, rsp->pdn_address_allocation.data,
+                ogs_min(sizeof(paa), rsp->pdn_address_allocation.len));
+        if (paa.pdn_type == OGS_GTP_PDN_TYPE_IPV4) {
+            /* Nothing */
+        } else if (paa.pdn_type == OGS_GTP_PDN_TYPE_IPV6) {
+            /* Nothing */
+        } else if (paa.pdn_type == OGS_GTP_PDN_TYPE_IPV4V6) {
+            /* Nothing */
+        } else {
+            ogs_error("Unknown PDN Type %u", paa.pdn_type);
+            cause_value = OGS_GTP_CAUSE_MANDATORY_IE_INCORRECT;
+        }
+
+    } else {
+        ogs_error("No PDN Address Allocation");
+        cause_value = OGS_GTP_CAUSE_MANDATORY_IE_MISSING;
+    }
+
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED)
         ogs_warn("Cause[%d] : No Accepted", cause_value);
 
     if (rsp->sender_f_teid_for_control_plane.presence == 0) {
         ogs_error("No S11 TEID");
-        cause_value = OGS_GTP_CAUSE_MANDATORY_IE_MISSING;
-    }
-    if (rsp->pdn_address_allocation.presence == 0) {
-        ogs_error("No PDN Address Allocation");
         cause_value = OGS_GTP_CAUSE_MANDATORY_IE_MISSING;
     }
     if (rsp->bearer_contexts_created.s1_u_enodeb_f_teid.presence == 0) {
@@ -126,6 +143,7 @@ void mme_s11_handle_create_session_response(
 
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
         if (OGS_FSM_CHECK(&mme_ue->sm, emm_state_initial_context_setup)) {
+            ogs_error("[%s] Attach reject", mme_ue->imsi_bcd);
             nas_eps_send_attach_reject(mme_ue,
                 EMM_CAUSE_NETWORK_FAILURE, ESM_CAUSE_NETWORK_FAILURE);
         }
@@ -187,7 +205,7 @@ void mme_s11_handle_create_session_response(
     rv = ogs_gtp_f_teid_to_ip(sgw_s1u_teid, &bearer->sgw_s1u_ip);
     ogs_assert(rv == OGS_OK);
 
-    if (OGS_FSM_CHECK(&mme_ue->sm, emm_state_initial_context_setup)) {
+    if (SESSION_CONTEXT_IN_ATTACH(sess)) {
         mme_csmap_t *csmap = mme_csmap_find_by_tai(&mme_ue->tai);
         mme_ue->csmap = csmap;
 
@@ -197,10 +215,9 @@ void mme_s11_handle_create_session_response(
             nas_eps_send_attach_accept(mme_ue);
         }
 
-    } else if (OGS_FSM_CHECK(&mme_ue->sm, emm_state_registered)) {
+    } else {
         nas_eps_send_activate_default_bearer_context_request(bearer);
-    } else
-        ogs_assert_if_reached();
+    }
 }
 
 void mme_s11_handle_modify_bearer_response(
@@ -723,7 +740,7 @@ void mme_s11_handle_downlink_data_notification(
     cause.value = OGS_GTP_CAUSE_REQUEST_ACCEPTED;
 
     if (!mme_ue) {
-        ogs_warn("No Context");
+        ogs_warn("OGS_GTP_CAUSE_CONTEXT_NOT_FOUND");
         cause.value = OGS_GTP_CAUSE_CONTEXT_NOT_FOUND;
     }
 

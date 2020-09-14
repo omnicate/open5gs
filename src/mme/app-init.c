@@ -37,12 +37,12 @@ int app_initialize(const char *const argv[])
 
     init();
 
-    mhddaemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, 8000, NULL, NULL);
+    mhddaemon = promhttp_start_daemon(MHD_USE_SELECT_INTERNALLY, 8001, NULL, NULL);
     if (mhddaemon == NULL) {
         return 1;
     }
 
-    ogs_sctp_init(ogs_config()->usrsctp.udp_port);
+    ogs_sctp_init(ogs_app()->usrsctp.udp_port);
     rv = mme_initialize();
     if (rv != OGS_OK) {
         ogs_error("Failed to intialize MME");

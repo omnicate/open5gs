@@ -19,7 +19,6 @@
 
 #include "ogs-crypt.h"
 
-#include "hss/hss-auc.h"
 #include "mme/nas-security.h"
 
 #include "core/abts.h"
@@ -114,7 +113,7 @@ static void security_test3(abts_case *tc, void *data)
     uint8_t kasme[32];
     uint8_t tmp[32];
 
-    hss_auc_kasme(
+    ogs_auc_kasme(
         OGS_HEX(_ck, strlen(_ck), ck),
         OGS_HEX(_ik, strlen(_ik), ik),
         OGS_HEX(_plmn_id, strlen(_plmn_id), plmn_id),
@@ -147,6 +146,7 @@ static void security_test4(abts_case *tc, void *data)
     ABTS_TRUE(tc, memcmp(mact, OGS_HEX(_mact, strlen(_mact), tmp), 4) == 0);
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_NAS_HEADROOM+SECURITY_TEST4_LEN);
+    ogs_assert(pkbuf);
     ogs_pkbuf_reserve(pkbuf, OGS_NAS_HEADROOM);
     ogs_pkbuf_put_data(pkbuf, message, SECURITY_TEST4_LEN);
 
@@ -192,6 +192,7 @@ static void security_test5(abts_case *tc, void *data)
         SECURITY_TEST5_LEN) == 0);
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_NAS_HEADROOM+SECURITY_TEST5_LEN);
+    ogs_assert(pkbuf);
     ogs_pkbuf_reserve(pkbuf, OGS_NAS_HEADROOM);
     ogs_pkbuf_put_data(pkbuf, plain, SECURITY_TEST5_LEN);
 
@@ -232,6 +233,7 @@ static void security_test6(abts_case *tc, void *data)
     ABTS_TRUE(tc, memcmp(mact, OGS_HEX(_mact, strlen(_mact), tmp), 4) == 0);
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_NAS_HEADROOM+SECURITY_TEST6_LEN);
+    ogs_assert(pkbuf);
     ogs_pkbuf_reserve(pkbuf, OGS_NAS_HEADROOM);
     ogs_pkbuf_put_data(pkbuf, message, SECURITY_TEST6_LEN);
 
@@ -286,6 +288,7 @@ static void security_test7(abts_case *tc, void *data)
     ABTS_TRUE(tc, memcmp(cipher, plain, SECURITY_TEST7_LEN) == 0);
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_NAS_HEADROOM+SECURITY_TEST7_LEN);
+    ogs_assert(pkbuf);
     ogs_pkbuf_reserve(pkbuf, OGS_NAS_HEADROOM);
     ogs_pkbuf_put_data(pkbuf, plain, SECURITY_TEST7_LEN);
 
@@ -327,6 +330,7 @@ static void security_test8(abts_case *tc, void *data)
         OGS_HEX(_mact, strlen(_mact), mact), 4) == 0);
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_NAS_HEADROOM+SECURITY_TEST8_LEN);
+    ogs_assert(pkbuf);
     ogs_pkbuf_reserve(pkbuf, OGS_NAS_HEADROOM);
     ogs_pkbuf_put_data(pkbuf, message, SECURITY_TEST8_LEN);
 
@@ -371,6 +375,7 @@ static void security_test9(abts_case *tc, void *data)
         SECURITY_TEST9_LEN) == 0);
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_NAS_HEADROOM+SECURITY_TEST9_LEN);
+    ogs_assert(pkbuf);
     ogs_pkbuf_reserve(pkbuf, OGS_NAS_HEADROOM);
     ogs_pkbuf_put_data(pkbuf, plain, SECURITY_TEST9_LEN);
 

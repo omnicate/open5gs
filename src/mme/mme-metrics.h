@@ -25,8 +25,7 @@
 const char* messageCounterLabels[5];
 
 prom_gauge_t *mme_up_gauge;
-prom_gauge_t *mme_ue_gauge;
-prom_gauge_t *mme_enb_gauge;
+prom_gauge_t *mme_enb_ue_gauge;
 prom_gauge_t *mme_sessions_gauge;
 prom_counter_t *mme_sessions_counter;
 prom_counter_t *mme_messages_counter;

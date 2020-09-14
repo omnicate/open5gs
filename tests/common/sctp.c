@@ -68,6 +68,7 @@ ogs_pkbuf_t *testsctp_read(ogs_socknode_t *node, int type)
     ogs_assert(node->sock);
 
     recvbuf = ogs_pkbuf_alloc(NULL, OGS_MAX_SDU_LEN);
+    ogs_assert(recvbuf);
     ogs_pkbuf_put(recvbuf, OGS_MAX_SDU_LEN);
 
     size = ogs_sctp_recvdata(node->sock, recvbuf->data, OGS_MAX_SDU_LEN,
@@ -99,4 +100,50 @@ int testsctp_send(ogs_socknode_t *node, ogs_pkbuf_t *pkbuf,
     ogs_pkbuf_free(pkbuf);
 
     return OGS_OK;
+}
+
+ogs_socknode_t *tests1ap_client(int family)
+{
+    int rv;
+    ogs_sockaddr_t *addr = NULL;
+    ogs_socknode_t *node = NULL;
+
+    if (family == AF_INET6)
+        ogs_copyaddrinfo(&addr, test_self()->s1ap_addr6);
+    else
+        ogs_copyaddrinfo(&addr, test_self()->s1ap_addr);
+
+    ogs_assert(addr);
+
+    node = ogs_socknode_new(addr);
+    ogs_assert(node);
+    ogs_socknode_nodelay(node, true);
+
+    ogs_sctp_client(SOCK_STREAM, node);
+    ogs_assert(node->sock);
+
+    return node;
+}
+
+ogs_socknode_t *testngap_client(int family)
+{
+    int rv;
+    ogs_sockaddr_t *addr = NULL;
+    ogs_socknode_t *node = NULL;
+
+    if (family == AF_INET6)
+        ogs_copyaddrinfo(&addr, test_self()->ngap_addr6);
+    else
+        ogs_copyaddrinfo(&addr, test_self()->ngap_addr);
+
+    ogs_assert(addr);
+
+    node = ogs_socknode_new(addr);
+    ogs_assert(node);
+    ogs_socknode_nodelay(node, true);
+
+    ogs_sctp_client(SOCK_STREAM, node);
+    ogs_assert(node->sock);
+
+    return node;
 }

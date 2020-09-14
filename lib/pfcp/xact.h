@@ -62,27 +62,36 @@ typedef struct ogs_pfcp_xact_s {
     uint8_t         holding_rcount;
 
     void            *assoc_xact;    /**< Associated GTP transaction */
+    ogs_pkbuf_t     *gtpbuf;        /**< GTP packet buffer */
+
     void            *assoc_session; /**< Associated SBI session */
 
-#define OGS_PFCP_5GC_MODIFY_CREATE ((uint64_t)1<<0)
-#define OGS_PFCP_5GC_MODIFY_TFT_UPDATE ((uint64_t)1<<1)
-#define OGS_PFCP_5GC_MODIFY_QOS_UPDATE ((uint64_t)1<<2)
-#define OGS_PFCP_5GC_MODIFY_REMOVE ((uint64_t)1<<3)
-#define OGS_PFCP_5GC_MODIFY_ACTIVATE ((uint64_t)1<<4)
-#define OGS_PFCP_5GC_MODIFY_DEACTIVATE ((uint64_t)1<<5)
-    int             modify_flags;
+    bool            epc;            /**< EPC or 5GC */
 
-#define OGS_PFCP_5GC_DELETE_TRIGGER_UE_REQUESTED 1
-#define OGS_PFCP_5GC_DELETE_TRIGGER_PCF_INITIATED 2
-#define OGS_PFCP_5GC_DELETE_TRIGGER_RAN_INITIATED 3
-#define OGS_PFCP_5GC_DELETE_TRIGGER_SMF_INITIATED 4
-#define OGS_PFCP_5GC_DELETE_TRIGGER_AMF_RELEASE_SM_CONTEXT 5
-#define OGS_PFCP_5GC_DELETE_TRIGGER_AMF_UPDATE_SM_CONTEXT 6
+#define OGS_PFCP_MODIFY_SESSION ((uint64_t)1<<0)
+#define OGS_PFCP_MODIFY_DL_ONLY ((uint64_t)1<<1)
+#define OGS_PFCP_MODIFY_UL_ONLY ((uint64_t)1<<2)
+#define OGS_PFCP_MODIFY_INDIRECT ((uint64_t)1<<3)
+#define OGS_PFCP_MODIFY_CREATE ((uint64_t)1<<4)
+#define OGS_PFCP_MODIFY_REMOVE ((uint64_t)1<<5)
+#define OGS_PFCP_MODIFY_TFT_UPDATE ((uint64_t)1<<6)
+#define OGS_PFCP_MODIFY_QOS_UPDATE ((uint64_t)1<<7)
+#define OGS_PFCP_MODIFY_ACTIVATE ((uint64_t)1<<8)
+#define OGS_PFCP_MODIFY_DEACTIVATE ((uint64_t)1<<9)
+#define OGS_PFCP_MODIFY_END_MARKER ((uint64_t)1<<10)
+    uint64_t        modify_flags;
+
+#define OGS_PFCP_DELETE_TRIGGER_UE_REQUESTED 1
+#define OGS_PFCP_DELETE_TRIGGER_PCF_INITIATED 2
+#define OGS_PFCP_DELETE_TRIGGER_RAN_INITIATED 3
+#define OGS_PFCP_DELETE_TRIGGER_SMF_INITIATED 4
+#define OGS_PFCP_DELETE_TRIGGER_AMF_RELEASE_SM_CONTEXT 5
+#define OGS_PFCP_DELETE_TRIGGER_AMF_UPDATE_SM_CONTEXT 6
     int             delete_trigger;
 } ogs_pfcp_xact_t;
 
-int ogs_pfcp_xact_init(ogs_timer_mgr_t *timer_mgr, int size);
-int ogs_pfcp_xact_final(void);
+int ogs_pfcp_xact_init(void);
+void ogs_pfcp_xact_final(void);
 
 ogs_pfcp_xact_t *ogs_pfcp_xact_local_create(ogs_pfcp_node_t *node,
         ogs_pfcp_header_t *hdesc, ogs_pkbuf_t *pkbuf,

@@ -73,15 +73,8 @@ int emm_handle_attach_request(mme_ue_t *mme_ue,
             mme_ue->nas_eps.type, mme_ue->nas_eps.ksi, mme_ue->nas_eps.data);
     /*
      * ATTACH_REQUEST
-     *   Clear EBI generator
-     *   Clear Timer and Message
-     *
      * TAU_REQUEST
-     *   Clear Timer and Message
-     *
      * SERVICE_REQUEST
-     *   Clear Timer and Message
-     *
      * EXTENDED_SERVICE_REQUEST
      *   Clear Timer and Message
      */
@@ -403,15 +396,8 @@ int emm_handle_service_request(
 
     /*
      * ATTACH_REQUEST
-     *   Clear EBI generator
-     *   Clear Timer and Message
-     *
      * TAU_REQUEST
-     *   Clear Timer and Message
-     *
      * SERVICE_REQUEST
-     *   Clear Timer and Message
-     *
      * EXTENDED_SERVICE_REQUEST
      *   Clear Timer and Message
      */
@@ -468,15 +454,8 @@ int emm_handle_tau_request(mme_ue_t *mme_ue,
     
     /*
      * ATTACH_REQUEST
-     *   Clear EBI generator
-     *   Clear Timer and Message
-     *
      * TAU_REQUEST
-     *   Clear Timer and Message
-     *
      * SERVICE_REQUEST
-     *   Clear Timer and Message
-     *
      * EXTENDED_SERVICE_REQUEST
      *   Clear Timer and Message
      */
@@ -602,15 +581,8 @@ int emm_handle_extended_service_request(mme_ue_t *mme_ue,
     
     /*
      * ATTACH_REQUEST
-     *   Clear EBI generator
-     *   Clear Timer and Message
-     *
      * TAU_REQUEST
-     *   Clear Timer and Message
-     *
      * SERVICE_REQUEST
-     *   Clear Timer and Message
-     *
      * EXTENDED_SERVICE_REQUEST
      *   Clear Timer and Message
      */

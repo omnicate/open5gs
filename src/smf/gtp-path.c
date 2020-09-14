@@ -37,6 +37,7 @@ static void _gtpv2_c_recv_cb(short when, ogs_socket_t fd, void *data)
     ogs_assert(fd != INVALID_SOCKET);
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_MAX_SDU_LEN);
+    ogs_assert(pkbuf);
     ogs_pkbuf_put(pkbuf, OGS_MAX_SDU_LEN);
 
     size = ogs_recvfrom(fd, pkbuf->data, pkbuf->len, 0, &from);
@@ -60,7 +61,7 @@ static void _gtpv2_c_recv_cb(short when, ogs_socket_t fd, void *data)
     e->gnode = gnode;
     e->pkbuf = pkbuf;
 
-    rv = ogs_queue_push(smf_self()->queue, e);
+    rv = ogs_queue_push(ogs_app()->queue, e);
     if (rv != OGS_OK) {
         ogs_warn("ogs_queue_push() failed:%d", (int)rv);
         ogs_pkbuf_free(e->pkbuf);
@@ -77,14 +78,14 @@ int smf_gtp_open(void)
         sock = ogs_gtp_server(node);
         ogs_assert(sock);
         
-        node->poll = ogs_pollset_add(smf_self()->pollset,
+        node->poll = ogs_pollset_add(ogs_app()->pollset,
                 OGS_POLLIN, sock->fd, _gtpv2_c_recv_cb, sock);
     }
     ogs_list_for_each(&smf_self()->gtpc_list6, node) {
         sock = ogs_gtp_server(node);
         ogs_assert(sock);
 
-        node->poll = ogs_pollset_add(smf_self()->pollset,
+        node->poll = ogs_pollset_add(ogs_app()->pollset,
                 OGS_POLLIN, sock->fd, _gtpv2_c_recv_cb, sock);
     }
 
@@ -95,8 +96,6 @@ int smf_gtp_open(void)
     smf_self()->gtpc_sock6 = ogs_socknode_sock_first(&smf_self()->gtpc_list6);
     if (smf_self()->gtpc_sock6)
         smf_self()->gtpc_addr6 = &smf_self()->gtpc_sock6->local_addr;
-
-    ogs_assert(smf_self()->gtpc_addr || smf_self()->gtpc_addr6);
 
     return OGS_OK;
 }

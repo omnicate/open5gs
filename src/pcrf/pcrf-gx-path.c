@@ -292,8 +292,7 @@ static int pcrf_gx_ccr_cb( struct msg **msg, struct avp *avp,
     /* Check Session */
     if (!sess_data &&
         (cc_request_type == OGS_DIAM_GX_CC_REQUEST_TYPE_UPDATE_REQUEST ||
-        cc_request_type == OGS_DIAM_GX_CC_REQUEST_TYPE_TERMINATION_REQUEST))
-    {
+        cc_request_type == OGS_DIAM_GX_CC_REQUEST_TYPE_TERMINATION_REQUEST)) {
         ogs_error("No Session for CC-Request-Type: [%d]", cc_request_type);
         result_code = OGS_DIAM_UNKNOWN_SESSION_ID;
         goto out;
@@ -1131,8 +1130,8 @@ int pcrf_gx_init(void)
 	struct disp_when data;
 
     ogs_thread_mutex_init(&sess_state_mutex);
-    ogs_pool_init(&sess_state_pool, ogs_config()->pool.sess);
-    ogs_pool_init(&rx_sess_state_pool, ogs_config()->pool.sess);
+    ogs_pool_init(&sess_state_pool, ogs_app()->pool.sess);
+    ogs_pool_init(&rx_sess_state_pool, ogs_app()->pool.sess);
 
 	/* Install objects definitions for this application */
 	ret = ogs_diam_gx_init();

@@ -306,6 +306,12 @@ static void common_register_state(ogs_fsm_t *s, amf_event_t *e)
             break;
 
         case OGS_NAS_5GS_UL_NAS_TRANSPORT:
+            if (!h.integrity_protected || !SECURITY_CONTEXT_IS_VALID(amf_ue)) {
+                ogs_error("No Security Context");
+                OGS_FSM_TRAN(s, gmm_state_exception);
+                break;
+            }
+
             gmm_handle_ul_nas_transport(
                     amf_ue, &nas_message->gmm.ul_nas_transport);
             break;
@@ -659,8 +665,15 @@ void gmm_state_security_mode(ogs_fsm_t *s, amf_event_t *e)
                 break;
             }
 
-            gmm_handle_security_mode_complete(
+            rv = gmm_handle_security_mode_complete(
                     amf_ue, &nas_message->gmm.security_mode_complete);
+            if (rv != OGS_OK) {
+                ogs_error("[%s] Cannot handle NAS message", amf_ue->suci);
+                nas_5gs_send_gmm_reject(amf_ue,
+                    OGS_5GMM_CAUSE_5GS_SERVICES_NOT_ALLOWED);
+                OGS_FSM_TRAN(s, gmm_state_exception);
+                break;
+            }
 
             ogs_kdf_kgnb_and_kn3iwf(
                     amf_ue->kamf, amf_ue->ul_count.i32,
@@ -847,7 +860,6 @@ void gmm_state_initial_context_setup(ogs_fsm_t *s, amf_event_t *e)
             SWITCH(sbi_message->h.resource.component[1])
             CASE(OGS_SBI_RESOURCE_NAME_AM_DATA)
             CASE(OGS_SBI_RESOURCE_NAME_SMF_SELECT_DATA)
-            CASE(OGS_SBI_RESOURCE_NAME_UE_CONTEXT_IN_SMF_DATA)
                 if (sbi_message->res_status != OGS_SBI_HTTP_STATUS_OK) {
                     ogs_error("[%s] HTTP response error [%d]",
                             amf_ue->supi, sbi_message->res_status);
@@ -858,6 +870,38 @@ void gmm_state_initial_context_setup(ogs_fsm_t *s, amf_event_t *e)
                 }
 
                 amf_nudm_sdm_handle_provisioned(amf_ue, sbi_message);
+                break;
+            CASE(OGS_SBI_RESOURCE_NAME_UE_CONTEXT_IN_SMF_DATA)
+                /*
+                 * Issues #553
+                 *
+                 * o Tester
+                 * 1. UE registered to 5GS and can connect to internet.
+                 * 2. Turn off the UE and turn on the UE immediately
+                 * 3. UE send PDU session request message
+                 *    without sending registration complete
+                 *
+                 * o Analysis Result
+                 * 1. UE sends registration request with unknown GUTI
+                 * 2. AMF send registration accept without GUTI
+                 * 3. UE skips the registration complete
+                 *
+                 * So, if GUTI is not present,
+                 * we need to move REGISTERED state.
+                 */
+                if (amf_ue->guti_present == 0)
+                    OGS_FSM_TRAN(&amf_ue->sm, &gmm_state_registered);
+
+                /*
+                 * Do not use nas_5gs_send_registration_accept()
+                 * instead of nas_5gs_send_accept() here.
+                 *
+                 * nas_5gs_send_service_accept() could be used later.
+                 * The reason is why the design could be changed to handle this.
+                 *
+                 * So we'll use nas_5gs_send_accept() at this point.
+                 */
+                nas_5gs_send_accept(amf_ue);
                 break;
 
             DEFAULT

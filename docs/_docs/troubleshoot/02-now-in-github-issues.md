@@ -3,33 +3,48 @@ title: Now in the Github Issue
 head_inline: "<style> .blue { color: blue; } </style>"
 ---
 
-#### Test failed (e.g. `meson test`)
+#### Wireshark cannot decode NAS-5GS
+
+By default, wireshark cannot decode NAS-5GS message when the security header type is "Integrity protected and ciphered".
+
+![Wireshark cannot decode]({{ site.url }}{{ site.baseurl }}/assets/images/wireshark_cannot_decode_nas_5gs.png){: height="100%" width="100%"}
+
+You need to turn on "Try to detect and decode 5G-EA0 ciphered messages" in the wireshark perference menu.
+
+![Wireshark perference]({{ site.url }}{{ site.baseurl }}/assets/images/wireshark_preference.png){: height="100%" width="100%"}
+
+Now, you can see the NAS-5GS message in the wireshark.
+
+![Wireshark can decode]({{ site.url }}{{ site.baseurl }}/assets/images/wireshark_can_decode_nas_5gs.png){: height="100%" width="100%"}
+
+#### Test failed (e.g. `meson test -v`)
 
 Sometimes you may get a message like the one below due to a problem with the freeDiameter library.
 
 ```
-$ meson test
+$ meson test -v
 
 ...
-5/8 open5gs:epc / simple                    OK       7.69 s
-
---- command ---
-08:06:23 /home/parallels/open5gs/build/tests/epc/simple
---- stdout ---
-s1setup-test        :  SUCCESS
-attach-test         :  SUCCESS
-volte-test          :  SUCCESS
-handover-test       :  SUCCESS
-crash-test          :  SUCCESS
+ 5/10 open5gs:5gc / registration              OK       4.98 s
+s1setup-test        : SUCCESS
+guti-test           : SUCCESS
+auth-test           : SUCCESS
+idle-test           : SUCCESS
+emm-status-test     : SUCCESS
+reset-test          : SUCCESS
+ue-context-test     : SUCCESS
 All tests passed.
--------
-
-6/8 open5gs:system / mnc3                   FAIL    12.80 s (exit status 1)
+ 6/10 open5gs:epc / attach                    OK       4.68 s
+bearer-test         : SUCCESS
+session-test        : SUCCESS
+rx-test             : SUCCESS
+All tests passed.
+ 7/10 open5gs:epc / volte                     OK       4.33 s
 
 --- command ---
-08:06:31 /home/parallels/open5gs/build/tests/mnc3/mnc3
+08:06:31 /home/parallels/open5gs/build/tests/csfb/csfb
 --- stdout ---
-mnc3-test           :  ERROR: ../subprojects/freeDiameter/extensions/dbg_msg_dumps/dbg_msg_dumps.c:112 ROUTING ERROR 'No remaining suitable candidate to route the message to' for:  (../lib/diameter/common/init.c:116)
+csfb-test           :  ERROR: ../subprojects/freeDiameter/extensions/dbg_msg_dumps/dbg_msg_dumps.c:112 ROUTING ERROR 'No remaining suitable candidate to route the message to' for:  (../lib/diameter/common/init.c:116)
 : ../subprojects/freeDiameter/extensions/dbg_msg_dumps/dbg_msg_dumps.c:113      'Credit-Control-Request' (../lib/diameter/common/init.c:116)
 : ../subprojects/freeDiameter/extensions/dbg_msg_dumps/dbg_msg_dumps.c:113        Version: 0x01 (../lib/diameter/common/init.c:116)
 : ../subprojects/freeDiameter/extensions/dbg_msg_dumps/dbg_msg_dumps.c:113        Length: 20 (../lib/diameter/common/init.c:116)
@@ -80,14 +95,13 @@ mnc3-test           :  ERROR: ../subprojects/freeDiameter/extensions/dbg_msg_dum
 FAILED 1 of 1
 Failed Tests   		Total	Fail	Failed %
 ===================================================
-mnc3-test      		    1	   1	100.00%
+csfb-test      		    1	   1	100.00%
 --- stderr ---
 03/26 16:06:43.681: [ERROR: GTP Timeout : IMSI[310014987654004] Message-Type[32] (../src/mme/mme-gtp-path.c:110)
 Line 202: Condition is false, but expected true
 -------
 
-7/8 open5gs:system / volte                  FAIL    10.57 s (killed by signal 6 SIGABRT)
-
+ 8/10 open5gs:epc / csfb                    FAIL    10.57 s (killed by signal 6 SIGABRT)
 ...
 ```
 
@@ -107,35 +121,107 @@ switched to db open5gs
 Kill all processes.
 ```bash
 $ ps -ef | grep open5gs
+$ sudo pkill -9 open5gs-mmed
+$ sudo pkill -9 open5gs-sgwcd
+$ sudo pkill -9 open5gs-smfd
+$ sudo pkill -9 open5gs-amfd
+$ sudo pkill -9 open5gs-sgwud
+$ sudo pkill -9 open5gs-upfd
 $ sudo pkill -9 open5gs-hssd
 $ sudo pkill -9 open5gs-pcrfd
-$ sudo pkill -9 open5gs-pgwd
-$ sudo pkill -9 open5gs-sgwd
-$ sudo pkill -9 open5gs-mmed
+$ sudo pkill -9 open5gs-nrfd
+$ sudo pkill -9 open5gs-ausfd
+$ sudo pkill -9 open5gs-udmd
+$ sudo pkill -9 open5gs-udrd
 ```
 
-Run `meson test` again
+Run `meson test -v` again
 ```
-$ meson test
-ninja: Entering directory `/Users/acetcom/Documents/git/open5gs/build'
+$ meson test -v
+ninja: Entering directory `/home/acetcom/Documents/git/open5gs/build'
 ninja: no work to do.
-1/8 open5gs:unit / core                     OK       6.93 s
-2/8 open5gs:unit / crypt                    OK       0.08 s
-3/8 open5gs:system / sctp                   OK       1.09 s
-4/8 open5gs:unit / unit                     OK       0.04 s
-5/8 open5gs:epc / simple                    OK       5.07 s
-6/8 open5gs:epc / mnc3                      OK       1.18 s
-7/8 open5gs:epc / volte                     OK       2.99 s
-8/8 open5gs:epc / csfb                      OK       6.53 s
+list-test           : SUCCESS
+pool-test           : SUCCESS
+strings-test        : SUCCESS
+time-test           : SUCCESS
+conv-test           : SUCCESS
+log-test            : SUCCESS
+pkbuf-test          : SUCCESS
+memory-test         : SUCCESS
+rbtree-test         : SUCCESS
+timer-test          : SUCCESS
+thread-test         : SUCCESS
+socket-test         : SUCCESS
+queue-test          : SUCCESS
+poll-test           : SUCCESS
+tlv-test            : SUCCESS
+fsm-test            : SUCCESS
+hash-test           : SUCCESS
+uuid-test           : SUCCESS
+All tests passed.
+ 1/10 open5gs:unit / core                     OK       6.89 s
+aes-test            : SUCCESS
+sha-test            : SUCCESS
+base64-test         : SUCCESS
+All tests passed.
+ 2/10 open5gs:unit / crypt                    OK       0.12 s
+sctp-test           : SUCCESS
+All tests passed.
+ 3/10 open5gs:app / sctp                      OK       0.02 s
+s1ap-message-test   : SUCCESS
+nas-message-test    : SUCCESS
+gtp-message-test    : SUCCESS
+sbi-message-test    : SUCCESS
+security-test       : SUCCESS
+crash-test          : SUCCESS
+All tests passed.
+ 4/10 open5gs:unit / unit                     OK       0.03 s
+guti-test           : SUCCESS
+auth-test           : SUCCESS
+idle-test           : SUCCESS
+dereg-test          : SUCCESS
+identity-test       : SUCCESS
+gmm-status-test     : SUCCESS
+ue-context-test     : SUCCESS
+All tests passed.
+ 5/10 open5gs:5gc / registration              OK       4.98 s
+s1setup-test        : SUCCESS
+guti-test           : SUCCESS
+auth-test           : SUCCESS
+idle-test           : SUCCESS
+emm-status-test     : SUCCESS
+reset-test          : SUCCESS
+ue-context-test     : SUCCESS
+All tests passed.
+ 6/10 open5gs:epc / attach                    OK       4.68 s
+bearer-test         : SUCCESS
+session-test        : SUCCESS
+rx-test             : SUCCESS
+All tests passed.
+ 7/10 open5gs:epc / volte                     OK       4.33 s
+mo-idle-test        : SUCCESS
+mt-idle-test        : SUCCESS
+mo-active-test      : SUCCESS
+mt-active-test      : SUCCESS
+mo-sms-test         : SUCCESS
+mt-sms-test         : SUCCESS
+crash-test          : SUCCESS
+All tests passed.
+ 8/10 open5gs:epc / csfb                      OK       4.08 s
+epc-test            : SUCCESS
+All tests passed.
+ 9/10 open5gs:app / 310014                    OK       2.37 s
+epc-x2-test         : SUCCESS
+epc-s1-test         : SUCCESS
+All tests passed.
+10/10 open5gs:app / handover                  OK       4.78 s
 
-Ok:                    8
+Ok:                   10
 Expected Fail:         0
 Fail:                  0
 Unexpected Pass:       0
 Skipped:               0
 Timeout:               0
-
-Full log written to /Users/acetcom/Documents/git/open5gs/build/meson-logs/testlog.txt
 ```
 
 **Note:** If your test result more than once is same as above, there should be no problem with code you modified.
@@ -255,64 +341,70 @@ $ sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
 $ sudo iptables -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE
 ```
 
-#### How to use a different APN for each PGW
+#### How to use a different APN for each SMF
 
-By default, MME selects the PGW as the first PGW node. To use a different APN for each PGW, specify gtpc.apn as the APN name. If the HSS uses WebUI to set the PGW IP for each UE, you can use a specific PGW node for each UE.
+By default, MME selects the SMF as the first SMF node. To use a different APN for each SMF, specify gtpc.apn as the APN name. If the HSS uses WebUI to set the SMF IP for each UE, you can use a specific SMF node for each UE.
 
 See the following example.
 
 ```
-### For reference, see `pgw.yaml`
-#------------------------ MME --------------------------
+### For reference, see `smf.yaml`
 #
-#  o Two PGW are defined. 127.0.0.3:2123 is used.
-#    [fe80::3%lo]:2123 is ignored.
+# smf:
+#
+#  <GTP-C Client>
+#
+#  o By default, the SMF uses the first SMF node.
+#    - To use a different APN for each SMF, specify gtpc.apn as the APN name.
+#    - If the HSS uses WebUI to set the SMF IP for each UE,
+#      you can use a specific SMF node for each UE.
+#
+#  o Two SMF are defined. 127.0.0.4:2123 is used.
+#    [fe80::3%@loopback_devname@]:2123 is ignored.
 #    gtpc:
-#      - addr: 127.0.0.3
-#      - addr: fe80::3%lo
+#      - addr: 127.0.0.4
+#      - addr: fe80::3%@loopback_devname@
 #
-#  o One PGW is defined. if prefer_ipv4 is not true,
-#    [fe80::3%lo] is selected.
+#  o One SMF is defined. if prefer_ipv4 is not true,
+#    [fe80::3%@loopback_devname@] is selected.
 #    gtpc:
 #      - addr:
-#        - 127.0.0.3
-#        - fe80::3%lo
+#        - 127.0.0.4
+#        - fe80::3%@loopback_devname@
 #
-#  o Two PGW are defined with a different APN.
-#    - Note that if PGW IP for UE is configured in HSS,
+#  o Two SMF are defined with a different APN.
+#    - Note that if SMF IP for UE is configured in HSS,
 #      the following configurion for this UE is ignored.
 #    gtpc:
-#      - addr: 127.0.0.3
+#      - addr: 127.0.0.4
 #        apn: internet
 #      - addr: 127.0.0.5
 #        apn: volte
 #
-#  o If APN is omitted, the default APN uses the first PGW node.
+#  o If APN is omitted, the default APN uses the first SMF node.
 #    gtpc:
-#      - addr: 127.0.0.3
+#      - addr: 127.0.0.4
 #      - addr: 127.0.0.5
 #        apn: volte
-#
 ```
 
 The IP address of the UE can also use a different UE pool depending on the APN.
 
 ```
-### For reference, see `pgw.yaml`
-#
-#  <UE Pool>
+### For reference, see `smf.yaml`
+#  <PDN Configuration with UE Pool>
 #
 #  o IPv4 Pool
 #    $ sudo ip addr add 10.45.0.1/16 dev ogstun
 #
-#    ue_pool:
+#    pdn:
 #      addr: 10.45.0.1/16
 #
 #  o IPv4/IPv6 Pool
 #    $ sudo ip addr add 10.45.0.1/16 dev ogstun
 #    $ sudo ip addr add cafe:1::1/64 dev ogstun
 #
-#    ue_pool:
+#    pdn:
 #      - addr: 10.45.0.1/16
 #      - addr: cafe:1::1/64
 #
@@ -324,7 +416,7 @@ The IP address of the UE can also use a different UE pool depending on the APN.
 #    $ sudo ip addr add cafe:1::1/64 dev ogstun
 #    $ sudo ip addr add cafe:2::1/64 dev ogstun
 #
-#    ue_pool:
+#    pdn:
 #      - addr: 10.45.0.1/16
 #      - addr: cafe:1::1/64
 #      - addr: 10.46.0.1/16
@@ -338,7 +430,7 @@ The IP address of the UE can also use a different UE pool depending on the APN.
 #    $ sudo ip addr add 10.46.0.1/16 dev ogstun3
 #    $ sudo ip addr add cafe:2::1/64 dev ogstun3
 #
-#    ue_pool:
+#    pdn:
 #      - addr: 10.45.0.1/16
 #      - addr: cafe:1::1/64
 #        dev: ogstun2
@@ -348,6 +440,33 @@ The IP address of the UE can also use a different UE pool depending on the APN.
 #      - addr: cafe:2::1/64
 #        apn: volte
 #        dev: ogstun3
+#
+#  o Pool Range Sample
+#    pdn:
+#      - addr: 10.45.0.1/24
+#        range: 10.45.0.100-10.45.0.200
+#
+#    pdn:
+#      - addr: 10.45.0.1/24
+#        range:
+#          - 10.45.0.5-10.45.0.50
+#          - 10.45.0.100-
+#
+#    pdn:
+#      - addr: 10.45.0.1/24
+#        range:
+#          - -10.45.0.200
+#          - 10.45.0.210-10.45.0.220
+#
+#    pdn:
+#      - addr: 10.45.0.1/16
+#        range:
+#          - 10.45.0.100-10.45.0.200
+#          - 10.45.1.100-10.45.1.200
+#      - addr: cafe::1/64
+#        range:
+#          - cafe::a0-cafe:b0
+#          - cafe::c0-cafe:d0
 #
 ```
 
@@ -385,11 +504,11 @@ You can start MongoDB using systemctl.
 $ sudo systemctl start mongodb
 ```
 
-#### I have some error when running `./build/test/epc/simple`
+#### I have some error when running `./build/tests/attach/attach`
 
-Did you see the following error after executing `./build/test/epc/simple`?
+Did you see the following error after executing `./build/tests/attach/attach`?
 ```bash
-$ ./build/test/epc/simple
+$ ./build/tests/attach/attach
 s1setup_test        : SUCCESS  
 attach_test         : -Line 134: Condition is false, but expected true  
 \04/09 15:49:09.285: [esm] FATAL: esm_handle_pdn_connectivity_request: Assertion `SECURITY_CONTEXT_IS_VALID(mme_ue)' failed. (esm_handler.c:29)  
@@ -409,29 +528,29 @@ $ mongo
 
 Kill all processes.
 ```bash
-$ ps -ef | grep simple
+$ ps -ef | grep attach
 $ ps -ef | grep open5gs
-$ sudo pkill -9 simple
+$ sudo pkill -9 attach
 $ sudo pkill -9 open5gs-mmed ...
 ```
 
-Execute `./build/test/epc/simple`
+Execute `./build/tests/attach/attach`
 ```bash
-$ ./build/test/epc/simple
+$ ./build/tests/attach/attach
 ```
 
-#### My eNB does not support IPv6.
+#### My gNB/eNB does not support IPv6.
 
 Your eNodeB don't have to support IPv6.
 
-If the sgw.gtpu configuration does not have an IPv6 address, the eNodeB can use IPv4 to connect to the MME and SGW. If the sgw.gtpu setting has an IPv6 address, you can disable the IPv6 address as shown below.
+If the sgwu.gtpu configuration does not have an IPv6 address, the gNB/eNB can use IPv4 to connect to the MME and SGW-U. If the sgwu.gtpu setting has an IPv6 address, you can disable the IPv6 address as shown below.
 
 ```yaml
 parameter:
     no_ipv6: true
 ```
 
-**Note:** This parameter `no_ipv6` is only applied to EPC Elements such as MME, SGW, and so on. The parameter `no_ipv6` does not affect to UE. So, IPv6-enabled UE can connect to Open5GS LTE network.
+**Note:** This parameter `no_ipv6` is only applied to NFs such as AMF, MME, SGW-C, and so on. The parameter `no_ipv6` does not affect to UE. So, IPv6-enabled UE can connect to Open5GS LTE network.
 {: .notice--warning}
 
 #### Unable to add new user by WebUI 
@@ -470,45 +589,55 @@ Currently, the number of UE is limited to `128*128`.
 - Network
 
 ```
-* MME
-  S1AP: listen on all address avaiable in system
-  GTP-C: listen on the first IP address in system
-  DIAMETER: 127.0.0.2 (No TLS)
+* MongoDB : 127.0.0.1
+* MME : 127.0.0.2
+* SGW-C : 127.0.0.3
+* SMF : 127.0.0.4
+* AMF : 127.0.0.5
+* SGW-U : 127.0.0.6
+* UPF : 127.0.0.7
+* HSS : 127.0.0.8
+* PCRF : 127.0.0.9
+* NRF : 127.0.0.10
+* AUSF : 127.0.0.11
+* UDM : 127.0.0.12
+* UDR : 127.0.0.13
+```
 
-* SGW
-  GTP-C: 127.0.0.2
-  GTP-U: listen on the first IP address in system
+- AMF_ID, TAC and S_NSSAI
 
-* PGW
-  GTP-C: Both 127.0.0.3 and [::1]
-  GTP-U: Both 127.0.0.3 and [::1]
-  DIAMETER: 127.0.0.3 (No TLS)
+```
+* AMF_ID
+  PLMN ID - MNC: 901, MCC: 70
+  Region : 2
+  Set : 1
 
-* HSS
-  DIAMETER: 127.0.0.4 (No TLS)
+* TAI
+  PLMN ID - MNC: 901, MCC: 70
+  TAC : 1
 
-* PCRF
-  DIAMETER: 127.0.0.5 (No TLS)
+* S_NSSASI
+  SST : 1
 ```
 
 - GUMMEI, PLMN and TAC
 
 ```
 * GUMMEI
-  PLMN ID - MNC: 001, MCC: 01
+  PLMN ID - MNC: 901, MCC: 70
   MME Group : 2
   MME Code : 1
 
 * TAI
-  PLMN ID - MNC: 001, MCC: 01
-  TAC : 12345
+  PLMN ID - MNC: 901, MCC: 70
+  TAC : 1
 ```
 
 - Security
 
 ```
-* Integrity : EIA1 - Snow 3G
-* Ciphering : EEA0 - Nothing
+* Integrity : NIA1/EIA1 - Snow 3G
+* Ciphering : NEA0/EEA0 - Nothing
 ```
 
 - UE Network
@@ -547,7 +676,7 @@ By default, Open5GS is designed to support the Embedding System. To do so, we in
 - We'll use Debian Docker Environment.
 
 ```bash
-$ git clone https://github.com/acetcom/open5gs
+$ git clone https://github.com/{{ site.github_username }}/open5gs
 $ cd open5gs/docker
 $ DIST=debian TAG=stretch docker-compose run dev
 ```
@@ -560,7 +689,7 @@ $ sudo apt update
 $ sudo apt install libsctp-dev:armel libyaml-dev:armel libgnutls28-dev:armel libgcrypt-dev:armel libidn11-dev:armel libssl-dev:armel libmongoc-dev:armel libbson-dev:armel
 $ sudo apt install crossbuild-essential-armel
 $ sudo apt install qemu
-$ git clone https://github.com/acetcom/open5gs
+$ git clone https://github.com/{{ site.github_username }}/open5gs
 $ cd open5gs/
 
 $ cat << EOF > cross_file.txt

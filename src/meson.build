@@ -31,8 +31,8 @@ configure_file(output : 'version.h', configuration : version_conf)
 
 subdir('mme')
 subdir('hss')
-subdir('sgw')
-subdir('pgw')
+subdir('sgwc')
+subdir('sgwu')
 subdir('pcrf')
 
 subdir('nrf')

@@ -50,6 +50,9 @@ static amf_timer_cfg_t g_amf_timer_cfg[MAX_NUM_OF_AMF_TIMER] = {
     /* IDENTITY REQUEST sent */
     [AMF_TIMER_T3570] =
         { .max_count = 4, .duration = ogs_time_from_sec(3) },
+
+    [AMF_TIMER_NG_HOLDING] =
+        { .duration = ogs_time_from_sec(30) },
 };
 
 static void gmm_timer_event_send(
@@ -90,6 +93,8 @@ const char *amf_timer_get_name(amf_timer_e id)
         return "AMF_TIMER_T3560";
     case AMF_TIMER_T3570:
         return "AMF_TIMER_T3570";
+    case AMF_TIMER_NG_HOLDING:
+        return "AMF_TIMER_NG_HOLDING";
     default: 
        break;
     }
@@ -105,7 +110,7 @@ void amf_timer_ng_delayed_send(void *data)
 
     e->timer_id = AMF_TIMER_NG_DELAYED_SEND;
 
-    rv = ogs_queue_push(amf_self()->queue, e);
+    rv = ogs_queue_push(ogs_app()->queue, e);
     if (rv != OGS_OK) {
         ogs_warn("ogs_queue_push() failed:%d", (int)rv);
         ogs_timer_delete(e->timer);
@@ -142,7 +147,7 @@ static void sbi_timer_send_event(int timer_id, void *data)
         break;
     }
 
-    rv = ogs_queue_push(amf_self()->queue, e);
+    rv = ogs_queue_push(ogs_app()->queue, e);
     if (rv != OGS_OK) {
         ogs_warn("ogs_queue_push() failed [%d] in %s",
                 (int)rv, amf_timer_get_name(e->timer_id));
@@ -191,7 +196,7 @@ static void gmm_timer_event_send(
     e->timer_id = timer_id;
     e->amf_ue = amf_ue;
 
-    rv = ogs_queue_push(amf_self()->queue, e);
+    rv = ogs_queue_push(ogs_app()->queue, e);
     if (rv != OGS_OK) {
         ogs_warn("ogs_queue_push() failed:%d", (int)rv);
         amf_event_free(e);
@@ -221,4 +226,25 @@ void amf_timer_t3560_expire(void *data)
 void amf_timer_t3570_expire(void *data)
 {
     gmm_timer_event_send(AMF_TIMER_T3570, data);
+}
+
+void amf_timer_ng_holding_timer_expire(void *data)
+{
+    int rv;
+    amf_event_t *e = NULL;
+    ran_ue_t *ran_ue = NULL;
+
+    ogs_assert(data);
+    ran_ue = data;
+
+    e = amf_event_new(AMF_EVT_NGAP_TIMER);
+
+    e->timer_id = AMF_TIMER_NG_HOLDING;
+    e->ran_ue = ran_ue;
+
+    rv = ogs_queue_push(ogs_app()->queue, e);
+    if (rv != OGS_OK) {
+        ogs_warn("ogs_queue_push() failed:%d", (int)rv);
+        amf_event_free(e);
+    }
 }
