@@ -18,10 +18,9 @@
 
 libtestapp_inc = include_directories('.')
 
-libtestepc_cc_args = '-DDEFAULT_CONFIG_FILENAME="@0@/configs/epc.yaml"'.format(meson.build_root())
+libtestepc_cc_args = '-DDEFAULT_CONFIG_FILENAME="@0@/configs/sample.yaml"'.format(meson.build_root())
 
 libtestepc_sources = files('''
-    test-packet.c
     epc-init.c
 '''.split())
 
@@ -29,24 +28,13 @@ libtestepc = static_library('testepc',
     sources : [libtestepc_sources],
     c_args : libtestepc_cc_args,
     include_directories : [libtestapp_inc, srcinc],
-    link_with : [libmme, libhss, libsgw, libpgw, libpcrf],
-    dependencies : [libtestcommon_dep,
-                    libmme_dep,
-                    libhss_dep,
-                    libsgw_dep,
-                    libpgw_dep,
-                    libpcrf_dep],
+    dependencies : libtestcommon_dep,
     install : false)
 
 libtestepc_dep = declare_dependency(
     link_with : libtestepc,
     include_directories : [libtestapp_inc, srcinc],
-    dependencies : [libtestcommon_dep,
-                    libmme_dep,
-                    libhss_dep,
-                    libsgw_dep,
-                    libpgw_dep,
-                    libpcrf_dep])
+    dependencies : libtestcommon_dep)
 
 testepc_sources = files('''
     ../../src/main.c
@@ -58,7 +46,7 @@ executable('epc',
     include_directories : srcinc,
     dependencies : libtestepc_dep)
 
-libtest5gc_cc_args = '-DDEFAULT_CONFIG_FILENAME="@0@/configs/5gc.yaml"'.format(meson.build_root())
+libtest5gc_cc_args = '-DDEFAULT_CONFIG_FILENAME="@0@/configs/sample.yaml"'.format(meson.build_root())
 
 libtest5gc_sources = files('''
     5gc-init.c
@@ -68,7 +56,6 @@ libtest5gc = static_library('test5gc',
     sources : [libtest5gc_sources],
     c_args : libtest5gc_cc_args,
     include_directories : [libtestapp_inc, srcinc],
-    link_with : libamf,
     dependencies : libtestcommon_dep,
     install : false)
 
@@ -86,3 +73,31 @@ executable('5gc',
     c_args : libtest5gc_cc_args,
     include_directories : srcinc,
     dependencies : libtest5gc_dep)
+
+libtestapp_cc_args = '-DDEFAULT_CONFIG_FILENAME="@0@/configs/sample.yaml"'.format(meson.build_root())
+
+libtestapp_sources = files('''
+    app-init.c
+'''.split())
+
+libtestapp = static_library('testapp',
+    sources : [libtestapp_sources],
+    c_args : libtestapp_cc_args,
+    include_directories : [libtestapp_inc, srcinc],
+    dependencies : libtestcommon_dep,
+    install : false)
+
+libtestapp_dep = declare_dependency(
+    link_with : libtestapp,
+    include_directories : [libtestapp_inc, srcinc],
+    dependencies : libtestcommon_dep)
+
+testapp_sources = files('''
+    ../../src/main.c
+'''.split())
+
+executable('app',
+    sources : [testapp_sources],
+    c_args : libtestapp_cc_args,
+    include_directories : srcinc,
+    dependencies : libtestapp_dep)

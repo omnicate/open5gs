@@ -76,57 +76,125 @@ $ sudo zypper install open5gs
 ### Configure Open5GS
 ---
 
-Modify [/etc/open5gs/mme.yaml](https://github.com/{{ site.github_username }}/open5gs/blob/master/configs/open5gs/mme.yaml.in) to set the S1AP/GTP-C IP address, PLMN ID, and TAC
+##### 5G Core(5GC)
+
+Modify [install/etc/open5gs/amf.yaml](https://github.com/{{ site.github_username }}/open5gs/blob/master/configs/open5gs/amf.yaml.in) to set the NGAP IP address, PLMN ID, TAC and NSSAI.
 
 ```diff
-diff -u /etc/open5gs/mme.yaml.old /etc/open5gs/mme.yaml
---- mme.yaml.old	2018-04-15 18:28:31.000000000 +0900
-+++ mme.yaml	2018-04-15 19:53:10.000000000 +0900
-@@ -8,18 +8,20 @@ parameter:
+$ diff -u /etc/open5gs/amf.yaml.old /etc/open5gs/amf.yaml
+--- amf.yaml	2020-09-05 20:52:28.652234967 -0400
++++ amf.yaml.new	2020-09-05 20:55:07.453114885 -0400
+@@ -165,23 +165,23 @@
+       - addr: 127.0.0.5
+         port: 7777
+     ngap:
+-      - addr: 127.0.0.5
++      - addr: 10.10.0.5
+     guami:
+       - plmn_id:
+-          mcc: 901
+-          mnc: 70
++          mcc: 001
++          mnc: 01
+         amf_id:
+           region: 2
+           set: 1
+     tai:
+       - plmn_id:
+-          mcc: 901
+-          mnc: 70
+-        tac: 1
++          mcc: 001
++          mnc: 01
++        tac: 2
+     plmn:
+       - plmn_id:
+-          mcc: 901
+-          mnc: 70
++          mcc: 001
++          mnc: 01
+         s_nssai:
+           - sst: 1
+     security:
+```
+
+Modify [install/etc/open5gs/upf.yaml](https://github.com/{{ site.github_username }}/open5gs/blob/master/configs/open5gs/upf.yaml.in) to set the GTP-U and PFCP IP address.
+```diff
+$ diff -u /etc/open5gs/upf.yaml.old /etc/open5gs/upf.yaml
+--- upf.yaml	2020-09-05 20:52:28.652234967 -0400
++++ upf.yaml.new	2020-09-05 20:52:55.279052142 -0400
+@@ -137,9 +137,7 @@
+     pfcp:
+       - addr: 127.0.0.7
+     gtpu:
+-      - addr:
+-        - 127.0.0.7
+-        - ::1
++      - addr: 10.11.0.7
+     pdn:
+       - addr: 10.45.0.1/16
+       - addr: cafe::1/64
+```
+##### 4G/EPC
+
+Modify [install/etc/open5gs/mme.yaml](https://github.com/{{ site.github_username }}/open5gs/blob/master/configs/open5gs/mme.yaml.in) to set the S1AP IP address, PLMN ID, and TAC.
+
+```diff
+$ diff -u /etc/open5gs/mme.yaml.old /etc/open5gs/mme.yaml
+--- mme.yaml	2020-09-05 20:52:28.648235143 -0400
++++ mme.yaml.new	2020-09-05 20:56:05.434484208 -0400
+@@ -204,20 +204,20 @@
  mme:
-     freeDiameter: /etc/freeDiameter/mme.conf
+     freeDiameter: /home/acetcom/Documents/git/open5gs/install/etc/freeDiameter/mme.conf
      s1ap:
-+      addr: 192.168.0.100
+-      addr: 127.0.0.2
++      addr: 10.10.0.2
      gtpc:
-+      addr: 192.168.0.100
+       addr: 127.0.0.2
      gummei:
        plmn_id:
--        mcc: 001
--        mnc: 01
-+        mcc: 901
-+        mnc: 70
+-        mcc: 901
+-        mnc: 70
++        mcc: 001
++        mnc: 01
        mme_gid: 2
        mme_code: 1
      tai:
        plmn_id:
--        mcc: 001
--        mnc: 01
--      tac: 12345
-+        mcc: 901
-+        mnc: 70
-+      tac: 7
+-        mcc: 901
+-        mnc: 70
+-      tac: 1
++        mcc: 001
++        mnc: 01
++      tac: 2
      security:
          integrity_order : [ EIA1, EIA2, EIA0 ]
          ciphering_order : [ EEA0, EEA1, EEA2 ]
 ```
 
-Modify [/etc/open5gs/sgw.yaml](https://github.com/{{ site.github_username }}/open5gs/blob/master/configs/open5gs/sgw.yaml.in) to set the GTP-U IP address.  
+Modify [install/etc/open5gs/sgwu.yaml](https://github.com/{{ site.github_username }}/open5gs/blob/master/configs/open5gs/sgwu.yaml.in) to set the GTP-U IP address.
 ```diff
-diff -u /etc/open5gs/sgw.yaml.old /etc/open5gs/sgw.yaml
---- sgw.yaml.old	2018-04-15 18:30:25.000000000 +0900
-+++ sgw.yaml	2018-04-15 18:30:30.000000000 +0900
-@@ -14,3 +14,4 @@
-     gtpc:
-       addr: 127.0.0.2
+$ diff -u /etc/open5gs/sgwu.yaml.old /etc/open5gs/sgwu.yaml
+--- sgwu.yaml	2020-09-05 20:50:39.393022566 -0400
++++ sgwu.yaml.new	2020-09-05 20:51:06.667838823 -0400
+@@ -51,7 +51,7 @@
+ #
+ sgwu:
      gtpu:
-+      addr: 192.168.0.100
+-      addr: 127.0.0.6
++      addr: 10.11.0.6
+     pfcp:
+       addr: 127.0.0.6
+
 ```
 
 After changing conf files, please restart Open5GS daemons.
 
 ```bash
-$ sudo systemctl restart open5gs-mmed
-$ sudo systemctl restart open5gs-sgwd
+$ sudo systemctl restart open5gs-amfd.service
+$ sudo systemctl restart open5gs-upfd.service
+$ sudo systemctl restart open5gs-mmed.service
+$ sudo systemctl restart open5gs-sgwud.service
 ```
 
 ### Install WebUI of Open5GS
@@ -218,9 +286,9 @@ $ sudo iptables -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE
 **Note:** For the first time, it is a good condition if you do not have any rules in the IP/NAT tables. If a program such as docker has already set up a rule, you will need to add a rule differently.
 {: .notice--danger}
 
-### Turn on your eNodeB and Phone
+### Turn on your gNB/eNB and Phone
 ---
-- Connect your eNodeB to the IP of your server via the standard S1AP port of SCTP 36412 (for MME)
+- Connect your gNB/eNB to the IP of your server via the standard NGAP/S1AP port of SCTP 38412/36412 (for AMF/MME)
 - You can see actual traffic through wireshark -- [[srsenb.pcapng]]({{ site.url }}{{ site.baseurl }}/assets/pcapng/srsenb.pcapng).
 - You can view the log at `/var/log/open5gs/*.log`.
 

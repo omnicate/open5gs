@@ -31,7 +31,7 @@ static void pfcp_node_fsm_init(ogs_pfcp_node_t *node, bool try_to_assoicate)
     e.pfcp_node = node;
 
     if (try_to_assoicate == true) {
-        node->t_association = ogs_timer_add(smf_self()->timer_mgr,
+        node->t_association = ogs_timer_add(ogs_app()->timer_mgr,
                 smf_timer_pfcp_association, node);
         ogs_assert(node->t_association);
     }
@@ -70,6 +70,7 @@ static void pfcp_recv_cb(short when, ogs_socket_t fd, void *data)
     ogs_assert(fd != INVALID_SOCKET);
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_MAX_SDU_LEN);
+    ogs_assert(pkbuf);
     ogs_pkbuf_put(pkbuf, OGS_MAX_SDU_LEN);
 
     size = ogs_recvfrom(fd, pkbuf->data, pkbuf->len, 0, &from);
@@ -102,9 +103,9 @@ static void pfcp_recv_cb(short when, ogs_socket_t fd, void *data)
     e = smf_event_new(SMF_EVT_N4_MESSAGE);
     ogs_assert(e);
 
-    node = ogs_pfcp_node_find(&ogs_pfcp_self()->n4_list, &from);
+    node = ogs_pfcp_node_find(&ogs_pfcp_self()->peer_list, &from);
     if (!node) {
-        node = ogs_pfcp_node_add(&ogs_pfcp_self()->n4_list, &from);
+        node = ogs_pfcp_node_add(&ogs_pfcp_self()->peer_list, &from);
         ogs_assert(node);
 
         node->sock = data;
@@ -113,7 +114,7 @@ static void pfcp_recv_cb(short when, ogs_socket_t fd, void *data)
     e->pfcp_node = node;
     e->pkbuf = pkbuf;
 
-    rv = ogs_queue_push(smf_self()->queue, e);
+    rv = ogs_queue_push(ogs_app()->queue, e);
     if (rv != OGS_OK) {
         ogs_warn("ogs_queue_push() failed:%d", (int)rv);
         ogs_pkbuf_free(e->pkbuf);
@@ -132,14 +133,14 @@ int smf_pfcp_open(void)
         sock = ogs_pfcp_server(node);
         ogs_assert(sock);
         
-        node->poll = ogs_pollset_add(smf_self()->pollset,
+        node->poll = ogs_pollset_add(ogs_app()->pollset,
                 OGS_POLLIN, sock->fd, pfcp_recv_cb, sock);
     }
     ogs_list_for_each(&ogs_pfcp_self()->pfcp_list6, node) {
         sock = ogs_pfcp_server(node);
         ogs_assert(sock);
 
-        node->poll = ogs_pollset_add(smf_self()->pollset,
+        node->poll = ogs_pollset_add(ogs_app()->pollset,
                 OGS_POLLIN, sock->fd, pfcp_recv_cb, sock);
     }
 
@@ -155,7 +156,7 @@ int smf_pfcp_open(void)
 
     ogs_assert(ogs_pfcp_self()->pfcp_addr || ogs_pfcp_self()->pfcp_addr6);
 
-    ogs_list_for_each(&ogs_pfcp_self()->n4_list, pfcp_node)
+    ogs_list_for_each(&ogs_pfcp_self()->peer_list, pfcp_node)
         pfcp_node_fsm_init(pfcp_node, true);
 
     return OGS_OK;
@@ -165,42 +166,11 @@ void smf_pfcp_close(void)
 {
     ogs_pfcp_node_t *pfcp_node = NULL;
 
-    ogs_list_for_each(&ogs_pfcp_self()->n4_list, pfcp_node)
+    ogs_list_for_each(&ogs_pfcp_self()->peer_list, pfcp_node)
         pfcp_node_fsm_fini(pfcp_node);
 
     ogs_socknode_remove_all(&ogs_pfcp_self()->pfcp_list);
     ogs_socknode_remove_all(&ogs_pfcp_self()->pfcp_list6);
-}
-
-static void timeout(ogs_pfcp_xact_t *xact, void *data)
-{
-    int rv;
-
-    smf_event_t *e = NULL;
-    uint8_t type;
-
-    ogs_assert(xact);
-    type = xact->seq[0].type;
-
-    switch (type) {
-    case OGS_PFCP_HEARTBEAT_REQUEST_TYPE:
-        ogs_assert(data);
-
-        e = smf_event_new(SMF_EVT_N4_NO_HEARTBEAT);
-        e->pfcp_node = data;
-
-        rv = ogs_queue_push(smf_self()->queue, e);
-        if (rv != OGS_OK) {
-            ogs_warn("ogs_queue_push() failed:%d", (int)rv);
-            smf_event_free(e);
-        }
-        break;
-    case OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE:
-        break;
-    default:
-        ogs_error("Not implemented [type:%d]", type);
-        break;
-    }
 }
 
 static void sess_5gc_timeout(ogs_pfcp_xact_t *xact, void *data)
@@ -255,7 +225,7 @@ static void sess_epc_timeout(ogs_pfcp_xact_t *xact, void *data)
 
     switch (type) {
     case OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE:
-        ogs_error("No PFCP session establishment response");
+        ogs_warn("No PFCP session establishment response");
         break;
     case OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE:
         ogs_error("No PFCP session modification response");
@@ -267,75 +237,6 @@ static void sess_epc_timeout(ogs_pfcp_xact_t *xact, void *data)
         ogs_error("Not implemented [type:%d]", type);
         break;
     }
-}
-
-void smf_pfcp_send_association_setup_request(ogs_pfcp_node_t *node)
-{
-    int rv;
-    ogs_pkbuf_t *n4buf = NULL;
-    ogs_pfcp_header_t h;
-    ogs_pfcp_xact_t *xact = NULL;
-
-    ogs_assert(node);
-
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_ASSOCIATION_SETUP_REQUEST_TYPE;
-    h.seid = 0;
-
-    n4buf = smf_n4_build_association_setup_request(h.type);
-    ogs_expect_or_return(n4buf);
-
-    xact = ogs_pfcp_xact_local_create(node, &h, n4buf, timeout, node);
-    ogs_expect_or_return(xact);
-
-    rv = ogs_pfcp_xact_commit(xact);
-    ogs_expect(rv == OGS_OK);
-}
-
-void smf_pfcp_send_association_setup_response(ogs_pfcp_xact_t *xact,
-        uint8_t cause)
-{
-    int rv;
-    ogs_pkbuf_t *n4buf = NULL;
-    ogs_pfcp_header_t h;
-
-    ogs_assert(xact);
-
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_ASSOCIATION_SETUP_RESPONSE_TYPE;
-    h.seid = 0;
-
-    n4buf = smf_n4_build_association_setup_response(h.type, cause);
-    ogs_expect_or_return(n4buf);
-
-    rv = ogs_pfcp_xact_update_tx(xact, &h, n4buf);
-    ogs_expect_or_return(rv == OGS_OK);
-
-    rv = ogs_pfcp_xact_commit(xact);
-    ogs_expect(rv == OGS_OK);
-}
-
-void smf_pfcp_send_heartbeat_request(ogs_pfcp_node_t *node)
-{
-    int rv;
-    ogs_pkbuf_t *n4buf = NULL;
-    ogs_pfcp_header_t h;
-    ogs_pfcp_xact_t *xact = NULL;
-
-    ogs_assert(node);
-
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_HEARTBEAT_REQUEST_TYPE;
-    h.seid = 0;
-
-    n4buf = ogs_pfcp_n4_build_heartbeat_request(h.type);
-    ogs_expect_or_return(n4buf);
-
-    xact = ogs_pfcp_xact_local_create(node, &h, n4buf, timeout, node);
-    ogs_expect_or_return(xact);
-
-    rv = ogs_pfcp_xact_commit(xact);
-    ogs_expect(rv == OGS_OK);
 }
 
 void smf_5gc_pfcp_send_session_establishment_request(
@@ -386,6 +287,39 @@ void smf_5gc_pfcp_send_session_modification_request(
     xact = ogs_pfcp_xact_local_create(
             sess->pfcp_node, &h, n4buf, sess_5gc_timeout, sess);
     ogs_expect_or_return(xact);
+    xact->assoc_session = session;
+    xact->modify_flags = flags | OGS_PFCP_MODIFY_SESSION;
+
+    rv = ogs_pfcp_xact_commit(xact);
+    ogs_expect(rv == OGS_OK);
+}
+
+void smf_5gc_pfcp_send_qos_flow_modification_request(smf_bearer_t *qos_flow,
+        ogs_sbi_session_t *session, uint64_t flags)
+{
+    int rv;
+    ogs_pkbuf_t *n4buf = NULL;
+    ogs_pfcp_header_t h;
+    ogs_pfcp_xact_t *xact = NULL;
+    smf_sess_t *sess = NULL;
+
+    ogs_assert(qos_flow);
+    sess = qos_flow->sess;
+    ogs_assert(sess);
+
+    ogs_assert(session);
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
+    h.seid = sess->upf_n4_seid;
+
+    n4buf = smf_n4_build_qos_flow_modification_request(h.type, qos_flow, flags);
+    ogs_expect_or_return(n4buf);
+
+    xact = ogs_pfcp_xact_local_create(
+            sess->pfcp_node, &h, n4buf, sess_5gc_timeout, qos_flow);
+    ogs_expect_or_return(xact);
+
     xact->assoc_session = session;
     xact->modify_flags = flags;
 
@@ -442,13 +376,16 @@ void smf_epc_pfcp_send_session_establishment_request(
     xact = ogs_pfcp_xact_local_create(
             sess->pfcp_node, &h, n4buf, sess_epc_timeout, sess);
     ogs_expect_or_return(xact);
+
+    xact->epc = true; /* EPC PFCP transaction */
     xact->assoc_xact = gtp_xact;
 
     rv = ogs_pfcp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);
 }
 
-void smf_epc_pfcp_send_session_modification_request(smf_bearer_t *bearer)
+void smf_epc_pfcp_send_bearer_modification_request(
+        smf_bearer_t *bearer, uint64_t flags)
 {
     int rv;
     ogs_pkbuf_t *n4buf = NULL;
@@ -464,12 +401,15 @@ void smf_epc_pfcp_send_session_modification_request(smf_bearer_t *bearer)
     h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
     h.seid = sess->upf_n4_seid;
 
-    n4buf = smf_epc_n4_build_session_modification_request(h.type, bearer);
+    n4buf = smf_n4_build_qos_flow_modification_request(h.type, bearer, flags);
     ogs_expect_or_return(n4buf);
 
     xact = ogs_pfcp_xact_local_create(
             sess->pfcp_node, &h, n4buf, sess_epc_timeout, bearer);
     ogs_expect_or_return(xact);
+
+    xact->epc = true; /* EPC PFCP transaction */
+    xact->modify_flags = flags;
 
     rv = ogs_pfcp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);
@@ -495,41 +435,9 @@ void smf_epc_pfcp_send_session_deletion_request(
     xact = ogs_pfcp_xact_local_create(
             sess->pfcp_node, &h, n4buf, sess_epc_timeout, sess);
     ogs_expect_or_return(xact);
+
+    xact->epc = true; /* EPC PFCP transaction */
     xact->assoc_xact = gtp_xact;
-
-    rv = ogs_pfcp_xact_commit(xact);
-    ogs_expect(rv == OGS_OK);
-}
-
-void smf_5gc_pfcp_send_qos_flow_modification_request(smf_bearer_t *qos_flow,
-        ogs_sbi_session_t *session, uint64_t flags)
-{
-    int rv;
-    ogs_pkbuf_t *n4buf = NULL;
-    ogs_pfcp_header_t h;
-    ogs_pfcp_xact_t *xact = NULL;
-    smf_sess_t *sess = NULL;
-
-    ogs_assert(qos_flow);
-    sess = qos_flow->sess;
-    ogs_assert(sess);
-
-    ogs_assert(session);
-
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
-    h.seid = sess->upf_n4_seid;
-
-    n4buf = smf_5gc_n4_build_qos_flow_modification_request(
-            h.type, qos_flow, flags);
-    ogs_expect_or_return(n4buf);
-
-    xact = ogs_pfcp_xact_local_create(
-            sess->pfcp_node, &h, n4buf, sess_5gc_timeout, qos_flow);
-    ogs_expect_or_return(xact);
-
-    xact->assoc_session = session;
-    xact->modify_flags = flags;
 
     rv = ogs_pfcp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);

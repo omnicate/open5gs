@@ -80,11 +80,16 @@ typedef struct ogs_gtp_xact_s {
     ogs_timer_t     *tm_holding;    /**< Timer waiting for holding message */
     uint8_t         holding_rcount;
 
-    struct ogs_gtp_xact_s *assoc_xact; /**< Associated transaction */
+    void            *assoc_xact;    /**< Associated GTP transaction */
+    void            *pfcp_xact;     /**< Associated PFCP transaction */
+
+#define OGS_GTP_MODIFY_TFT_UPDATE ((uint64_t)1<<0)
+#define OGS_GTP_MODIFY_QOS_UPDATE ((uint64_t)1<<1)
+    uint64_t        update_flags;
 } ogs_gtp_xact_t;
 
-int ogs_gtp_xact_init(ogs_timer_mgr_t *timer_mgr, int size);
-int ogs_gtp_xact_final(void);
+int ogs_gtp_xact_init(void);
+void ogs_gtp_xact_final(void);
 
 ogs_gtp_xact_t *ogs_gtp_xact_local_create(ogs_gtp_node_t *gnode,
         ogs_gtp_header_t *hdesc, ogs_pkbuf_t *pkbuf,

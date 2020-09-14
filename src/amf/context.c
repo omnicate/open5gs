@@ -31,6 +31,14 @@ static OGS_POOL(amf_sess_pool, amf_sess_t);
 
 static int context_initialized = 0;
 
+static int num_of_ran_ue = 0;
+static int num_of_amf_sess = 0;
+
+static void stats_add_ran_ue(void);
+static void stats_remove_ran_ue(void);
+static void stats_add_amf_session(void);
+static void stats_remove_amf_session(void);
+
 void amf_context_init(void)
 {
     ogs_assert(context_initialized == 0);
@@ -48,18 +56,17 @@ void amf_context_init(void)
     ogs_list_init(&self.ngap_list6);
 
     /* Allocate TWICE the pool to check if maximum number of gNBs is reached */
-    ogs_pool_init(&amf_gnb_pool, ogs_config()->max.gnb*2);
-    ogs_pool_init(&amf_ue_pool, ogs_config()->pool.ue);
-    ogs_pool_init(&ran_ue_pool, ogs_config()->pool.ue);
-    ogs_pool_init(&amf_sess_pool, ogs_config()->pool.sess);
-    ogs_pool_init(&self.m_tmsi, ogs_config()->pool.ue);
+    ogs_pool_init(&amf_gnb_pool, ogs_app()->max.gnb*2);
+    ogs_pool_init(&amf_ue_pool, ogs_app()->max.ue);
+    ogs_pool_init(&ran_ue_pool, ogs_app()->max.ue);
+    ogs_pool_init(&amf_sess_pool, ogs_app()->pool.sess);
+    ogs_pool_init(&self.m_tmsi, ogs_app()->max.ue);
 
     ogs_list_init(&self.gnb_list);
     ogs_list_init(&self.amf_ue_list);
 
     self.gnb_addr_hash = ogs_hash_make();
     self.gnb_id_hash = ogs_hash_make();
-    self.amf_ue_ngap_id_hash = ogs_hash_make();
     self.guti_ue_hash = ogs_hash_make();
     self.suci_hash = ogs_hash_make();
     self.supi_hash = ogs_hash_make();
@@ -79,8 +86,6 @@ void amf_context_final(void)
     ogs_assert(self.gnb_id_hash);
     ogs_hash_destroy(self.gnb_id_hash);
 
-    ogs_assert(self.amf_ue_ngap_id_hash);
-    ogs_hash_destroy(self.amf_ue_ngap_id_hash);
     ogs_assert(self.guti_ue_hash);
     ogs_hash_destroy(self.guti_ue_hash);
     ogs_assert(self.suci_hash);
@@ -117,50 +122,50 @@ static int amf_context_validation(void)
 {
     if (ogs_list_first(&self.ngap_list) == NULL &&
         ogs_list_first(&self.ngap_list6) == NULL) {
-        ogs_error("No amf.ngap in '%s'", ogs_config()->file);
+        ogs_error("No amf.ngap in '%s'", ogs_app()->file);
         return OGS_RETRY;
     }
 
     if (self.num_of_served_guami == 0) {
-        ogs_error("No amf.guami in '%s'", ogs_config()->file);
+        ogs_error("No amf.guami in '%s'", ogs_app()->file);
         return OGS_ERROR;
     }
 
     if (self.num_of_served_tai == 0) {
-        ogs_error("No amf.tai in '%s'", ogs_config()->file);
+        ogs_error("No amf.tai in '%s'", ogs_app()->file);
         return OGS_ERROR;
     }
 
     if (self.num_of_plmn_support == 0) {
-        ogs_error("No amf.plmn in '%s'", ogs_config()->file);
+        ogs_error("No amf.plmn_support in '%s'", ogs_app()->file);
         return OGS_ERROR;
     }
 
     if (self.plmn_support[0].num_of_s_nssai == 0) {
-        ogs_error("No amf.plmn.s_nssai in '%s'", ogs_config()->file);
+        ogs_error("No amf.plmn_support.s_nssai in '%s'", ogs_app()->file);
         return OGS_ERROR;
     }
 
     if (self.served_tai[0].list0.tai[0].num == 0 &&
         self.served_tai[0].list2.num == 0) {
-        ogs_error("No amf.tai.plmn_id|tac in '%s'", ogs_config()->file);
+        ogs_error("No amf.tai.plmn_id|tac in '%s'", ogs_app()->file);
         return OGS_ERROR;
     }
 
     if (self.amf_name == NULL) {
-        ogs_error("No amf.amf_name in '%s'", ogs_config()->file);
+        ogs_error("No amf.amf_name in '%s'", ogs_app()->file);
         return OGS_ERROR;
     }
 
     if (self.num_of_integrity_order == 0) {
         ogs_error("No amf.security.integrity_order in '%s'",
-                ogs_config()->file);
+                ogs_app()->file);
         return OGS_ERROR;
     }
 
     if (self.num_of_ciphering_order == 0) {
         ogs_error("no amf.security.ciphering_order in '%s'",
-                ogs_config()->file);
+                ogs_app()->file);
         return OGS_ERROR;
     }
 
@@ -173,7 +178,7 @@ int amf_context_parse_config(void)
     yaml_document_t *document = NULL;
     ogs_yaml_iter_t root_iter;
 
-    document = ogs_config()->document;
+    document = ogs_app()->document;
     ogs_assert(document);
 
     rv = amf_context_prepare();
@@ -229,7 +234,7 @@ int amf_context_parse_config(void)
                                     family != AF_INET && family != AF_INET6) {
                                     ogs_warn("Ignore family(%d) : "
                                         "AF_UNSPEC(%d), "
-                                        "AF_INET(%d), AF_INET6(%d) ", 
+                                        "AF_INET(%d), AF_INET6(%d) ",
                                         family, AF_UNSPEC, AF_INET, AF_INET6);
                                     family = AF_UNSPEC;
                                 }
@@ -249,7 +254,7 @@ int amf_context_parse_config(void)
                                     }
 
                                     ogs_assert(num <= OGS_MAX_NUM_OF_HOSTNAME);
-                                    hostname[num++] = 
+                                    hostname[num++] =
                                         ogs_yaml_iter_value(&hostname_iter);
                                 } while (
                                     ogs_yaml_iter_type(&hostname_iter) ==
@@ -271,10 +276,10 @@ int amf_context_parse_config(void)
                         }
 
                         if (addr) {
-                            if (ogs_config()->parameter.no_ipv4 == 0)
+                            if (ogs_app()->parameter.no_ipv4 == 0)
                                 ogs_socknode_add(
                                         &self.ngap_list, AF_INET, addr);
-                            if (ogs_config()->parameter.no_ipv6 == 0)
+                            if (ogs_app()->parameter.no_ipv6 == 0)
                                 ogs_socknode_add(
                                         &self.ngap_list6, AF_INET6, addr);
                             ogs_freeaddrinfo(addr);
@@ -282,9 +287,9 @@ int amf_context_parse_config(void)
 
                         if (dev) {
                             rv = ogs_socknode_probe(
-                                    ogs_config()->parameter.no_ipv4 ?
+                                    ogs_app()->parameter.no_ipv4 ?
                                         NULL : &self.ngap_list,
-                                    ogs_config()->parameter.no_ipv6 ?
+                                    ogs_app()->parameter.no_ipv6 ?
                                         NULL : &self.ngap_list6,
                                     dev, port);
                             ogs_assert(rv == OGS_OK);
@@ -296,9 +301,9 @@ int amf_context_parse_config(void)
                     if (ogs_list_first(&self.ngap_list) == NULL &&
                         ogs_list_first(&self.ngap_list6) == NULL) {
                         rv = ogs_socknode_probe(
-                                ogs_config()->parameter.no_ipv4 ?
+                                ogs_app()->parameter.no_ipv4 ?
                                     NULL : &self.ngap_list,
-                                ogs_config()->parameter.no_ipv6 ?
+                                ogs_app()->parameter.no_ipv6 ?
                                     NULL : &self.ngap_list6,
                                 NULL, self.ngap_port);
                         ogs_assert(rv == OGS_OK);
@@ -520,38 +525,38 @@ int amf_context_parse_config(void)
                     if (list2->num || num_of_list0) {
                         self.num_of_served_tai++;
                     }
-                } else if (!strcmp(amf_key, "plmn")) {
-                    ogs_yaml_iter_t plmn_array, plmn_iter;
-                    ogs_yaml_iter_recurse(&amf_iter, &plmn_array);
+                } else if (!strcmp(amf_key, "plmn_support")) {
+                    ogs_yaml_iter_t plmn_support_array, plmn_support_iter;
+                    ogs_yaml_iter_recurse(&amf_iter, &plmn_support_array);
                     do {
                         const char *mnc = NULL, *mcc = NULL;
                         ogs_assert(self.num_of_plmn_support <=
                                 OGS_MAX_NUM_OF_PLMN);
 
-                        if (ogs_yaml_iter_type(&plmn_array) ==
+                        if (ogs_yaml_iter_type(&plmn_support_array) ==
                                 YAML_MAPPING_NODE) {
-                            memcpy(&plmn_iter, &plmn_array,
+                            memcpy(&plmn_support_iter, &plmn_support_array,
                                     sizeof(ogs_yaml_iter_t));
-                        } else if (ogs_yaml_iter_type(&plmn_array) ==
+                        } else if (ogs_yaml_iter_type(&plmn_support_array) ==
                             YAML_SEQUENCE_NODE) {
-                            if (!ogs_yaml_iter_next(&plmn_array))
+                            if (!ogs_yaml_iter_next(&plmn_support_array))
                                 break;
-                            ogs_yaml_iter_recurse(&plmn_array,
-                                    &plmn_iter);
-                        } else if (ogs_yaml_iter_type(&plmn_array) ==
+                            ogs_yaml_iter_recurse(&plmn_support_array,
+                                    &plmn_support_iter);
+                        } else if (ogs_yaml_iter_type(&plmn_support_array) ==
                             YAML_SCALAR_NODE) {
                             break;
                         } else
                             ogs_assert_if_reached();
 
-                        while (ogs_yaml_iter_next(&plmn_iter)) {
-                            const char *plmn_key =
-                                ogs_yaml_iter_key(&plmn_iter);
-                            ogs_assert(plmn_key);
-                            if (!strcmp(plmn_key, "plmn_id")) {
+                        while (ogs_yaml_iter_next(&plmn_support_iter)) {
+                            const char *plmn_support_key =
+                                ogs_yaml_iter_key(&plmn_support_iter);
+                            ogs_assert(plmn_support_key);
+                            if (!strcmp(plmn_support_key, "plmn_id")) {
                                 ogs_yaml_iter_t plmn_id_iter;
 
-                                ogs_yaml_iter_recurse(&plmn_iter,
+                                ogs_yaml_iter_recurse(&plmn_support_iter,
                                         &plmn_id_iter);
                                 while (ogs_yaml_iter_next(&plmn_id_iter)) {
                                     const char *plmn_id_key =
@@ -573,9 +578,9 @@ int amf_context_parse_config(void)
                                                 plmn_id,
                                         atoi(mcc), atoi(mnc), strlen(mnc));
                                 }
-                            } else if (!strcmp(plmn_key, "s_nssai")) {
+                            } else if (!strcmp(plmn_support_key, "s_nssai")) {
                                 ogs_yaml_iter_t s_nssai_array, s_nssai_iter;
-                                ogs_yaml_iter_recurse(&plmn_iter,
+                                ogs_yaml_iter_recurse(&plmn_support_iter,
                                         &s_nssai_array);
                                 do {
                                     ogs_s_nssai_t *s_nssai = NULL;
@@ -646,7 +651,7 @@ int amf_context_parse_config(void)
                                 } while (ogs_yaml_iter_type(&s_nssai_array) ==
                                         YAML_SEQUENCE_NODE);
                             } else
-                                ogs_warn("unknown key `%s`", plmn_key);
+                                ogs_warn("unknown key `%s`", plmn_support_key);
                         }
 
                         if (self.plmn_support[
@@ -662,7 +667,7 @@ int amf_context_parse_config(void)
                             self.plmn_support[
                                 self.num_of_plmn_support].num_of_s_nssai = 0;
                         }
-                    } while (ogs_yaml_iter_type(&plmn_array) ==
+                    } while (ogs_yaml_iter_type(&plmn_support_array) ==
                             YAML_SEQUENCE_NODE);
                 } else if (!strcmp(amf_key, "security")) {
                     ogs_yaml_iter_t security_iter;
@@ -834,16 +839,16 @@ amf_gnb_t *amf_gnb_add(ogs_sock_t *sock, ogs_sockaddr_t *addr)
 
     gnb->max_num_of_ostreams = DEFAULT_SCTP_MAX_NUM_OF_OSTREAMS;
     gnb->ostream_id = 0;
-    if (ogs_config()->sockopt.sctp.max_num_of_ostreams) {
+    if (ogs_app()->sockopt.sctp.max_num_of_ostreams) {
         gnb->max_num_of_ostreams =
-            ogs_config()->sockopt.sctp.max_num_of_ostreams;
+            ogs_app()->sockopt.sctp.max_num_of_ostreams;
         ogs_info("[GNB] max_num_of_ostreams : %d", gnb->max_num_of_ostreams);
     }
 
     ogs_list_init(&gnb->ran_ue_list);
 
     if (gnb->sock_type == SOCK_STREAM) {
-        gnb->poll = ogs_pollset_add(amf_self()->pollset,
+        gnb->poll = ogs_pollset_add(ogs_app()->pollset,
             OGS_POLLIN, sock->fd, ngap_recv_upcall, sock);
         ogs_assert(gnb->poll);
     }
@@ -856,6 +861,9 @@ amf_gnb_t *amf_gnb_add(ogs_sock_t *sock, ogs_sockaddr_t *addr)
     ogs_fsm_init(&gnb->sm, &e);
 
     ogs_list_add(&self.gnb_list, gnb);
+
+    ogs_info("[Added] Number of gNBs is now %d",
+            ogs_list_count(&self.gnb_list));
 
     return gnb;
 }
@@ -887,6 +895,9 @@ int amf_gnb_remove(amf_gnb_t *gnb)
     ogs_free(gnb->addr);
 
     ogs_pool_free(&amf_gnb_pool, gnb);
+
+    ogs_info("[Removed] Number of gNBs is now %d",
+            ogs_list_count(&self.gnb_list));
 
     return OGS_OK;
 }
@@ -945,19 +956,21 @@ ran_ue_t *ran_ue_add(amf_gnb_t *gnb, uint32_t ran_ue_ngap_id)
 {
     ran_ue_t *ran_ue = NULL;
 
-    ogs_assert(self.amf_ue_ngap_id_hash);
     ogs_assert(gnb);
 
     ogs_pool_alloc(&ran_ue_pool, &ran_ue);
     ogs_assert(ran_ue);
     memset(ran_ue, 0, sizeof *ran_ue);
 
+    ran_ue->index = ogs_pool_index(&ran_ue_pool, ran_ue);
+    ogs_assert(ran_ue->index > 0 && ran_ue->index <= ogs_app()->max.ue);
+
     ran_ue->ran_ue_ngap_id = ran_ue_ngap_id;
-    ran_ue->amf_ue_ngap_id = OGS_NEXT_ID(self.amf_ue_ngap_id, 1, 0xffffffff);
+    ran_ue->amf_ue_ngap_id = ran_ue->index;
 
     /*
      * SCTP output stream identification
-     * Default ogs_config()->parameter.sctp_streams : 30
+     * Default ogs_app()->parameter.sctp_streams : 30
      *   0 : Non UE signalling
      *   1-29 : UE specific association 
      */
@@ -966,22 +979,18 @@ ran_ue_t *ran_ue_add(amf_gnb_t *gnb, uint32_t ran_ue_ngap_id)
 
     ran_ue->gnb = gnb;
 
-    ogs_hash_set(self.amf_ue_ngap_id_hash, &ran_ue->amf_ue_ngap_id,
-            sizeof(ran_ue->amf_ue_ngap_id), ran_ue);
+    ran_ue->t_ng_holding = ogs_timer_add(
+            ogs_app()->timer_mgr, amf_timer_ng_holding_timer_expire, ran_ue);
+
     ogs_list_add(&gnb->ran_ue_list, ran_ue);
+
+    stats_add_ran_ue();
 
     return ran_ue;
 }
 
-unsigned int ran_ue_count()
-{
-    ogs_assert(self.amf_ue_ngap_id_hash);
-    return ogs_hash_count(self.amf_ue_ngap_id_hash);
-}
-
 void ran_ue_remove(ran_ue_t *ran_ue)
 {
-    ogs_assert(self.amf_ue_ngap_id_hash);
     ogs_assert(ran_ue);
     ogs_assert(ran_ue->gnb);
 
@@ -989,10 +998,12 @@ void ran_ue_remove(ran_ue_t *ran_ue)
     ran_ue_deassociate(ran_ue);
 
     ogs_list_remove(&ran_ue->gnb->ran_ue_list, ran_ue);
-    ogs_hash_set(self.amf_ue_ngap_id_hash, &ran_ue->amf_ue_ngap_id,
-            sizeof(ran_ue->amf_ue_ngap_id), NULL);
+
+    ogs_timer_delete(ran_ue->t_ng_holding);
 
     ogs_pool_free(&ran_ue_pool, ran_ue);
+
+    stats_remove_ran_ue();
 }
 
 void ran_ue_remove_in_gnb(amf_gnb_t *gnb)
@@ -1041,11 +1052,15 @@ ran_ue_t *ran_ue_find_by_ran_ue_ngap_id(
     return ran_ue;
 }
 
+ran_ue_t *ran_ue_find(uint32_t index)
+{
+    ogs_assert(index);
+    return ogs_pool_find(&ran_ue_pool, index);
+}
+
 ran_ue_t *ran_ue_find_by_amf_ue_ngap_id(uint64_t amf_ue_ngap_id)
 {
-    ogs_assert(self.amf_ue_ngap_id_hash);
-    return ogs_hash_get(self.amf_ue_ngap_id_hash, 
-            &amf_ue_ngap_id, sizeof(amf_ue_ngap_id));
+    return ran_ue_find(amf_ue_ngap_id);
 }
 
 ran_ue_t *ran_ue_first_in_gnb(amf_gnb_t *gnb)
@@ -1109,22 +1124,22 @@ amf_ue_t *amf_ue_add(ran_ue_t *ran_ue)
 
     /* Add All Timers */
     amf_ue->t3513.timer = ogs_timer_add(
-            self.timer_mgr, amf_timer_t3513_expire, amf_ue);
+            ogs_app()->timer_mgr, amf_timer_t3513_expire, amf_ue);
     amf_ue->t3513.pkbuf = NULL;
     amf_ue->t3522.timer = ogs_timer_add(
-            self.timer_mgr, amf_timer_t3522_expire, amf_ue);
+            ogs_app()->timer_mgr, amf_timer_t3522_expire, amf_ue);
     amf_ue->t3522.pkbuf = NULL;
     amf_ue->t3550.timer = ogs_timer_add(
-            self.timer_mgr, amf_timer_t3550_expire, amf_ue);
+            ogs_app()->timer_mgr, amf_timer_t3550_expire, amf_ue);
     amf_ue->t3550.pkbuf = NULL;
     amf_ue->t3555.timer = ogs_timer_add(
-            self.timer_mgr, amf_timer_t3555_expire, amf_ue);
+            ogs_app()->timer_mgr, amf_timer_t3555_expire, amf_ue);
     amf_ue->t3555.pkbuf = NULL;
     amf_ue->t3560.timer = ogs_timer_add(
-            self.timer_mgr, amf_timer_t3560_expire, amf_ue);
+            ogs_app()->timer_mgr, amf_timer_t3560_expire, amf_ue);
     amf_ue->t3560.pkbuf = NULL;
     amf_ue->t3570.timer = ogs_timer_add(
-            self.timer_mgr, amf_timer_t3570_expire, amf_ue);
+            ogs_app()->timer_mgr, amf_timer_t3570_expire, amf_ue);
     amf_ue->t3570.pkbuf = NULL;
 
     /* Create FSM */
@@ -1134,6 +1149,9 @@ amf_ue_t *amf_ue_add(ran_ue_t *ran_ue)
     ogs_fsm_init(&amf_ue->sm, &e);
 
     ogs_list_add(&self.amf_ue_list, amf_ue);
+
+    ogs_info("[Added] Number of AMF-UEs is now %d",
+            ogs_list_count(&self.amf_ue_list));
 
     return amf_ue;
 }
@@ -1201,6 +1219,9 @@ void amf_ue_remove(amf_ue_t *amf_ue)
     amf_sess_remove_all(amf_ue);
 
     ogs_pool_free(&amf_ue_pool, amf_ue);
+
+    ogs_info("[Removed] Number of AMF-UEs is now %d",
+            ogs_list_count(&self.amf_ue_list));
 }
 
 void amf_ue_remove_all()
@@ -1481,6 +1502,8 @@ amf_sess_t *amf_sess_add(amf_ue_t *amf_ue, uint8_t psi)
 
     ogs_list_add(&amf_ue->sess_list, sess);
 
+    stats_add_amf_session();
+
     return sess;
 }
 
@@ -1509,6 +1532,8 @@ void amf_sess_remove(amf_sess_t *sess)
     OGS_TLV_CLEAR_DATA(&sess->pgw_pco);
 
     ogs_pool_free(&amf_sess_pool, sess);
+
+    stats_remove_amf_session();
 }
 
 void amf_sess_remove_all(amf_ue_t *amf_ue)
@@ -1635,7 +1660,7 @@ int amf_m_tmsi_pool_generate()
     int index = 0;
 
     ogs_trace("M-TMSI Pool try to generate...");
-    for (i = 0; index < ogs_config()->pool.ue; i++) {
+    for (i = 0; index < ogs_app()->max.ue; i++) {
         amf_m_tmsi_t *m_tmsi = NULL;
         int conflict = 0;
 
@@ -1715,4 +1740,28 @@ uint8_t amf_selected_enc_algorithm(amf_ue_t *amf_ue)
     }
 
     return 0;
+}
+
+static void stats_add_ran_ue(void)
+{
+    num_of_ran_ue = num_of_ran_ue + 1;
+    ogs_info("[Added] Number of gNB-UEs is now %d", num_of_ran_ue);
+}
+
+static void stats_remove_ran_ue(void)
+{
+    num_of_ran_ue = num_of_ran_ue - 1;
+    ogs_info("[Removed] Number of gNB-UEs is now %d", num_of_ran_ue);
+}
+
+static void stats_add_amf_session(void)
+{
+    num_of_amf_sess = num_of_amf_sess + 1;
+    ogs_info("[Added] Number of AMF-Sessions is now %d", num_of_amf_sess);
+}
+
+static void stats_remove_amf_session(void)
+{
+    num_of_amf_sess = num_of_amf_sess - 1;
+    ogs_info("[Removed] Number of AMF-Sessions is now %d", num_of_amf_sess);
 }

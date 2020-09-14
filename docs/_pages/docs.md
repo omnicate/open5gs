@@ -5,13 +5,10 @@ permalink: /docs/
 head_inline: "<style> ul { padding-bottom: 1em; } </style>"
 ---
 
-- What's New?
-  - [Installing 5G Core](new/02-installing-5g-core)
-
 - User's Guide
   - [Quickstart](guide/01-quickstart)
   - [Building Open5GS from Sources](guide/02-building-open5gs-from-sources)
-  - [Splitting Network Elements](guide/03-splitting-network-elements)
+  - [Splitting Network Functions](guide/03-splitting-network-functions)
 
 - Tutorials
   - [Your First LTE](tutorial/01-your-first-lte)

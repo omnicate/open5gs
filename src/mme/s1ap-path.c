@@ -115,7 +115,7 @@ int s1ap_delayed_send_to_enb_ue(
         e = mme_event_new(MME_EVT_S1AP_TIMER);
         ogs_assert(e);
         e->timer = ogs_timer_add(
-                mme_self()->timer_mgr, mme_timer_s1_delayed_send, e);
+                ogs_app()->timer_mgr, mme_timer_s1_delayed_send, e);
         ogs_assert(e->timer);
         e->pkbuf = pkbuf;
         e->enb_ue = enb_ue;
@@ -144,7 +144,7 @@ int s1ap_send_to_esm(mme_ue_t *mme_ue, ogs_pkbuf_t *esmbuf)
     ogs_assert(e);
     e->mme_ue = mme_ue;
     e->pkbuf = esmbuf;
-    rv = ogs_queue_push(mme_self()->queue, e);
+    rv = ogs_queue_push(ogs_app()->queue, e);
     if (rv != OGS_OK) {
         ogs_warn("ogs_queue_push() failed:%d", (int)rv);
         ogs_pkbuf_free(e->pkbuf);
@@ -170,6 +170,7 @@ int s1ap_send_to_nas(enb_ue_t *enb_ue,
     /* The Packet Buffer(pkbuf_t) for NAS message MUST make a HEADROOM. 
      * When calculating AES_CMAC, we need to use the headroom of the packet. */
     nasbuf = ogs_pkbuf_alloc(NULL, OGS_NAS_HEADROOM+nasPdu->size);
+    ogs_assert(nasbuf);
     ogs_pkbuf_reserve(nasbuf, OGS_NAS_HEADROOM);
     ogs_pkbuf_put_data(nasbuf, nasPdu->buf, nasPdu->size);
 
@@ -227,7 +228,7 @@ int s1ap_send_to_nas(enb_ue_t *enb_ue,
         e->s1ap_code = procedureCode;
         e->nas_type = security_header_type.type;
         e->pkbuf = nasbuf;
-        rv = ogs_queue_push(mme_self()->queue, e);
+        rv = ogs_queue_push(ogs_app()->queue, e);
         if (rv != OGS_OK) {
             ogs_warn("ogs_queue_push() failed:%d", (int)rv);
             ogs_pkbuf_free(e->pkbuf);
@@ -311,31 +312,20 @@ void s1ap_send_ue_context_release_command(
     ogs_debug("    ENB_UE_S1AP_ID[%d] MME_UE_S1AP_ID[%d]",
             enb_ue->enb_ue_s1ap_id, enb_ue->mme_ue_s1ap_id);
 
-    if (delay) {
-        ogs_assert(action != S1AP_UE_CTX_REL_INVALID_ACTION);
-        enb_ue->ue_ctx_rel_action = action;
+    ogs_assert(action != S1AP_UE_CTX_REL_INVALID_ACTION);
+    enb_ue->ue_ctx_rel_action = action;
 
-        ogs_debug("    Group[%d] Cause[%d] Action[%d] Delay[%d]",
-                group, (int)cause, action, delay);
+    ogs_debug("    Group[%d] Cause[%d] Action[%d] Delay[%d]",
+            group, (int)cause, action, delay);
 
-        s1apbuf = s1ap_build_ue_context_release_command(enb_ue, group, cause);
-        ogs_expect_or_return(s1apbuf);
+    s1apbuf = s1ap_build_ue_context_release_command(enb_ue, group, cause);
+    ogs_expect_or_return(s1apbuf);
 
-        rv = s1ap_delayed_send_to_enb_ue(enb_ue, s1apbuf, delay);
-        ogs_expect(rv == OGS_OK);
-    } else {
-        ogs_assert(action != S1AP_UE_CTX_REL_INVALID_ACTION);
-        enb_ue->ue_ctx_rel_action = action;
+    rv = s1ap_delayed_send_to_enb_ue(enb_ue, s1apbuf, delay);
+    ogs_expect(rv == OGS_OK);
 
-        ogs_debug("    Group[%d] Cause[%d] Action[%d] Delay[%d]",
-                group, (int)cause, action, delay);
-
-        s1apbuf = s1ap_build_ue_context_release_command(enb_ue, group, cause);
-        ogs_expect_or_return(s1apbuf);
-
-        rv = s1ap_delayed_send_to_enb_ue(enb_ue, s1apbuf, 0);
-        ogs_expect(rv == OGS_OK);
-    }
+    ogs_timer_start(enb_ue->t_s1_holding,
+            mme_timer_cfg(MME_TIMER_S1_HOLDING)->duration);
 }
 
 void s1ap_send_paging(mme_ue_t *mme_ue, S1AP_CNDomain_t cn_domain)
@@ -521,12 +511,34 @@ void s1ap_send_error_indication(
 
     ogs_assert(enb);
 
-    s1apbuf = s1ap_build_error_indication(
+    s1apbuf = ogs_s1ap_build_error_indication(
             mme_ue_s1ap_id, enb_ue_s1ap_id, group, cause);
     ogs_expect_or_return(s1apbuf);
 
     rv = s1ap_send_to_enb(enb, s1apbuf, S1AP_NON_UE_SIGNALLING);
     ogs_expect(rv == OGS_OK);
+}
+
+void s1ap_send_error_indication2(
+        mme_ue_t *mme_ue, S1AP_Cause_PR group, long cause)
+{
+    mme_enb_t *enb;
+    enb_ue_t *enb_ue;
+
+    S1AP_MME_UE_S1AP_ID_t mme_ue_s1ap_id;
+    S1AP_ENB_UE_S1AP_ID_t enb_ue_s1ap_id;
+
+    ogs_assert(mme_ue);
+    enb_ue = mme_ue->enb_ue;
+    ogs_expect_or_return(enb_ue);
+    enb = enb_ue->enb;
+    ogs_expect_or_return(enb);
+
+    mme_ue_s1ap_id = enb_ue->mme_ue_s1ap_id,
+    enb_ue_s1ap_id = enb_ue->enb_ue_s1ap_id,
+
+    s1ap_send_error_indication(
+        enb, &mme_ue_s1ap_id, &enb_ue_s1ap_id, group, cause);
 }
 
 void s1ap_send_s1_reset_ack(
@@ -538,7 +550,7 @@ void s1ap_send_s1_reset_ack(
 
     ogs_assert(enb);
 
-    s1apbuf = s1ap_build_s1_reset_ack(partOfS1_Interface);
+    s1apbuf = ogs_s1ap_build_s1_reset_ack(partOfS1_Interface);
     ogs_expect_or_return(s1apbuf);
 
     rv = s1ap_send_to_enb(enb, s1apbuf, S1AP_NON_UE_SIGNALLING);

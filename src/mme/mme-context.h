@@ -54,6 +54,8 @@ typedef struct mme_csmap_s mme_csmap_t;
 
 typedef struct enb_ue_s enb_ue_t;
 typedef struct mme_ue_s mme_ue_t;
+typedef struct mme_sess_s mme_sess_t;
+typedef struct mme_bearer_s mme_bearer_t;
 
 typedef struct ogs_diam_config_s ogs_diam_config_t;
 
@@ -146,15 +148,9 @@ typedef struct mme_context_s {
 
     ogs_hash_t      *enb_addr_hash;         /* hash table for ENB Address */
     ogs_hash_t      *enb_id_hash;           /* hash table for ENB-ID */
-    ogs_hash_t      *mme_ue_s1ap_id_hash;   /* hash table for MME-UE-S1AP-ID */
     ogs_hash_t      *imsi_ue_hash;          /* hash table (IMSI : MME_UE) */
     ogs_hash_t      *guti_ue_hash;          /* hash table (GUTI : MME_UE) */
 
-    /* System */
-    ogs_queue_t     *queue;         /* Queue for processing MME control */
-    ogs_timer_mgr_t *timer_mgr;     /* Timer Manager */
-    ogs_pollset_t   *pollset;       /* Poll Set for I/O Multiplexing */
-    
 } mme_context_t;
 
 typedef struct mme_sgw_s {
@@ -235,6 +231,7 @@ typedef struct mme_enb_s {
 
 struct enb_ue_s {
     ogs_lnode_t     lnode;
+    uint32_t        index;
 
     /* UE identity */
 #define INVALID_UE_S1AP_ID      0xffffffff /* Initial value of enb_ue_s1ap_id */
@@ -256,6 +253,9 @@ struct enb_ue_s {
         ogs_eps_tai_t   tai;
         ogs_e_cgi_t     e_cgi;
     } saved;
+
+    /* S1 Holding timer for removing this context */
+    ogs_timer_t     *t_s1_holding;
 
     /* Store by UE Context Release Command
      * Retrieve by UE Context Release Complete */
@@ -392,20 +392,22 @@ struct mme_ue_s {
     ogs_subscription_data_t subscription_data;
 
     /* ESM Info */
+    ogs_list_t      sess_list;
+
 #define MIN_EPS_BEARER_ID           5
 #define MAX_EPS_BEARER_ID           15
 
 #define CLEAR_EPS_BEARER_ID(__mME) \
     do { \
         ogs_assert((__mME)); \
-        (__mME)->ebi = MIN_EPS_BEARER_ID - 1; \
+        mme_ebi_pool_clear(__mME); \
     } while(0)
-    uint8_t         ebi; /* EPS Bearer ID generator */
-    ogs_list_t      sess_list;
+    OGS_POOL(ebi_pool, uint8_t);
 
 #define ECM_CONNECTED(__mME) \
     ((__mME) && ((__mME)->enb_ue != NULL))
-#define ECM_IDLE(__mME) (!ECM_CONNECTED(__mME))
+#define ECM_IDLE(__mME) \
+    ((__mME) && ((__mME)->enb_ue == NULL))
     /* S1 UE context */
     enb_ue_t        *enb_ue;
 
@@ -582,9 +584,11 @@ typedef struct mme_sess_s {
     } while(0)
 typedef struct mme_bearer_s {
     ogs_lnode_t     lnode;
+    uint32_t        index;
     ogs_fsm_t       sm;             /* State Machine */
 
-    uint8_t         ebi;            /* EPS Bearer ID */    
+    uint8_t         *ebi_node;      /* Pool-Node for EPS Bearer ID */
+    uint8_t         ebi;            /* EPS Bearer ID */
 
     uint32_t        enb_s1u_teid;
     ogs_ip_t        enb_s1u_ip;
@@ -672,12 +676,12 @@ int mme_enb_set_enb_id(mme_enb_t *enb, uint32_t enb_id);
 int mme_enb_sock_type(ogs_sock_t *sock);
 
 enb_ue_t *enb_ue_add(mme_enb_t *enb, uint32_t enb_ue_s1ap_id);
-unsigned int enb_ue_count(void);
 void enb_ue_remove(enb_ue_t *enb_ue);
 void enb_ue_remove_in_enb(mme_enb_t *enb);
 void enb_ue_switch_to_enb(enb_ue_t *enb_ue, mme_enb_t *new_enb);
 enb_ue_t *enb_ue_find_by_enb_ue_s1ap_id(
         mme_enb_t *enb, uint32_t enb_ue_s1ap_id);
+enb_ue_t *enb_ue_find(uint32_t index);
 enb_ue_t *enb_ue_find_by_mme_ue_s1ap_id(uint32_t mme_ue_s1ap_id);
 enb_ue_t *enb_ue_first_in_enb(mme_enb_t *enb);
 enb_ue_t *enb_ue_next_in_enb(enb_ue_t *enb_ue);
@@ -757,9 +761,13 @@ void mme_sess_remove_all(mme_ue_t *mme_ue);
 mme_sess_t *mme_sess_find_by_pti(mme_ue_t *mme_ue, uint8_t pti);
 mme_sess_t *mme_sess_find_by_ebi(mme_ue_t *mme_ue, uint8_t ebi);
 mme_sess_t *mme_sess_find_by_apn(mme_ue_t *mme_ue, char *apn);
+
 mme_sess_t *mme_sess_first(mme_ue_t *mme_ue);
 mme_sess_t *mme_sess_next(mme_sess_t *sess);
 unsigned int mme_sess_count(mme_ue_t *mme_ue);
+
+#define SESSION_CONTEXT_IN_ATTACH(__sESS) mme_sess_in_attach(__sESS)
+bool mme_sess_in_attach(mme_sess_t *sess);
 
 mme_bearer_t *mme_bearer_add(mme_sess_t *sess);
 void mme_bearer_remove(mme_bearer_t *bearer);
@@ -786,15 +794,12 @@ int mme_m_tmsi_pool_generate(void);
 mme_m_tmsi_t *mme_m_tmsi_alloc(void);
 int mme_m_tmsi_free(mme_m_tmsi_t *tmsi);
 
+void mme_ebi_pool_init(mme_ue_t *mme_ue);
+void mme_ebi_pool_final(mme_ue_t *mme_ue);
+void mme_ebi_pool_clear(mme_ue_t *mme_ue);
+
 uint8_t mme_selected_int_algorithm(mme_ue_t *mme_ue);
 uint8_t mme_selected_enc_algorithm(mme_ue_t *mme_ue);
-
-void stats_add_ue(void);
-void stats_remove_ue(void);
-void stats_add_enb(void);
-void stats_remove_enb(void);
-void stats_add_mme_session(void);
-void stats_remove_mme_session(void);
 
 #ifdef __cplusplus
 }

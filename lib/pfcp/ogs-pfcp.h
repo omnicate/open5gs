@@ -21,13 +21,16 @@
 #define OGS_PFCP_H
 
 #include "ogs-core.h"
+#include "ipfw/ogs-ipfw.h"
+#include "ogs-app.h"
+#include "ogs-gtp.h"
 
 #define OGS_PFCP_UDP_PORT               8805
 
-#define OGS_MAX_NUM_OF_PDR              4
-#define OGS_MAX_NUM_OF_FAR              4
+#define OGS_MAX_NUM_OF_PDR              16
+#define OGS_MAX_NUM_OF_FAR              16
 #define OGS_MAX_NUM_OF_URR              2
-#define OGS_MAX_NUM_OF_QER              2
+#define OGS_MAX_NUM_OF_QER              4
 #define OGS_MAX_NUM_OF_BAR              1
 #define OGS_MAX_NUM_OF_GTPU_RESOURCE    4
 
@@ -37,9 +40,10 @@
 #include "pfcp/types.h"
 #include "pfcp/conv.h"
 #include "pfcp/context.h"
-#include "pfcp/n4-build.h"
+#include "pfcp/build.h"
 #include "pfcp/path.h"
 #include "pfcp/xact.h"
+#include "pfcp/handler.h"
 
 #ifdef __cplusplus
 extern "C" {

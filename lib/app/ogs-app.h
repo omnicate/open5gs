@@ -27,7 +27,7 @@
 extern int __ogs_app_domain;
 
 #include "app/ogs-yaml.h"
-#include "app/ogs-config.h"
+#include "app/ogs-context.h"
 #include "app/ogs-init.h"
 
 #undef OGS_APP_INSIDE
@@ -50,6 +50,12 @@ void hss_terminate(void);
 
 int sgw_initialize(void);
 void sgw_terminate(void);
+
+int sgwc_initialize(void);
+void sgwc_terminate(void);
+
+int sgwu_initialize(void);
+void sgwu_terminate(void);
 
 int pgw_initialize(void);
 void pgw_terminate(void);

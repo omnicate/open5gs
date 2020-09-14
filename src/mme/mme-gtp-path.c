@@ -40,6 +40,7 @@ static void _gtpv2_c_recv_cb(short when, ogs_socket_t fd, void *data)
     ogs_assert(fd != INVALID_SOCKET);
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_MAX_SDU_LEN);
+    ogs_assert(pkbuf);
     ogs_pkbuf_put(pkbuf, OGS_MAX_SDU_LEN);
 
     size = ogs_recvfrom(fd, pkbuf->data, pkbuf->len, 0, &from);
@@ -65,7 +66,7 @@ static void _gtpv2_c_recv_cb(short when, ogs_socket_t fd, void *data)
     e->gnode = sgw->gnode;
     e->pkbuf = pkbuf;
 
-    rv = ogs_queue_push(mme_self()->queue, e);
+    rv = ogs_queue_push(ogs_app()->queue, e);
     if (rv != OGS_OK) {
         ogs_error("ogs_queue_push() failed:%d", (int)rv);
         ogs_pkbuf_free(e->pkbuf);
@@ -121,14 +122,14 @@ int mme_gtp_open(void)
         sock = ogs_gtp_server(node);
         ogs_assert(sock);
 
-        node->poll = ogs_pollset_add(mme_self()->pollset,
+        node->poll = ogs_pollset_add(ogs_app()->pollset,
                 OGS_POLLIN, sock->fd, _gtpv2_c_recv_cb, sock);
     }
     ogs_list_for_each(&mme_self()->gtpc_list6, node) {
         sock = ogs_gtp_server(node);
         ogs_assert(sock);
 
-        node->poll = ogs_pollset_add(mme_self()->pollset,
+        node->poll = ogs_pollset_add(ogs_app()->pollset,
                 OGS_POLLIN, sock->fd, _gtpv2_c_recv_cb, sock);
     }
 
@@ -250,8 +251,8 @@ void mme_gtp_send_delete_all_sessions(mme_ue_t *mme_ue)
     ogs_assert(mme_ue);
 
     if (SESSION_CONTEXT_WILL_DELETED(mme_ue)) {
-        ogs_warn("The MME has already sent a Delete-Session-Request to the SGW"
-                " for all sessions.");
+        ogs_warn("[%s] Delete-Session-Request has already sent",
+                mme_ue->imsi_bcd);
         return;
     }
 
@@ -432,6 +433,7 @@ void mme_gtp_send_delete_indirect_data_forwarding_tunnel_request(
     h.teid = mme_ue->sgw_s11_teid;
 
     pkbuf = ogs_pkbuf_alloc(NULL, OGS_TLV_MAX_HEADROOM);
+    ogs_assert(pkbuf);
     ogs_pkbuf_reserve(pkbuf, OGS_TLV_MAX_HEADROOM);
 
     xact = ogs_gtp_xact_local_create(mme_ue->gnode, &h, pkbuf, timeout, mme_ue);

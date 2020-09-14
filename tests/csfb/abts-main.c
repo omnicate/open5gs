@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "test-epc.h"
+#include "test-app.h"
 
 abts_suite *test_mo_idle(abts_suite *suite);
 abts_suite *test_mt_idle(abts_suite *suite);
@@ -40,10 +40,6 @@ const struct testlist {
     {NULL},
 };
 
-static ogs_thread_t *pcrf_thread = NULL;
-static ogs_thread_t *pgw_thread = NULL;
-static ogs_thread_t *sgw_thread = NULL;
-static ogs_thread_t *hss_thread = NULL;
 ogs_socknode_t *sgsap = NULL;
 
 static void terminate(void)
@@ -51,21 +47,11 @@ static void terminate(void)
     ogs_msleep(50);
 
     test_child_terminate();
-
-    ogs_info("MME try to terminate");
-    mme_terminate();
+    app_terminate();
 
     testvlr_sgsap_close(sgsap);
 
-    ogs_sctp_final();
     test_epc_final();
-    ogs_info("MME terminate...done");
-
-    if (hss_thread) ogs_thread_destroy(hss_thread);
-    if (sgw_thread) ogs_thread_destroy(sgw_thread);
-    if (pgw_thread) ogs_thread_destroy(pgw_thread);
-    if (pcrf_thread) ogs_thread_destroy(pcrf_thread);
-
     ogs_app_terminate();
 }
 
@@ -75,21 +61,13 @@ static void initialize(const char *const argv[])
 
     rv = ogs_app_initialize(NULL, argv);
     ogs_assert(rv == OGS_OK);
-
-    pcrf_thread = test_child_create("pcrf", argv);
-    pgw_thread = test_child_create("pgw", argv);
-    sgw_thread = test_child_create("sgw", argv);
-    hss_thread = test_child_create("hss", argv);
-
     test_epc_init();
-    ogs_sctp_init(ogs_config()->usrsctp.udp_port);
 
     sgsap = testvlr_sgsap_server("127.0.0.2");
     ogs_assert(sgsap);
 
-    rv = mme_initialize();
+    rv = app_initialize(argv);
     ogs_assert(rv == OGS_OK);
-    ogs_info("MME initialize...done");
 }
 
 int main(int argc, const char *const argv[])
@@ -98,7 +76,7 @@ int main(int argc, const char *const argv[])
     abts_suite *suite = NULL;
 
     atexit(terminate);
-    test_epc_run(argc, argv, "csfb.yaml", initialize);
+    test_app_run(argc, argv, "csfb.yaml", initialize);
 
     for (i = 0; alltests[i].func; i++)
         suite = alltests[i].func(suite);
