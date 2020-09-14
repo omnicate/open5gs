@@ -1,0 +1,56 @@
+/*
+ * Copyright (C) 2019 by Sukchan Lee <acetcom@gmail.com>
+ *
+ * This file is part of Open5GS.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include "mme-metrics.h"
+#include "prom.h"
+
+const char* messageCounterLabels[5] = {"s1ap", "emm", "esm", "s6a", "s11"};
+
+void mme_metrics_initialize(void) {
+    mme_up_gauge = prom_collector_registry_must_register_metric(
+            prom_gauge_new(
+                    "open5gs_mme_up",
+                    "Open5GS MME is up",
+                    0,
+                    NULL));
+    mme_sessions_counter = prom_collector_registry_must_register_metric(
+            prom_counter_new(
+                    "open5gs_mme_sessions_total",
+                    "Open5GS MME sessions added",
+                    0,
+                    NULL));
+    mme_enb_ue_gauge = prom_collector_registry_must_register_metric(
+            prom_gauge_new(
+                    "open5gs_enb_gauge",
+                    "Open5GS MME number of eNB and UE",
+                    0,
+                    NULL));
+    mme_sessions_gauge = prom_collector_registry_must_register_metric(
+            prom_gauge_new(
+                    "open5gs_mme_session_gauge",
+                    "Open5GS MME number of sessions",
+                    0,
+                    NULL));
+    mme_messages_counter = prom_collector_registry_must_register_metric(
+            prom_counter_new(
+                    "open5gs_mme_messages_total",
+                    "open5gs MME messages handled by the state machine",
+                    5,
+                    messageCounterLabels));
+}

@@ -33,6 +33,8 @@
 #include "mme-fd-path.h"
 #include "mme-s6a-handler.h"
 #include "mme-path.h"
+#include "mme-metrics.h"
+#include "prom.h"
 
 /* 3GPP TS 29.272 Annex A; Table !.a:
  * Mapping from S6a error codes to NAS Cause Codes */
@@ -243,6 +245,7 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
         if (rc == OGS_OK) {
             e->enb = enb;
             e->s1ap_message = &s1ap_message;
+            prom_counter_inc(mme_messages_counter, &messageCounterLabels[0]);
             ogs_fsm_dispatch(&enb->sm, e);
         } else {
             ogs_warn("Cannot decode S1AP message");
@@ -352,6 +355,7 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
         e->mme_ue = mme_ue;
         e->nas_message = &nas_message;
 
+        prom_counter_inc(mme_messages_counter, &messageCounterLabels[1]);
         ogs_fsm_dispatch(&mme_ue->sm, e);
         if (OGS_FSM_CHECK(&mme_ue->sm, emm_state_exception)) {
             mme_send_delete_session_or_mme_ue_context_release(mme_ue);
@@ -394,6 +398,7 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
         e->bearer = bearer;
         e->nas_message = &nas_message;
 
+        prom_counter_inc(mme_messages_counter, &messageCounterLabels[2]);
         ogs_fsm_dispatch(&bearer->sm, e);
         if (OGS_FSM_CHECK(&bearer->sm, esm_state_bearer_deactivated)) {
             if (default_bearer->ebi == bearer->ebi) {
@@ -464,6 +469,7 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
             break;
         }
 
+        prom_counter_inc(mme_messages_counter, &messageCounterLabels[4]);
         switch (s6a_message->cmd_code) {
         case OGS_DIAM_S6A_CMD_CODE_AUTHENTICATION_INFORMATION:
             mme_s6a_handle_aia(mme_ue, &s6a_message->aia_message);
@@ -556,6 +562,7 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
             break;
         }
 
+        prom_counter_inc(mme_messages_counter, &messageCounterLabels[4]);
         switch (gtp_message.h.type) {
         case OGS_GTP_ECHO_REQUEST_TYPE:
             mme_s11_handle_echo_request(xact, &gtp_message.echo_request);
